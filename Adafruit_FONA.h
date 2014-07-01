@@ -64,6 +64,8 @@ class Adafruit_FONA {
   boolean setVolume(uint8_t i);
   uint8_t getVolume(void);
   boolean playToolkitTone(uint8_t t, uint16_t len);
+  boolean tuneFMradio(uint16_t station);
+  boolean FMradio(boolean onoff, uint8_t a = FONA_HEADSETAUDIO);
 
   // SMS handling
   int8_t getNumSMS(void);

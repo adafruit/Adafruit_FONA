@@ -183,6 +183,33 @@ boolean Adafruit_FONA::playToolkitTone(uint8_t t, uint16_t len) {
   return sendCheckReply(sendbuff, "OK");
 }
 
+/********* FM RADIO *******************************************************/
+
+
+boolean Adafruit_FONA::FMradio(boolean onoff, uint8_t a) {
+  if (! onoff) {
+    return sendCheckReply("AT+FMCLOSE", "OK");
+  }
+
+  // 0 is headset, 1 is external audio
+  if (a > 1) return false;
+
+  char sendbuff[12] = "AT+FMOPEN=0";
+  sendbuff[10] = a + '0';
+
+  return sendCheckReply(sendbuff, "OK");
+}
+
+boolean Adafruit_FONA::tuneFMradio(uint16_t station) {
+  if ((station < 870) || (station > 1090))
+    return false;
+
+  char sendbuff[20] = "AT+FMFREQ=";
+  itoa(station, sendbuff+10, 10);
+  return sendCheckReply(sendbuff, "OK");
+
+}
+
 /********* LOW LEVEL *******************************************/
 uint8_t Adafruit_FONA::readline(uint16_t timeout, boolean multiline) {
   uint16_t replyidx = 0;
