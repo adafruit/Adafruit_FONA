@@ -42,9 +42,12 @@ class Adafruit_FONA {
   // SIM query
   uint8_t getSIMCCID(char *ccid);
   uint8_t getNetworkStatus(void);
+  uint8_t getRSSI(void);
 
   // set Audio output
   boolean setAudio(uint8_t a);
+  boolean setVolume(uint8_t i);
+  uint8_t getVolume(void);
 
   // SMS handling
   int8_t getNumSMS(void);

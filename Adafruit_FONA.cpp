@@ -70,7 +70,9 @@ boolean Adafruit_FONA::begin(uint16_t baudrate) {
   return true;
 }
 
-/* read the battery & ADC  - returns value in mV (uint16_t) */
+/********* BATTERY & ADC ********************************************/
+
+/* returns value in mV (uint16_t) */
 boolean Adafruit_FONA::getBattVoltage(uint16_t *v) {
   getReply("AT+CBC");  // query the battery ADC
   char *p = strstr(replybuffer, "+CBC: ");  // check reply
@@ -93,6 +95,8 @@ boolean Adafruit_FONA::getADCVoltage(uint16_t *v) {
   return true;
 }
 
+/********* SIM ***********************************************************/
+
 uint8_t Adafruit_FONA::getSIMCCID(char *ccid) {
    getReply("AT+CCID");
    // up to 20 chars
@@ -100,6 +104,8 @@ uint8_t Adafruit_FONA::getSIMCCID(char *ccid) {
    ccid[20] = 0;
    return strlen(ccid);
 }
+
+/********* NETWORK *******************************************************/
 
 uint8_t Adafruit_FONA::getNetworkStatus(void) {
   uint8_t status;
@@ -112,12 +118,57 @@ uint8_t Adafruit_FONA::getNetworkStatus(void) {
   status = atoi(p);
   return status;
 }
-// 
+
+
+uint8_t Adafruit_FONA::getRSSI(void) {
+  uint8_t rssi;
+
+  getReply("AT+CSQ");
+  char *p = strstr(replybuffer, "+CSQ: ");  // get the pointer to the voltage
+  if (p == 0) return false;
+  p+=6;
+  //Serial.println(p);
+  rssi = atoi(p);
+
+  readline(); // eat the "OK"
+
+  return rssi;
+}
+
+/********* AUDIO *******************************************************/
+
 boolean Adafruit_FONA::setAudio(uint8_t a) {
 
 }
 
-/************************************************************/
+uint8_t Adafruit_FONA::getVolume(void) {
+  uint8_t level;
+
+  getReply("AT+CLVL?");
+  char *p = strstr(replybuffer, "+CLVL: ");  // get the pointer to the voltage
+  if (p == 0) return false;
+  p+=7;
+  //Serial.println(p);
+  level = atoi(p);
+
+  readline();  // eat the "OK"
+
+  return level;
+}
+
+boolean Adafruit_FONA::setVolume(uint8_t i) {
+  char sendbuff[12] = "AT+CLVL=000";
+
+  sendbuff[8] = (i / 100) + '0';
+  i %= 100;
+  sendbuff[9] = (i / 10) + '0';
+  i %= 10;
+  sendbuff[10] = i + '0';
+
+  return sendCheckReply(sendbuff, "OK");
+}
+
+/********* LOW LEVEL *******************************************/
 uint8_t Adafruit_FONA::readline(uint16_t timeout, boolean multiline) {
   uint16_t replyidx = 0;
   
