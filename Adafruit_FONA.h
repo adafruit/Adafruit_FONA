@@ -64,6 +64,8 @@ class Adafruit_FONA {
   boolean setVolume(uint8_t i);
   uint8_t getVolume(void);
   boolean playToolkitTone(uint8_t t, uint16_t len);
+  boolean setMicVolume(uint8_t a, uint8_t level);
+
   boolean tuneFMradio(uint16_t station);
   boolean FMradio(boolean onoff, uint8_t a = FONA_HEADSETAUDIO);
 
@@ -75,6 +77,10 @@ class Adafruit_FONA {
 
   // PWM (buzzer)
   boolean PWM(uint16_t period, uint8_t duty = 50);
+
+  // Phone calls
+  boolean callPhone(char *phonenum);
+  boolean hangUp(void);
 
  private: 
   int8_t _rstpin;

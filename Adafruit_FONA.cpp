@@ -183,6 +183,19 @@ boolean Adafruit_FONA::playToolkitTone(uint8_t t, uint16_t len) {
   return sendCheckReply(sendbuff, "OK");
 }
 
+boolean Adafruit_FONA::setMicVolume(uint8_t a, uint8_t level) {
+  char sendbuff[35] = "AT+CMIC=0,";
+
+  // 0 is headset, 1 is external audio
+  if (a > 1) return false;
+
+  sendbuff[8] = a + '0';
+  char *p = sendbuff+10;
+  itoa(level, p, 10);
+  
+  return sendCheckReply(sendbuff, "OK");
+}
+
 /********* FM RADIO *******************************************************/
 
 
@@ -230,6 +243,21 @@ boolean Adafruit_FONA::PWM(uint16_t period, uint8_t duty) {
   return sendCheckReply(sendbuff, "OK");
 }
 
+/********* CALL PHONES **************************************************/
+boolean Adafruit_FONA::callPhone(char *number) {
+  char sendbuff[35] = "ATD";
+  strncpy(sendbuff+3, number, min(30, strlen(number)));
+  uint8_t x = strlen(sendbuff);
+  sendbuff[x] = ';';
+  sendbuff[x+1] = 0;
+  Serial.println(sendbuff);
+
+  return sendCheckReply(sendbuff, "OK");
+}
+
+boolean Adafruit_FONA::hangUp(void) {
+  return sendCheckReply("ATH0", "OK");
+}
 
 /********* LOW LEVEL *******************************************/
 uint8_t Adafruit_FONA::readline(uint16_t timeout, boolean multiline) {
