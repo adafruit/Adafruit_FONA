@@ -207,8 +207,29 @@ boolean Adafruit_FONA::tuneFMradio(uint16_t station) {
   char sendbuff[20] = "AT+FMFREQ=";
   itoa(station, sendbuff+10, 10);
   return sendCheckReply(sendbuff, "OK");
-
 }
+
+/********* PWM/BUZZER **************************************************/
+
+boolean Adafruit_FONA::PWM(uint16_t period, uint8_t duty) {
+  if (period > 2000) return false;
+  if (duty > 100) return false;
+
+
+  char sendbuff[35] = "AT+SPWM=0,";
+
+  char *p = sendbuff+10;
+  itoa(period, p, 10);
+  Serial.println(sendbuff);
+  p = sendbuff+strlen(sendbuff);
+  *p = ',';
+  p++;
+  itoa(duty, p, 10);
+  Serial.println(sendbuff);
+  
+  return sendCheckReply(sendbuff, "OK");
+}
+
 
 /********* LOW LEVEL *******************************************/
 uint8_t Adafruit_FONA::readline(uint16_t timeout, boolean multiline) {

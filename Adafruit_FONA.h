@@ -73,6 +73,9 @@ class Adafruit_FONA {
   boolean sendSMS(char *smsaddr, char *smsmsg);
   boolean deleteSMS(uint8_t i);
 
+  // PWM (buzzer)
+  boolean PWM(uint16_t period, uint8_t duty = 50);
+
  private: 
   int8_t _rstpin;
 
