@@ -138,7 +138,13 @@ uint8_t Adafruit_FONA::getRSSI(void) {
 /********* AUDIO *******************************************************/
 
 boolean Adafruit_FONA::setAudio(uint8_t a) {
+  // 0 is headset, 1 is external audio
+  if (a > 1) return false;
 
+  char sendbuff[12] = "AT+CHFA=0";
+  sendbuff[8] = a + '0';
+
+  return sendCheckReply(sendbuff, "OK");
 }
 
 uint8_t Adafruit_FONA::getVolume(void) {
@@ -157,14 +163,23 @@ uint8_t Adafruit_FONA::getVolume(void) {
 }
 
 boolean Adafruit_FONA::setVolume(uint8_t i) {
-  char sendbuff[12] = "AT+CLVL=000";
+  char sendbuff[12] = "AT+CLVL=";
+  itoa(i, sendbuff+8, 10);
+  return sendCheckReply(sendbuff, "OK");
+}
 
-  sendbuff[8] = (i / 100) + '0';
-  i %= 100;
-  sendbuff[9] = (i / 10) + '0';
-  i %= 10;
-  sendbuff[10] = i + '0';
 
+boolean Adafruit_FONA::playToolkitTone(uint8_t t, uint16_t len) {
+  char sendbuff[35] = "AT+STTONE=1,";
+  char *p = sendbuff+12;
+  itoa(t, p, 10);
+  //Serial.println(sendbuff);
+  p = sendbuff+strlen(sendbuff);
+  *p = ',';
+  p++;
+  itoa(len, p, 10);
+  //Serial.println(sendbuff);
+  
   return sendCheckReply(sendbuff, "OK");
 }
 

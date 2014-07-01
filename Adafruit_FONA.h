@@ -24,7 +24,22 @@
 #endif
 
 
-#define FONA_HEADSET 
+#define FONA_HEADSETAUDIO 0
+#define FONA_EXTAUDIO 1
+
+#define FONA_STTONE_DIALTONE 1
+#define FONA_STTONE_BUSY 2
+#define FONA_STTONE_CONGESTION 3
+#define FONA_STTONE_PATHACK 4 
+#define FONA_STTONE_DROPPED 5
+#define FONA_STTONE_ERROR 6  
+#define FONA_STTONE_CALLWAIT 7 
+#define FONA_STTONE_RINGING 8
+#define FONA_STTONE_BEEP 16
+#define FONA_STTONE_POSTONE 17
+#define FONA_STTONE_ERRTONE 18
+#define FONA_STTONE_INDIANDIALTONE 19
+#define FONA_STTONE_USADIALTONE 20
 
 class Adafruit_FONA {
  public:
@@ -48,6 +63,7 @@ class Adafruit_FONA {
   boolean setAudio(uint8_t a);
   boolean setVolume(uint8_t i);
   uint8_t getVolume(void);
+  boolean playToolkitTone(uint8_t t, uint16_t len);
 
   // SMS handling
   int8_t getNumSMS(void);
