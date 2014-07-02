@@ -357,8 +357,7 @@ void loop() {
       flushSerial();
       Serial.print(F("Send to #"));
       readline(sendto, 20);
-      Serial.println();
-      Serial.print(F("SMSing ")); Serial.println(sendto);
+      Serial.println(sendto);
       Serial.print(F("Type out one-line message (140 char): "));
       readline(message, 140);
       Serial.println(message);
