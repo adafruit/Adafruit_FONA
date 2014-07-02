@@ -25,8 +25,6 @@
 
 #include "Adafruit_FONA.h"
 
-#define ADAFRUIT_FONA_DEBUG
-
 #if ARDUINO >= 100
 Adafruit_FONA::Adafruit_FONA(SoftwareSerial *ss, int8_t rst)
 #else
@@ -82,6 +80,9 @@ boolean Adafruit_FONA::getBattVoltage(uint16_t *v) {
   p++;
   //Serial.println(p);
   *v = atoi(p);
+
+  readline(); // eat 'OK'
+
   return true;
 }
 
@@ -92,6 +93,9 @@ boolean Adafruit_FONA::getADCVoltage(uint16_t *v) {
   p+=9;
   //Serial.println(p);
   *v = atoi(p);
+
+  readline(); // eat 'OK'
+
   return true;
 }
 
@@ -102,6 +106,9 @@ uint8_t Adafruit_FONA::getSIMCCID(char *ccid) {
    // up to 20 chars
    strncpy(ccid, replybuffer, 20);
    ccid[20] = 0;
+
+   readline(); // eat 'OK'
+
    return strlen(ccid);
 }
 
@@ -116,6 +123,9 @@ uint8_t Adafruit_FONA::getNetworkStatus(void) {
   p+=9;
   //Serial.println(p);
   status = atoi(p);
+
+  readline(); // eat 'OK'
+
   return status;
 }
 
@@ -233,12 +243,12 @@ boolean Adafruit_FONA::PWM(uint16_t period, uint8_t duty) {
 
   char *p = sendbuff+10;
   itoa(period, p, 10);
-  Serial.println(sendbuff);
+  //Serial.println(sendbuff);
   p = sendbuff+strlen(sendbuff);
   *p = ',';
   p++;
   itoa(duty, p, 10);
-  Serial.println(sendbuff);
+  //Serial.println(sendbuff);
   
   return sendCheckReply(sendbuff, "OK");
 }
@@ -250,7 +260,7 @@ boolean Adafruit_FONA::callPhone(char *number) {
   uint8_t x = strlen(sendbuff);
   sendbuff[x] = ';';
   sendbuff[x+1] = 0;
-  Serial.println(sendbuff);
+  //Serial.println(sendbuff);
 
   return sendCheckReply(sendbuff, "OK");
 }

@@ -20,6 +20,7 @@ THIS CODE IS STILL IN PROGRESS!
 
 Open up the serial console on the Arduino at 115200 baud to interact with FONA
 */
+
 #include <SoftwareSerial.h>
 #include "Adafruit_FONA.h"
 
@@ -46,10 +47,39 @@ void setup() {
     Serial.println(F("Couldn't find FONA"));
     while (1);
   }
-  Serial.println(F("OK"));
+  Serial.println(F("FONA is OK"));
 
+  printMenu();
 }
 
+void printMenu(void) {
+   Serial.println(F("-------------------------------------"));
+   Serial.println(F("[?] Print this menu"));
+   Serial.println(F("[a] read the ADC (2.8V max)"));
+   Serial.println(F("[b] read the Battery V"));
+   Serial.println(F("[C] read the SIM CCID"));
+   Serial.println(F("[i] read RSSI"));
+   Serial.println(F("[n] get Network status"));
+   Serial.println(F("[v] set audio Volume"));
+   Serial.println(F("[V] get Volume"));
+   Serial.println(F("[H] set Headphone audio"));
+   Serial.println(F("[e] set External audio"));
+   Serial.println(F("[T] play audio Tone"));
+   Serial.println(F("[f] tune FM radio"));
+   Serial.println(F("[F] turn off FM"));
+   Serial.println(F("[P] PWM/Buzzer out"));
+   Serial.println(F("[c] make phone Call"));
+   Serial.println(F("[h] Hang up phone"));
+   Serial.println(F("[N] Number of SMSs"));
+   Serial.println(F("[r] Read SMS #"));
+   Serial.println(F("[R] Read All SMS"));
+   Serial.println(F("[d] Delete SMS #"));
+   Serial.println(F("[s] Send SMS"));
+   Serial.println(F("[S] create Serial passthru tunnel"));
+   Serial.println(F("-------------------------------------"));
+   Serial.println(F(""));
+  
+}
 void loop() {
   Serial.print(F("FONA> "));
   while (! Serial.available() );
@@ -59,6 +89,11 @@ void loop() {
   
   
   switch (command) {
+    case '?': {
+      printMenu();
+      break;
+    }
+    
     case 'a': {
       // read the ADC
       uint16_t adc;
@@ -125,6 +160,7 @@ void loop() {
       flushSerial();
       Serial.print(F("Set Vol %"));
       uint8_t vol = readnumber();
+      Serial.println();
       if (! fona.setVolume(vol)) {
         Serial.println(F("Failed"));
       } else {
@@ -167,6 +203,7 @@ void loop() {
       flushSerial();
       Serial.print(F("Play tone #"));
       uint8_t kittone = readnumber();
+      Serial.println();
       // play for 1 second (1000 ms)
       if (! fona.playToolkitTone(kittone, 1000)) {
         Serial.println(F("Failed"));
@@ -183,6 +220,7 @@ void loop() {
       flushSerial();
       Serial.print(F("FM Freq (eg 1011 == 101.1 MHz): "));
       uint16_t station = readnumber();
+      Serial.println();
       // FM radio ON using headset
       if (fona.FMradio(true, FONA_HEADSETAUDIO)) {
         Serial.println(F("Opened"));
@@ -211,7 +249,7 @@ void loop() {
       flushSerial();
       Serial.print(F("PWM Freq, 0 = Off, (1-2000): "));
       uint16_t freq= readnumber();
-      
+      Serial.println();
       if (! fona.PWM(freq)) {
         Serial.println(F("Failed"));
       } else {
@@ -321,8 +359,9 @@ void loop() {
       readline(sendto, 20);
       Serial.println();
       Serial.print(F("SMSing ")); Serial.println(sendto);
-      Serial.print(F("Type out one-line message (140 char):"));
+      Serial.print(F("Type out one-line message (140 char): "));
       readline(message, 140);
+      Serial.println(message);
       if (!fona.sendSMS(sendto, message)) {
         Serial.println(F("Failed"));
       } else {
@@ -337,6 +376,7 @@ void loop() {
       while (1) {
         if (Serial.available()) {
           fonaSS.write(Serial.read());
+          delay(1); // add a delay required for some reason?
         }
         if (fonaSS.available()) {
           Serial.write(fonaSS.read());
@@ -347,6 +387,7 @@ void loop() {
     
     default: {
       Serial.println(F("Unknown command"));
+      printMenu();
       break;
     }
   }
@@ -371,7 +412,7 @@ uint16_t readnumber() {
   uint16_t x = 0;
   char c;
   while (! isdigit(c = readBlocking())) {
-    Serial.print(c);
+    //Serial.print(c);
   }
   Serial.print(c);
   x = c - '0';
@@ -421,4 +462,3 @@ uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout) {
   buff[buffidx] = 0;  // null term
   return buffidx;
 }
-
