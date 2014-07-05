@@ -244,6 +244,31 @@ boolean Adafruit_FONA::tuneFMradio(uint16_t station) {
   return sendCheckReply(sendbuff, "OK");
 }
 
+boolean Adafruit_FONA::setFMVolume(uint8_t i) {
+  // Fail if volume is outside allowed range (0-6).
+  if (i > 6) {
+    return false;
+  }
+  // Build FM volume set command.
+  char sendbuff[14] = "AT+FMVOLUME=";
+  itoa(i, sendbuff+12, 10);
+  // Send FM volume command and verify response.
+  return sendCheckReply(sendbuff, "OK");
+}
+
+int8_t Adafruit_FONA::getFMVolume() {
+  // Send FM volume read.
+  getReply("AT+FMVOLUME?");
+  // Check response is expected value.
+  char *p = strstr(replybuffer, "+FMVOLUME: ");
+  // Parse FM volume from response and return it.
+  if (p == 0) return -1;
+  p+=11;
+  uint8_t level = atoi(p);
+  readline();  // eat the "OK"
+  return level;
+}
+
 /********* PWM/BUZZER **************************************************/
 
 boolean Adafruit_FONA::PWM(uint16_t period, uint8_t duty) {
