@@ -250,12 +250,8 @@ boolean Adafruit_FONA::setFMVolume(uint8_t i) {
   if (i > 6) {
     return false;
   }
-  // Convert volume to string.
-  char volume[2];
-  memset(volume, 0, sizeof(volume));
-  itoa(i, volume, 10);
   // Send FM volume command and verify response.
-  return sendCheckReply(F("AT+FMVOLUME="), volume, F("OK"));
+  return sendCheckReply(F("AT+FMVOLUME="), i, F("OK"));
 }
 
 int8_t Adafruit_FONA::getFMVolume() {
@@ -263,10 +259,32 @@ int8_t Adafruit_FONA::getFMVolume() {
   getReply(F("AT+FMVOLUME?"));
   // Check response is expected value.
   char *p = strstr_P(replybuffer, PSTR("+FMVOLUME: "));
-  // Parse FM volume from response and return it.
   if (p == 0) return -1;
   p+=11;
-  uint8_t level = atoi(p);
+  // Parse FM volume from response and return it.
+  int8_t level = atoi(p);
+  readline();  // eat the "OK"
+  return level;
+}
+
+int8_t Adafruit_FONA::getFMSignalLevel(uint16_t station) {
+  // Fail if FM station is outside allowed range.
+  if ((station < 870) || (station > 1090)) {
+    return -1;
+  }
+  // Send FM signal level query command.
+  // Note, need to explicitly send timeout so right overload is chosen.
+  getReply(F("AT+FMSIGNAL="), station, FONA_DEFAULT_TIMEOUT_MS);
+  // Check response starts with expected value.
+  char *p = strstr_P(replybuffer, PSTR("+FMSIGNAL: "));
+  if (p == 0) return -1;
+  p+=11;
+  // Find second colon to get start of signal quality.
+  p = strchr(p, ':');
+  if (p == 0) return -1;
+  p+=1;
+  // Parse signal quality.
+  int8_t level = atoi(p);
   readline();  // eat the "OK"
   return level;
 }
@@ -503,6 +521,24 @@ uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *prefix, char *suffix,
   return l;
 }
 
+// Send prefix, suffix, and newline. Return response (and also set replybuffer with response).
+uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *prefix, int32_t suffix, uint16_t timeout) {
+  flushInput();
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print("\t---> "); Serial.print(prefix); Serial.println(suffix, DEC);
+#endif
+
+  mySerial->print(prefix);
+  mySerial->println(suffix, DEC);
+  
+  uint8_t l = readline(timeout);  
+#ifdef ADAFRUIT_FONA_DEBUG
+    Serial.print ("\t<--- "); Serial.println(replybuffer);
+#endif
+  return l;
+}
+
 boolean Adafruit_FONA::sendCheckReply(char *send, char *reply, uint16_t timeout) {
   getReply(send, timeout);
 
@@ -521,6 +557,12 @@ boolean Adafruit_FONA::sendCheckReply(char *send, char *reply, uint16_t timeout)
 
 // Send prefix, suffix, and newline.  Verify FONA response matches reply parameter.
 boolean Adafruit_FONA::sendCheckReply(const __FlashStringHelper *prefix, char *suffix, const __FlashStringHelper *reply, uint16_t timeout) {
+  getReply(prefix, suffix, timeout);
+  return (strcmp_P(replybuffer, (prog_char*)reply) == 0);
+}
+
+// Send prefix, suffix, and newline.  Verify FONA response matches reply parameter.
+boolean Adafruit_FONA::sendCheckReply(const __FlashStringHelper *prefix, int32_t suffix, const __FlashStringHelper *reply, uint16_t timeout) {
   getReply(prefix, suffix, timeout);
   return (strcmp_P(replybuffer, (prog_char*)reply) == 0);
 }

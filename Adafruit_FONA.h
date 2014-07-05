@@ -42,6 +42,8 @@
 #define FONA_STTONE_INDIANDIALTONE 19
 #define FONA_STTONE_USADIALTONE 20
 
+#define FONA_DEFAULT_TIMEOUT_MS 500
+
 class Adafruit_FONA {
  public:
 #if ARDUINO >= 100
@@ -73,6 +75,7 @@ class Adafruit_FONA {
   boolean FMradio(boolean onoff, uint8_t a = FONA_HEADSETAUDIO);
   boolean setFMVolume(uint8_t i);
   int8_t getFMVolume();
+  int8_t getFMSignalLevel(uint16_t station);
 
   // SMS handling
   int8_t getNumSMS(void);
@@ -93,12 +96,14 @@ class Adafruit_FONA {
   char replybuffer[255];
 
   void flushInput();
-  uint8_t readline(uint16_t timeout = 500, boolean multiline = false);
-  uint8_t getReply(char *send, uint16_t timeout = 500);
-  uint8_t getReply(const __FlashStringHelper *send, uint16_t timeout = 500);
-  uint8_t getReply(const __FlashStringHelper *prefix, char *suffix, uint16_t timeout = 500);
-  boolean sendCheckReply(char *send, char *reply, uint16_t timeout = 500);
-  boolean sendCheckReply(const __FlashStringHelper *prefix, char *suffix, const __FlashStringHelper *reply, uint16_t timeout = 500);
+  uint8_t readline(uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS, boolean multiline = false);
+  uint8_t getReply(char *send, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  uint8_t getReply(const __FlashStringHelper *send, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  uint8_t getReply(const __FlashStringHelper *prefix, char *suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  uint8_t getReply(const __FlashStringHelper *prefix, int32_t suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  boolean sendCheckReply(char *send, char *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  boolean sendCheckReply(const __FlashStringHelper *prefix, char *suffix, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  boolean sendCheckReply(const __FlashStringHelper *prefix, int32_t suffix, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
 
 #if ARDUINO >= 100
   SoftwareSerial *mySerial;

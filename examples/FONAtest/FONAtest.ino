@@ -70,6 +70,7 @@ void printMenu(void) {
    Serial.println(F("[F] turn off FM"));
    Serial.println(F("[m] set FM volume"));
    Serial.println(F("[M] get FM volume"));
+   Serial.println(F("[q] get FM station signal level"));
    Serial.println(F("[P] PWM/Buzzer out"));
    Serial.println(F("[c] make phone Call"));
    Serial.println(F("[h] Hang up phone"));
@@ -282,6 +283,21 @@ void loop() {
       } else {
         Serial.print(F("FM volume: "));
         Serial.println(fmvol, DEC);
+      }
+      break;
+    }
+    case 'q': {
+      // Get FM station signal level (in decibels).
+      flushSerial();
+      Serial.print(F("FM Freq (eg 1011 == 101.1 MHz): "));
+      uint16_t station = readnumber();
+      Serial.println();
+      int8_t level = fona.getFMSignalLevel(station);
+      if (level < 0) {
+        Serial.println(F("Failed! Make sure FM radio is on (tuned to station)."));
+      } else {
+        Serial.print(F("Signal level (dB): "));
+        Serial.println(level, DEC);
       }
       break;
     }
