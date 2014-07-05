@@ -92,9 +92,13 @@ class Adafruit_FONA {
 
   char replybuffer[255];
 
+  void flushInput();
   uint8_t readline(uint16_t timeout = 500, boolean multiline = false);
   uint8_t getReply(char *send, uint16_t timeout = 500);
+  uint8_t getReply(const __FlashStringHelper *send, uint16_t timeout = 500);
+  uint8_t getReply(const __FlashStringHelper *prefix, char *suffix, uint16_t timeout = 500);
   boolean sendCheckReply(char *send, char *reply, uint16_t timeout = 500);
+  boolean sendCheckReply(const __FlashStringHelper *prefix, char *suffix, const __FlashStringHelper *reply, uint16_t timeout = 500);
 
 #if ARDUINO >= 100
   SoftwareSerial *mySerial;
