@@ -224,25 +224,21 @@ boolean Adafruit_FONA::setMicVolume(uint8_t a, uint8_t level) {
 
 boolean Adafruit_FONA::FMradio(boolean onoff, uint8_t a) {
   if (! onoff) {
-    return sendCheckReply("AT+FMCLOSE", "OK");
+    return sendCheckReply(F("AT+FMCLOSE"), F("OK"));
   }
 
   // 0 is headset, 1 is external audio
   if (a > 1) return false;
 
-  char sendbuff[12] = "AT+FMOPEN=0";
-  sendbuff[10] = a + '0';
-
-  return sendCheckReply(sendbuff, "OK");
+  return sendCheckReply(F("AT+FMOPEN="), a, F("OK"));
 }
 
 boolean Adafruit_FONA::tuneFMradio(uint16_t station) {
+  // Fail if FM station is outside allowed range.
   if ((station < 870) || (station > 1090))
     return false;
 
-  char sendbuff[20] = "AT+FMFREQ=";
-  itoa(station, sendbuff+10, 10);
-  return sendCheckReply(sendbuff, "OK");
+  return sendCheckReply(F("AT+FMFREQ="), station, F("OK"));
 }
 
 boolean Adafruit_FONA::setFMVolume(uint8_t i) {
@@ -553,6 +549,11 @@ boolean Adafruit_FONA::sendCheckReply(char *send, char *reply, uint16_t timeout)
   Serial.println();
   */
   return (strcmp(replybuffer, reply) == 0);
+}
+
+boolean Adafruit_FONA::sendCheckReply(const __FlashStringHelper *send, const __FlashStringHelper *reply, uint16_t timeout) {
+  getReply(send, timeout);
+  return (strcmp_P(replybuffer, (prog_char*)reply) == 0);
 }
 
 // Send prefix, suffix, and newline.  Verify FONA response matches reply parameter.
