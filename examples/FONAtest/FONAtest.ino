@@ -58,6 +58,7 @@ void printMenu(void) {
    Serial.println(F("[a] read the ADC (2.8V max)"));
    Serial.println(F("[b] read the Battery V"));
    Serial.println(F("[C] read the SIM CCID"));
+   Serial.println(F("[U] Unlock SIM with PIN code"));
    Serial.println(F("[i] read RSSI"));
    Serial.println(F("[n] get Network status"));
    Serial.println(F("[v] set audio Volume"));
@@ -115,6 +116,23 @@ void loop() {
         }
         break;
     }
+
+    case 'U': {
+        // Unlock the SIM with a PIN code
+        char PIN[5];
+        flushSerial();
+        Serial.println(F("Enter 4-digit PIN"));
+        readline(PIN, 3);
+        Serial.println(PIN);
+        Serial.print(F("Unlocking SIM card: "));
+        if (! fona.unlockSIM(PIN)) {
+          Serial.println(F("Failed"));
+        } else {
+          Serial.println(F("OK!"));
+        }        
+        break;
+    }
+
     case 'C': {
         // read the CCID
         fona.getSIMCCID(replybuffer);  // make sure replybuffer is at least 21 bytes!

@@ -56,6 +56,7 @@ class Adafruit_FONA {
   boolean getBattVoltage(uint16_t *v);
 
   // SIM query
+  uint8_t unlockSIM(char *pin);
   uint8_t getSIMCCID(char *ccid);
   uint8_t getNetworkStatus(void);
   uint8_t getRSSI(void);

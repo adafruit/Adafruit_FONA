@@ -101,6 +101,18 @@ boolean Adafruit_FONA::getADCVoltage(uint16_t *v) {
 
 /********* SIM ***********************************************************/
 
+uint8_t Adafruit_FONA::unlockSIM(char *pin)
+{
+  char sendbuff[14] = "AT+CPIN=";
+  sendbuff[8] = pin[0];
+  sendbuff[9] = pin[1];
+  sendbuff[10] = pin[2];
+  sendbuff[11] = pin[3];
+  sendbuff[12] = NULL;
+  
+  return sendCheckReply(sendbuff, "OK");
+}
+
 uint8_t Adafruit_FONA::getSIMCCID(char *ccid) {
    getReply("AT+CCID");
    // up to 20 chars
