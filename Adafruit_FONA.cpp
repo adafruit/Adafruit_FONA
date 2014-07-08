@@ -51,53 +51,35 @@ boolean Adafruit_FONA::begin(uint16_t baudrate) {
   delay(500);
   while (mySerial->available()) mySerial->read();
 
-  sendCheckReply("AT", "OK");
+  sendCheckReply(F("AT"), F("OK"));
   delay(100);
-  sendCheckReply("AT", "OK");
+  sendCheckReply(F("AT"), F("OK"));
   delay(100);
-  sendCheckReply("AT", "OK");
+  sendCheckReply(F("AT"), F("OK"));
   delay(100);
 
   // turn off Echo!
-  sendCheckReply("ATE0", "OK");
+  sendCheckReply(F("ATE0"), F("OK"));
   delay(100);
   
-  if (! sendCheckReply("ATE0", "OK")) {
+  if (! sendCheckReply(F("ATE0"), F("OK"))) {
     return false;
   }
 
   return true;
 }
 
+
+
 /********* BATTERY & ADC ********************************************/
 
 /* returns value in mV (uint16_t) */
 boolean Adafruit_FONA::getBattVoltage(uint16_t *v) {
-  getReply("AT+CBC");  // query the battery ADC
-  char *p = strstr(replybuffer, "+CBC: ");  // check reply
-  if (p == 0) return false;
-  p = strrchr(replybuffer, ',');
-  if (p == 0) return false;
-  p++;
-  //Serial.println(p);
-  *v = atoi(p);
-
-  readline(); // eat 'OK'
-
-  return true;
+  return sendParseReply(F("AT+CBC"), F("+CBC: "), v, ',', 2);
 }
 
 boolean Adafruit_FONA::getADCVoltage(uint16_t *v) {
-  getReply("AT+CADC?");  // query the ADC
-  char *p = strstr(replybuffer, "+CADC: 1,");  // get the pointer to the voltage
-  if (p == 0) return false;
-  p+=9;
-  //Serial.println(p);
-  *v = atoi(p);
-
-  readline(); // eat 'OK'
-
-  return true;
+  return sendParseReply(F("AT+CADC?"), F("+CADC: 1,"), v);
 }
 
 /********* SIM ***********************************************************/
@@ -128,34 +110,20 @@ uint8_t Adafruit_FONA::getSIMCCID(char *ccid) {
 /********* NETWORK *******************************************************/
 
 uint8_t Adafruit_FONA::getNetworkStatus(void) {
-  uint8_t status;
-
-  getReply("AT+CREG?");
-  char *p = strstr(replybuffer, "+CREG: ");  // get the pointer to the voltage
-  if (p == 0) return false;
-  p+=9;
-  //Serial.println(p);
-  status = atoi(p);
-
-  readline(); // eat 'OK'
+  uint16_t status;
+  
+  if (! sendParseReply(F("AT+CREG?"), F("+CREG: "), &status, ',', 1)) return 0;
 
   return status;
 }
 
 
 uint8_t Adafruit_FONA::getRSSI(void) {
-  uint8_t rssi;
+  uint16_t reply;
 
-  getReply("AT+CSQ");
-  char *p = strstr(replybuffer, "+CSQ: ");  // get the pointer to the voltage
-  if (p == 0) return false;
-  p+=6;
-  //Serial.println(p);
-  rssi = atoi(p);
+  if (! sendParseReply(F("AT+CSQ"), F("+CSQ: "), &reply) ) return 0;
 
-  readline(); // eat the "OK"
-
-  return rssi;
+  return reply;
 }
 
 /********* AUDIO *******************************************************/
@@ -164,31 +132,19 @@ boolean Adafruit_FONA::setAudio(uint8_t a) {
   // 0 is headset, 1 is external audio
   if (a > 1) return false;
 
-  char sendbuff[12] = "AT+CHFA=0";
-  sendbuff[8] = a + '0';
-
-  return sendCheckReply(sendbuff, "OK");
+  return sendCheckReply(F("AT+CHFA="), a, F("OK"));
 }
 
 uint8_t Adafruit_FONA::getVolume(void) {
-  uint8_t level;
+  uint16_t reply;
 
-  getReply("AT+CLVL?");
-  char *p = strstr(replybuffer, "+CLVL: ");  // get the pointer to the voltage
-  if (p == 0) return false;
-  p+=7;
-  //Serial.println(p);
-  level = atoi(p);
+  if (! sendParseReply(F("AT+CLVL?"), F("+CLVL: "), &reply) ) return 0;
 
-  readline();  // eat the "OK"
-
-  return level;
+  return reply;
 }
 
 boolean Adafruit_FONA::setVolume(uint8_t i) {
-  char sendbuff[12] = "AT+CLVL=";
-  itoa(i, sendbuff+8, 10);
-  return sendCheckReply(sendbuff, "OK");
+  return sendCheckReply(F("AT+CLVL="), i, F("OK"));
 }
 
 
@@ -566,4 +522,28 @@ boolean Adafruit_FONA::sendCheckReply(const __FlashStringHelper *prefix, char *s
 boolean Adafruit_FONA::sendCheckReply(const __FlashStringHelper *prefix, int32_t suffix, const __FlashStringHelper *reply, uint16_t timeout) {
   getReply(prefix, suffix, timeout);
   return (strcmp_P(replybuffer, (prog_char*)reply) == 0);
+}
+
+
+boolean Adafruit_FONA::sendParseReply(const __FlashStringHelper *tosend, 
+				      const __FlashStringHelper *toreply, 
+				      uint16_t *v, char divider, uint8_t index) {
+  getReply(tosend);  // query the ADC
+  char *p = strstr_P(replybuffer, (prog_char*)toreply);  // get the pointer to the voltage
+  if (p == 0) return false;
+  p+=strlen_P((prog_char*)toreply);
+  Serial.println(p);
+  for (uint8_t i=0; i<index;i++) {
+    // increment dividers
+    p = strchr(p, divider);
+    if (!p) return false;
+    p++;
+      Serial.println(p);
+
+  }
+  *v = atoi(p);
+
+  readline(); // eat 'OK'
+
+  return true;
 }

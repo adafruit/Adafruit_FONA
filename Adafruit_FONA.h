@@ -106,6 +106,11 @@ class Adafruit_FONA {
   boolean sendCheckReply(const __FlashStringHelper *prefix, char *suffix, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReply(const __FlashStringHelper *prefix, int32_t suffix, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
 
+
+  boolean sendParseReply(const __FlashStringHelper *tosend, 
+			 const __FlashStringHelper *toreply, 
+			 uint16_t *v, char divider = ',', uint8_t index=0);
+
 #if ARDUINO >= 100
   SoftwareSerial *mySerial;
 #else
