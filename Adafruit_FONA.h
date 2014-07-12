@@ -83,6 +83,11 @@ class Adafruit_FONA {
   boolean sendSMS(char *smsaddr, char *smsmsg);
   boolean deleteSMS(uint8_t i);
 
+  // GPRS handling
+  boolean enableGPRS(boolean onoff);
+  uint8_t GPRSstate(void);
+  boolean getGSMLoc(uint16_t *replycode, char *buff, uint16_t maxlen);
+
   // PWM (buzzer)
   boolean PWM(uint16_t period, uint8_t duty = 50);
 
@@ -113,7 +118,7 @@ class Adafruit_FONA {
 
 
   boolean parseReply(const __FlashStringHelper *toreply, 
-				  uint16_t *v, char divider, uint8_t index);
+				  uint16_t *v, char divider  = ',', uint8_t index=0);
 
   boolean sendParseReply(const __FlashStringHelper *tosend, 
 			 const __FlashStringHelper *toreply, 

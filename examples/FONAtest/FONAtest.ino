@@ -79,6 +79,9 @@ void printMenu(void) {
    Serial.println(F("[R] Read All SMS"));
    Serial.println(F("[d] Delete SMS #"));
    Serial.println(F("[s] Send SMS"));
+   Serial.println(F("[G] Enable GPRS"));
+   Serial.println(F("[g] Disable GPRS"));
+   Serial.println(F("[l] Query GSMLOC"));
    Serial.println(F("[S] create Serial passthru tunnel"));
    Serial.println(F("-------------------------------------"));
    Serial.println(F(""));
@@ -383,8 +386,10 @@ void loop() {
       uint16_t smslen;
       for (int8_t smsn=1; smsn<=smsnum; smsn++) {
         Serial.print(F("\n\rReading SMS #")); Serial.println(smsn);
-        if (!fona.readSMS(smsn, replybuffer, 250, &smslen))  // pass in buffer and max len!
-            continue;
+        if (!fona.readSMS(smsn, replybuffer, 250, &smslen)) {  // pass in buffer and max len!
+           Serial.println(F("Failed!"));
+           break;
+        }
         // if the length is zero, its a special case where the index number is higher
         // so increase the max we'll look at!
         if (smslen == 0) {
@@ -434,6 +439,37 @@ void loop() {
       
       break;
     }
+    /*********************************** GPRS */
+    
+    case 'g': {
+       // turn GPRS off
+       if (!fona.enableGPRS(false))  
+         Serial.println(F("Failed to turn off"));
+       break;
+    }
+    case 'G': {
+       // turn GPRS on
+       if (!fona.enableGPRS(true))  
+         Serial.println(F("Failed to turn on"));
+       break;
+    }
+    case 'l': {
+       // check for GSMLOC (requires GPRS)
+       uint16_t returncode;
+       
+       if (!fona.getGSMLoc(&returncode, replybuffer, 250))
+         Serial.println(F("Failed!"));
+       if (returncode == 0) {
+         Serial.println(replybuffer);
+       } else {
+         Serial.print(F("Fail code #")); Serial.println(returncode);
+       }
+       
+       break;
+    }
+    
+    
+    /*****************************************/
       
     case 'S': {
       Serial.println(F("Creating SERIAL TUBE"));

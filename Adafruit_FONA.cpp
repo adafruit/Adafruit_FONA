@@ -341,6 +341,64 @@ boolean Adafruit_FONA::deleteSMS(uint8_t i) {
   return sendCheckReply(sendbuff, "OK", 2000);
 }
 
+/********* GPRS **********************************************************/
+
+boolean Adafruit_FONA::enableGPRS(boolean onoff) {
+
+  if (onoff) {
+    if (! sendCheckReply(F("AT+CGATT=1"), F("OK"), 10000))
+      return false;
+
+    // set bearer profile! connection type GPRS
+    if (! sendCheckReply(F("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\""),
+			   F("OK"), 10000))
+      return false;
+    // set bearer profile access point name
+    if (! sendCheckReply(F("AT+SAPBR=3,1,\"APN\",\"FONAnet\""),
+			   F("OK"), 10000))
+      return false;
+    
+    // open GPRS context
+    if (! sendCheckReply(F("AT+SAPBR=1,1"), F("OK"), 10000))
+      return false;
+  } else {
+    // close GPRS context
+  if (! sendCheckReply(F("AT+SAPBR=0,1"), F("OK"), 10000))
+      return false;
+
+    if (! sendCheckReply(F("AT+CGATT=0"), F("OK"), 10000))
+      return false;
+
+  }
+  return true;
+}
+
+uint8_t Adafruit_FONA::GPRSstate(void) {
+  uint16_t state;
+
+  if (! sendParseReply(F("AT+CGATT?"), F("+AT+CGATT: "), &state) ) 
+    return -1;
+
+  return state;
+}
+
+boolean Adafruit_FONA::getGSMLoc(uint16_t *errorcode, char *buff, uint16_t maxlen) {
+
+  getReply(F("AT+CIPGSMLOC=1,1"), (uint16_t)10000);
+
+  if (! parseReply(F("+CIPGSMLOC: "), errorcode))
+    return false;
+
+  char *p = replybuffer+14;
+  uint16_t lentocopy = min(maxlen-1, strlen(p));
+  strncpy(buff, p, lentocopy+1);
+
+  readline(); // eat OK
+
+  return true;
+
+}
+
 /********* LOW LEVEL *******************************************/
 
 void Adafruit_FONA::flushInput() {
