@@ -365,9 +365,13 @@ void loop() {
       uint8_t smsn = readnumber();
       
       Serial.print(F("\n\rReading SMS #")); Serial.println(smsn);
-      uint8_t len = fona.readSMS(smsn, replybuffer, 250); // pass in buffer and max len!
+      uint16_t smslen;
+      if (! fona.readSMS(smsn, replybuffer, 250, &smslen)) { // pass in buffer and max len!
+        Serial.println("Failed!");
+        break;
+      }
       Serial.print(F("***** SMS #")); Serial.print(smsn); 
-      Serial.print(" ("); Serial.print(len); Serial.println(F(") bytes *****"));
+      Serial.print(" ("); Serial.print(smslen); Serial.println(F(") bytes *****"));
       Serial.println(replybuffer);
       Serial.println(F("*****"));
       
@@ -376,20 +380,21 @@ void loop() {
     case 'R': {
       // read all SMS
       int8_t smsnum = fona.getNumSMS();
+      uint16_t smslen;
       for (int8_t smsn=1; smsn<=smsnum; smsn++) {
         Serial.print(F("\n\rReading SMS #")); Serial.println(smsn);
-        uint8_t len = fona.readSMS(smsn, replybuffer, 250); // pass in buffer and max len!
-
+        if (!fona.readSMS(smsn, replybuffer, 250, &smslen))  // pass in buffer and max len!
+            continue;
         // if the length is zero, its a special case where the index number is higher
         // so increase the max we'll look at!
-        if (len == 0) {
+        if (smslen == 0) {
           Serial.println(F("[empty slot]"));
           smsnum++;
           continue;
         }
         
         Serial.print(F("***** SMS #")); Serial.print(smsn); 
-        Serial.print(" ("); Serial.print(len); Serial.println(F(") bytes *****"));
+        Serial.print(" ("); Serial.print(smslen); Serial.println(F(") bytes *****"));
         Serial.println(replybuffer);
         Serial.println(F("*****"));
       }
