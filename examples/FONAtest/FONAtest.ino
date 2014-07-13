@@ -81,7 +81,8 @@ void printMenu(void) {
    Serial.println(F("[s] Send SMS"));
    Serial.println(F("[G] Enable GPRS"));
    Serial.println(F("[g] Disable GPRS"));
-   Serial.println(F("[l] Query GSMLOC"));
+   Serial.println(F("[l] Query GSMLOC (GPRS)"));
+   Serial.println(F("[w] Read webpage (GPRS)"));
    Serial.println(F("[S] create Serial passthru tunnel"));
    Serial.println(F("-------------------------------------"));
    Serial.println(F(""));
@@ -467,6 +468,39 @@ void loop() {
        
        break;
     }
+    case 'w': {
+      // read website URL
+      uint16_t statuscode;
+      int16_t length;
+      char url[80];
+      
+      flushSerial();
+      Serial.println(F("NOTE: in beta! Use small webpages to read!"));
+      Serial.println(F("URL to read (e.g. www.adafruit.com/testwifi/index.html):"));
+      Serial.print(F("http://")); readline(url, 79);
+      Serial.println(url);
+      
+       Serial.println(F("****"));
+       if (!fona.HTTP_GET_start(url, &statuscode, (uint16_t *)&length)) {
+         Serial.println("Failed!");
+         break;
+       }
+       while (length > 0) {
+         while (fona.available()) {
+           char c = fona.read();
+           
+           // Serial.write is too slow, we'll write directly to Serial register!
+           loop_until_bit_is_set(UCSR0A, UDRE0); /* Wait until data register empty. */
+           UDR0 = c;
+           
+           length--;
+           if (! length) break;
+         }
+       }
+       Serial.println(F("\n****"));
+       fona.HTTP_GET_end();
+       break;
+    }
     
     
     /*****************************************/
@@ -474,12 +508,11 @@ void loop() {
     case 'S': {
       Serial.println(F("Creating SERIAL TUBE"));
       while (1) {
-        if (Serial.available()) {
-          fonaSS.write(Serial.read());
-          delay(1); // add a delay required for some reason?
+        while (Serial.available()) {
+          fona.write(Serial.read());
         }
-        if (fonaSS.available()) {
-          Serial.write(fonaSS.read());
+        if (fona.available()) {
+          Serial.write(fona.read());
         }
       }
       break;
@@ -493,8 +526,8 @@ void loop() {
   }
   // flush input
   flushSerial();
-  while (fonaSS.available()) {
-    Serial.write(fonaSS.read());
+  while (fona.available()) {
+    Serial.write(fona.read());
   }
 
 }

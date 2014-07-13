@@ -44,7 +44,7 @@
 
 #define FONA_DEFAULT_TIMEOUT_MS 500
 
-class Adafruit_FONA {
+class Adafruit_FONA : public Stream {
  public:
 #if ARDUINO >= 100
   Adafruit_FONA(SoftwareSerial *, int8_t r);
@@ -52,6 +52,13 @@ class Adafruit_FONA {
   Adafruit_FONA(NewSoftSerial *, int8_t r);
 #endif
   boolean begin(uint16_t baud);
+
+  // Stream
+  int available(void);
+  size_t write(uint8_t x);
+  int read(void);
+  int peek(void);
+  void flush();
 
   // Battery and ADC
   boolean getADCVoltage(uint16_t *v);
@@ -87,6 +94,10 @@ class Adafruit_FONA {
   boolean enableGPRS(boolean onoff);
   uint8_t GPRSstate(void);
   boolean getGSMLoc(uint16_t *replycode, char *buff, uint16_t maxlen);
+
+  // HTTP 
+  boolean HTTP_GET_start(char *url, uint16_t *status, uint16_t *datalen);
+  boolean HTTP_GET_end(void);
 
   // PWM (buzzer)
   boolean PWM(uint16_t period, uint8_t duty = 50);

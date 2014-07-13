@@ -363,7 +363,7 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
       return false;
   } else {
     // close GPRS context
-  if (! sendCheckReply(F("AT+SAPBR=0,1"), F("OK"), 10000))
+    if (! sendCheckReply(F("AT+SAPBR=0,1"), F("OK"), 10000))
       return false;
 
     if (! sendCheckReply(F("AT+CGATT=0"), F("OK"), 10000))
@@ -396,15 +396,76 @@ boolean Adafruit_FONA::getGSMLoc(uint16_t *errorcode, char *buff, uint16_t maxle
   readline(); // eat OK
 
   return true;
+}
 
+boolean Adafruit_FONA::HTTP_GET_start(char *url, 
+				      uint16_t *status, uint16_t *datalen){
+
+  // wrap up any pending
+  HTTP_GET_end();
+
+  if (! sendCheckReply(F("AT+HTTPINIT"), F("OK")))
+    return false;
+  if (! sendCheckReply(F("AT+HTTPPARA=\"CID\",1"), F("OK")))
+    return false;
+
+  flushInput();
+  mySerial->print(F("AT+HTTPPARA=\"URL\",\""));
+  mySerial->print(url);
+  mySerial->println("\"");
+  readline(FONA_DEFAULT_TIMEOUT_MS); 
+  if (strcmp(replybuffer, "OK") != 0)
+    return false;
+
+  // HTTP GET
+  if (! sendCheckReply(F("AT+HTTPACTION=0"), F("OK")))
+    return false;
+  readline(10000); 
+
+  if (! parseReply(F("+HTTPACTION:"), status, ',', 1)) 
+    return false;
+  if (! parseReply(F("+HTTPACTION:"), datalen, ',', 2)) 
+    return false;
+
+  Serial.print("Status: "); Serial.println(*status);
+  Serial.print("Len: "); Serial.println(*datalen);
+
+  getReply(F("AT+HTTPREAD"));
+  
+  return true;
+}
+
+boolean Adafruit_FONA::HTTP_GET_end(void) {
+  flushInput();
+  sendCheckReply(F("AT+HTTPTERM"), F("OK"));
 }
 
 /********* LOW LEVEL *******************************************/
 
+inline int Adafruit_FONA::available(void) {
+  return mySerial->available();
+}
+
+inline size_t Adafruit_FONA::write(uint8_t x) {
+  return mySerial->write(x);
+}
+
+inline int Adafruit_FONA::read(void) {
+  return mySerial->read();
+}
+
+inline int Adafruit_FONA::peek(void) {
+  return mySerial->peek();
+}
+
+inline void Adafruit_FONA::flush() {
+  mySerial->flush();
+}
+
 void Adafruit_FONA::flushInput() {
   // Read all available serial input to flush pending data.
-  while(mySerial->available()) {
-     mySerial->read();
+  while(available()) {
+     read();
   }
 }
 
