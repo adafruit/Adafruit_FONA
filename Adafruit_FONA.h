@@ -94,6 +94,7 @@ class Adafruit_FONA : public Stream {
   boolean enableGPRS(boolean onoff);
   uint8_t GPRSstate(void);
   boolean getGSMLoc(uint16_t *replycode, char *buff, uint16_t maxlen);
+  boolean setGPRSNetworkSettings(const __FlashStringHelper *apn, const __FlashStringHelper *username, const __FlashStringHelper *password);
 
   // HTTP 
   boolean HTTP_GET_start(char *url, uint16_t *status, uint16_t *datalen);
@@ -110,6 +111,9 @@ class Adafruit_FONA : public Stream {
   int8_t _rstpin;
 
   char replybuffer[255];
+  const prog_char *apn;
+  const prog_char *apnusername;
+  const prog_char *apnpassword;
 
   void flushInput();
   uint16_t readRaw(uint16_t b);
