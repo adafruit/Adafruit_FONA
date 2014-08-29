@@ -94,7 +94,7 @@ class Adafruit_FONA : public Stream {
   boolean enableGPRS(boolean onoff);
   uint8_t GPRSstate(void);
   boolean getGSMLoc(uint16_t *replycode, char *buff, uint16_t maxlen);
-  boolean setGPRSNetworkSettings(const __FlashStringHelper *apn, const __FlashStringHelper *username, const __FlashStringHelper *password);
+  void setGPRSNetworkSettings(const __FlashStringHelper *apn, const __FlashStringHelper *username=0, const __FlashStringHelper *password=0);
 
   // HTTP 
   boolean HTTP_GET_start(char *url, uint16_t *status, uint16_t *datalen);
@@ -111,9 +111,9 @@ class Adafruit_FONA : public Stream {
   int8_t _rstpin;
 
   char replybuffer[255];
-  const prog_char *apn;
-  const prog_char *apnusername;
-  const prog_char *apnpassword;
+  const __FlashStringHelper *apn;
+  const __FlashStringHelper *apnusername;
+  const __FlashStringHelper *apnpassword;
 
   void flushInput();
   uint16_t readRaw(uint16_t b);
@@ -122,14 +122,15 @@ class Adafruit_FONA : public Stream {
   uint8_t getReply(const __FlashStringHelper *send, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   uint8_t getReply(const __FlashStringHelper *prefix, char *suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   uint8_t getReply(const __FlashStringHelper *prefix, int32_t suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
-
-  uint8_t getReply(const __FlashStringHelper *prefix, int32_t suffix1, int32_t suffix2, uint16_t timeout);
+  uint8_t getReply(const __FlashStringHelper *prefix, int32_t suffix1, int32_t suffix2, uint16_t timeout); // Don't set default value or else function call is ambiguous.
+  uint8_t getReplyQuoted(const __FlashStringHelper *prefix, const __FlashStringHelper *suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
 
   boolean sendCheckReply(char *send, char *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReply(const __FlashStringHelper *send, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReply(const __FlashStringHelper *prefix, char *suffix, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReply(const __FlashStringHelper *prefix, int32_t suffix, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReply(const __FlashStringHelper *prefix, int32_t suffix, int32_t suffix2, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  boolean sendCheckReplyQuoted(const __FlashStringHelper *prefix, const __FlashStringHelper *suffix, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
 
 
   boolean parseReply(const __FlashStringHelper *toreply, 
