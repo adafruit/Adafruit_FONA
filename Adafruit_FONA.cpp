@@ -15,6 +15,8 @@
   BSD license, all text above must be included in any redistribution
  ****************************************************/
 #include <avr/pgmspace.h>
+    // next line per http://postwarrior.com/arduino-ethershield-error-prog_char-does-not-name-a-type/
+#define prog_char  char PROGMEM
 
 #if (ARDUINO >= 100)
  #include "Arduino.h"
