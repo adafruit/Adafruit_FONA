@@ -36,6 +36,9 @@ Adafruit_FONA::Adafruit_FONA(NewSoftSerial *ssm, int8_t rst)
 {
   _rstpin = rst;
   mySerial = ss;
+  apn = PSTR("FONAnet");
+  apnusername = 0;
+  apnpassword = 0;
 }
 
 boolean Adafruit_FONA::begin(uint16_t baudrate) {
@@ -355,11 +358,32 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
     if (! sendCheckReply(F("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\""),
 			   F("OK"), 10000))
       return false;
+
     // set bearer profile access point name
-    if (! sendCheckReply(F("AT+SAPBR=3,1,\"APN\",\"FONAnet\""),
-			   F("OK"), 10000))
-      return false;
-    
+    if (apn) {
+      char sendcmd[70] = "AT+SAPBR=3,1,\"APN\",\"";
+      strncpy_P(sendcmd+20, apn, 70-20-2);  // 20 bytes beginning, 2 bytes for close quote + null
+      sendcmd[strlen(sendcmd)] = '\"';
+      if (! sendCheckReply(sendcmd, ("OK"), 10000))
+        return false;
+
+      // set username/password
+      if (apnusername) {
+        strncpy(sendcmd+14, "USER\",\"", 7);
+        strncpy_P(sendcmd+21, apnusername, 70-21-2);
+        sendcmd[strlen(sendcmd)] = '\"';
+        if (! sendCheckReply(sendcmd, ("OK"), 10000))
+          return false;
+      }
+      if (apnpassword) {
+        strncpy(sendcmd+14, "PWD\",\"", 6);
+        strncpy_P(sendcmd+20, apnpassword, 70-20-2);
+        sendcmd[strlen(sendcmd)] = '\"';
+        if (! sendCheckReply(sendcmd, ("OK"), 10000))
+          return false;
+      }
+    }
+
     // open GPRS context
     if (! sendCheckReply(F("AT+SAPBR=1,1"), F("OK"), 10000))
       return false;
@@ -382,6 +406,13 @@ uint8_t Adafruit_FONA::GPRSstate(void) {
     return -1;
 
   return state;
+}
+
+boolean Adafruit_FONA::setGPRSNetworkSettings(const __FlashStringHelper *apn,
+              const __FlashStringHelper *username, const __FlashStringHelper *password) {
+  this->apn = (const prog_char *) apn;
+  this->apnusername = (const prog_char *) username;
+  this->apnpassword = (const prog_char *) password;
 }
 
 boolean Adafruit_FONA::getGSMLoc(uint16_t *errorcode, char *buff, uint16_t maxlen) {
