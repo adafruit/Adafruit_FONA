@@ -4,7 +4,7 @@ Adafruit_FONA_Library
 This is a library for the Adafruit FONA Cellular GSM Breakouts etc
 
 Designed specifically to work with the Adafruit FONA Breakout
-  ----> https://www.adafruit.com/products/1469
+  ----> https://www.adafruit.com/products/1946
   ----> https://www.adafruit.com/products/1963
 
 These modules use TTL Serial to communicate, 2 pins are required to interface
