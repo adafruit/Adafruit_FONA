@@ -19,6 +19,10 @@
 THIS CODE IS STILL IN PROGRESS!
 
 Open up the serial console on the Arduino at 115200 baud to interact with FONA
+
+Note that if you need to set a GPRS APN, username, and password scroll down to
+the commented section below at the end of the setup() function.
+
 */
 
 #include <SoftwareSerial.h>
@@ -48,6 +52,13 @@ void setup() {
     while (1);
   }
   Serial.println(F("FONA is OK"));
+
+  // Optionally configure a GPRS APN, username, and password.
+  // You might need to do this to access your network's GPRS/data
+  // network.  Contact your provider for the exact APN, username,
+  // and password values.  Username and password are optional and
+  // can be removed, but APN is required.
+  //fona.setGPRSNetworkSettings(F("your APN"), F("your username"), F("your password"));
 
   printMenu();
 }

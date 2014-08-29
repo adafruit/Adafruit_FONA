@@ -36,6 +36,9 @@ Adafruit_FONA::Adafruit_FONA(NewSoftSerial *ssm, int8_t rst)
 {
   _rstpin = rst;
   mySerial = ss;
+  apn = F("FONAnet");
+  apnusername = 0;
+  apnpassword = 0;
 }
 
 boolean Adafruit_FONA::begin(uint16_t baudrate) {
@@ -355,11 +358,26 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
     if (! sendCheckReply(F("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\""),
 			   F("OK"), 10000))
       return false;
+
     // set bearer profile access point name
-    if (! sendCheckReply(F("AT+SAPBR=3,1,\"APN\",\"FONAnet\""),
-			   F("OK"), 10000))
-      return false;
-    
+    if (apn) {
+      // Send command AT+SAPBR=3,1,"APN","<apn value>" where <apn value> is the configured APN value.
+      if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"APN\","), apn, F("OK"), 10000))
+        return false;
+
+      // set username/password
+      if (apnusername) {
+        // Send command AT+SAPBR=3,1,"USER","<user>" where <user> is the configured APN username.
+        if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"USER\","), apnusername, F("OK"), 10000))
+          return false;
+      }
+      if (apnpassword) {
+        // Send command AT+SAPBR=3,1,"PWD","<password>" where <password> is the configured APN password.
+        if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"PWD\","), apnpassword, F("OK"), 10000))
+          return false;
+      }
+    }
+
     // open GPRS context
     if (! sendCheckReply(F("AT+SAPBR=1,1"), F("OK"), 10000))
       return false;
@@ -382,6 +400,13 @@ uint8_t Adafruit_FONA::GPRSstate(void) {
     return -1;
 
   return state;
+}
+
+void Adafruit_FONA::setGPRSNetworkSettings(const __FlashStringHelper *apn,
+              const __FlashStringHelper *username, const __FlashStringHelper *password) {
+  this->apn = apn;
+  this->apnusername = username;
+  this->apnpassword = password;
 }
 
 boolean Adafruit_FONA::getGSMLoc(uint16_t *errorcode, char *buff, uint16_t maxlen) {
@@ -590,7 +615,7 @@ uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *prefix, int32_t suffi
   return l;
 }
 
-// Send prefix, suffix, and newline. Return response (and also set replybuffer with response).
+// Send prefix, suffix, suffix2, and newline. Return response (and also set replybuffer with response).
 uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *prefix, int32_t suffix1, int32_t suffix2, uint16_t timeout) {
   flushInput();
 
@@ -605,6 +630,27 @@ uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *prefix, int32_t suffi
   mySerial->println(suffix2, DEC);
   
   uint8_t l = readline(timeout);  
+#ifdef ADAFRUIT_FONA_DEBUG
+    Serial.print ("\t<--- "); Serial.println(replybuffer);
+#endif
+  return l;
+}
+
+// Send prefix, ", suffix, ", and newline. Return response (and also set replybuffer with response).
+uint8_t Adafruit_FONA::getReplyQuoted(const __FlashStringHelper *prefix, const __FlashStringHelper *suffix, uint16_t timeout) {
+  flushInput();
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print("\t---> "); Serial.print(prefix);
+  Serial.print('"'); Serial.print(suffix); Serial.println('"');
+#endif
+
+  mySerial->print(prefix);
+  mySerial->print('"');
+  mySerial->print(suffix);
+  mySerial->println('"');
+
+  uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
     Serial.print ("\t<--- "); Serial.println(replybuffer);
 #endif
@@ -645,9 +691,15 @@ boolean Adafruit_FONA::sendCheckReply(const __FlashStringHelper *prefix, int32_t
   return (strcmp_P(replybuffer, (prog_char*)reply) == 0);
 }
 
-// Send prefix, suffix, and newline.  Verify FONA response matches reply parameter.
+// Send prefix, suffix, suffix2, and newline.  Verify FONA response matches reply parameter.
 boolean Adafruit_FONA::sendCheckReply(const __FlashStringHelper *prefix, int32_t suffix1, int32_t suffix2, const __FlashStringHelper *reply, uint16_t timeout) {
   getReply(prefix, suffix1, suffix2, timeout);
+  return (strcmp_P(replybuffer, (prog_char*)reply) == 0);
+}
+
+// Send prefix, ", suffix, ", and newline.  Verify FONA response matches reply parameter.
+boolean Adafruit_FONA::sendCheckReplyQuoted(const __FlashStringHelper *prefix, const __FlashStringHelper *suffix, const __FlashStringHelper *reply, uint16_t timeout) {
+  getReplyQuoted(prefix, suffix, timeout);
   return (strcmp_P(replybuffer, (prog_char*)reply) == 0);
 }
 
