@@ -362,7 +362,6 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
       char sendcmd[70] = "AT+SAPBR=3,1,\"APN\",\"";
       strncpy_P(sendcmd+20, apn, 70-20-2);  // 20 bytes beginning, 2 bytes for close quote + null
       sendcmd[strlen(sendcmd)] = '\"';
-      Serial.println(sendcmd);
       if (! sendCheckReply(sendcmd, ("OK"), 10000))
         return false;
 
