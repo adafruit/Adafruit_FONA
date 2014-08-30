@@ -70,6 +70,9 @@ class Adafruit_FONA : public Stream {
   uint8_t getNetworkStatus(void);
   uint8_t getRSSI(void);
 
+  // IMEI
+  uint8_t getIMEI(char *imei);
+
   // set Audio output
   boolean setAudio(uint8_t a);
   boolean setVolume(uint8_t i);
@@ -100,6 +103,9 @@ class Adafruit_FONA : public Stream {
   boolean HTTP_GET_start(char *url, uint16_t *status, uint16_t *datalen);
   boolean HTTP_GET_end(void);
 
+  // HTTPS
+  void setHTTPSRedirect(boolean onoff);
+
   // PWM (buzzer)
   boolean PWM(uint16_t period, uint8_t duty = 50);
 
@@ -114,6 +120,7 @@ class Adafruit_FONA : public Stream {
   const __FlashStringHelper *apn;
   const __FlashStringHelper *apnusername;
   const __FlashStringHelper *apnpassword;
+  boolean httpsredirect;
 
   void flushInput();
   uint16_t readRaw(uint16_t b);

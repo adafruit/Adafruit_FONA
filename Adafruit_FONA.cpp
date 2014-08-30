@@ -112,6 +112,20 @@ uint8_t Adafruit_FONA::getSIMCCID(char *ccid) {
    return strlen(ccid);
 }
 
+/********* IMEI **********************************************************/
+
+uint8_t Adafruit_FONA::getIMEI(char *imei) {
+    getReply("AT+GSN");
+
+   // up to 15 chars
+   strncpy(imei, replybuffer, 15);
+   imei[15] = 0;
+
+   readline(); // eat 'OK'
+
+   return strlen(imei);
+}
+
 /********* NETWORK *******************************************************/
 
 uint8_t Adafruit_FONA::getNetworkStatus(void) {
@@ -444,6 +458,15 @@ boolean Adafruit_FONA::HTTP_GET_start(char *url,
   if (strcmp(replybuffer, "OK") != 0)
     return false;
 
+  // HTTPS redirect
+  if (httpsredirect) {
+    if (! sendCheckReply(F("AT+HTTPPARA=\"REDIR\",1"), F("OK")))
+      return false;
+
+    if (! sendCheckReply(F("AT+HTTPSSL=1"), F("OK")))
+      return false;
+  }
+
   // HTTP GET
   if (! sendCheckReply(F("AT+HTTPACTION=0"), F("OK")))
     return false;
@@ -465,6 +488,10 @@ boolean Adafruit_FONA::HTTP_GET_start(char *url,
 boolean Adafruit_FONA::HTTP_GET_end(void) {
   flushInput();
   sendCheckReply(F("AT+HTTPTERM"), F("OK"));
+}
+
+void Adafruit_FONA::setHTTPSRedirect(boolean onoff) {
+  httpsredirect = onoff;
 }
 
 /********* LOW LEVEL *******************************************/
