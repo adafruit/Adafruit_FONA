@@ -39,6 +39,7 @@ Adafruit_FONA::Adafruit_FONA(NewSoftSerial *ssm, int8_t rst)
   apn = F("FONAnet");
   apnusername = 0;
   apnpassword = 0;
+  httpsredirect = false;
 }
 
 boolean Adafruit_FONA::begin(uint16_t baudrate) {
@@ -102,14 +103,28 @@ uint8_t Adafruit_FONA::unlockSIM(char *pin)
 }
 
 uint8_t Adafruit_FONA::getSIMCCID(char *ccid) {
-   getReply("AT+CCID");
-   // up to 20 chars
-   strncpy(ccid, replybuffer, 20);
-   ccid[20] = 0;
+  getReply("AT+CCID");
+  // up to 20 chars
+  strncpy(ccid, replybuffer, 20);
+  ccid[20] = 0;
 
-   readline(); // eat 'OK'
+  readline(); // eat 'OK'
 
-   return strlen(ccid);
+  return strlen(ccid);
+}
+
+/********* IMEI **********************************************************/
+
+uint8_t Adafruit_FONA::getIMEI(char *imei) {
+  getReply("AT+GSN");
+
+  // up to 15 chars
+  strncpy(imei, replybuffer, 15);
+  imei[15] = 0;
+
+  readline(); // eat 'OK'
+
+  return strlen(imei);
 }
 
 /********* NETWORK *******************************************************/
@@ -444,6 +459,15 @@ boolean Adafruit_FONA::HTTP_GET_start(char *url,
   if (strcmp(replybuffer, "OK") != 0)
     return false;
 
+  // HTTPS redirect
+  if (httpsredirect) {
+    if (! sendCheckReply(F("AT+HTTPPARA=\"REDIR\",1"), F("OK")))
+      return false;
+
+    if (! sendCheckReply(F("AT+HTTPSSL=1"), F("OK")))
+      return false;
+  }
+
   // HTTP GET
   if (! sendCheckReply(F("AT+HTTPACTION=0"), F("OK")))
     return false;
@@ -465,6 +489,10 @@ boolean Adafruit_FONA::HTTP_GET_start(char *url,
 boolean Adafruit_FONA::HTTP_GET_end(void) {
   flushInput();
   sendCheckReply(F("AT+HTTPTERM"), F("OK"));
+}
+
+void Adafruit_FONA::setHTTPSRedirect(boolean onoff) {
+  httpsredirect = onoff;
 }
 
 /********* LOW LEVEL *******************************************/
