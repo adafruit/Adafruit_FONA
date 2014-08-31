@@ -39,6 +39,7 @@ Adafruit_FONA::Adafruit_FONA(NewSoftSerial *ssm, int8_t rst)
   apn = F("FONAnet");
   apnusername = 0;
   apnpassword = 0;
+  httpsredirect = false;
 }
 
 boolean Adafruit_FONA::begin(uint16_t baudrate) {
@@ -102,28 +103,28 @@ uint8_t Adafruit_FONA::unlockSIM(char *pin)
 }
 
 uint8_t Adafruit_FONA::getSIMCCID(char *ccid) {
-   getReply("AT+CCID");
-   // up to 20 chars
-   strncpy(ccid, replybuffer, 20);
-   ccid[20] = 0;
+  getReply("AT+CCID");
+  // up to 20 chars
+  strncpy(ccid, replybuffer, 20);
+  ccid[20] = 0;
 
-   readline(); // eat 'OK'
+  readline(); // eat 'OK'
 
-   return strlen(ccid);
+  return strlen(ccid);
 }
 
 /********* IMEI **********************************************************/
 
 uint8_t Adafruit_FONA::getIMEI(char *imei) {
-    getReply("AT+GSN");
+  getReply("AT+GSN");
 
-   // up to 15 chars
-   strncpy(imei, replybuffer, 15);
-   imei[15] = 0;
+  // up to 15 chars
+  strncpy(imei, replybuffer, 15);
+  imei[15] = 0;
 
-   readline(); // eat 'OK'
+  readline(); // eat 'OK'
 
-   return strlen(imei);
+  return strlen(imei);
 }
 
 /********* NETWORK *******************************************************/
