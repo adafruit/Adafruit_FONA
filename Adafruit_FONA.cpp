@@ -40,6 +40,7 @@ Adafruit_FONA::Adafruit_FONA(NewSoftSerial *ssm, int8_t rst)
   apnusername = 0;
   apnpassword = 0;
   httpsredirect = false;
+  useragent = F("FONA");
 }
 
 boolean Adafruit_FONA::begin(uint16_t baudrate) {
@@ -498,6 +499,10 @@ void Adafruit_FONA::HTTP_POST_end(void) {
   HTTP_terminate();
 }
 
+void Adafruit_FONA::setUserAgent(const __FlashStringHelper *useragent) {
+  this->useragent = useragent;
+}
+
 void Adafruit_FONA::setHTTPSRedirect(boolean onoff) {
   httpsredirect = onoff;
 }
@@ -512,6 +517,8 @@ boolean Adafruit_FONA::HTTP_initialize(char *url) {
   if (! sendCheckReply(F("AT+HTTPINIT"), F("OK")))
     return false;
   if (! sendCheckReply(F("AT+HTTPPARA=\"CID\",1"), F("OK")))
+    return false;
+  if (! sendCheckReplyQuoted(F("AT+HTTPPARA=\"UA\","), useragent, F("OK"), 10000))
     return false;
 
   flushInput();
