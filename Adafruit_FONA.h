@@ -121,7 +121,7 @@ class Adafruit_FONA : public Stream {
   boolean callPhone(char *phonenum);
   boolean hangUp(void);
 
- // private: 
+ private: 
   int8_t _rstpin;
 
   char replybuffer[255];
