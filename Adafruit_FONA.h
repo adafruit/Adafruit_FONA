@@ -93,6 +93,11 @@ class Adafruit_FONA : public Stream {
   boolean sendSMS(char *smsaddr, char *smsmsg);
   boolean deleteSMS(uint8_t i);
 
+  // Time
+  boolean enableNetworkTimeSync(boolean onoff);
+  boolean enableNTPTimeSync(boolean onoff, const __FlashStringHelper *ntpserver=0);
+  boolean getTime(char *buff, uint16_t maxlen);
+
   // GPRS handling
   boolean enableGPRS(boolean onoff);
   uint8_t GPRSstate(void);
@@ -116,7 +121,7 @@ class Adafruit_FONA : public Stream {
   boolean callPhone(char *phonenum);
   boolean hangUp(void);
 
- private: 
+ // private: 
   int8_t _rstpin;
 
   char replybuffer[255];

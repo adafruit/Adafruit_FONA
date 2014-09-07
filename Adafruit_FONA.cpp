@@ -362,6 +362,68 @@ boolean Adafruit_FONA::deleteSMS(uint8_t i) {
   return sendCheckReply(sendbuff, "OK", 2000);
 }
 
+/********* TIME **********************************************************/
+
+boolean Adafruit_FONA::enableNetworkTimeSync(boolean onoff) {
+  if (onoff) {
+    if (! sendCheckReply(F("AT+CLTS=1"), F("OK")))
+      return false;    
+  } else {
+    if (! sendCheckReply(F("AT+CLTS=0"), F("OK")))
+      return false;        
+  }
+
+  flushInput(); // eat any 'Unsolicted Result Code'
+
+  return true;
+}
+
+boolean Adafruit_FONA::enableNTPTimeSync(boolean onoff, const __FlashStringHelper *ntpserver) {
+  if (onoff) {
+    if (! sendCheckReply(F("AT+CNTPCID=1"), F("OK")))
+      return false;
+
+    mySerial->print(F("AT+CNTP=\""));
+    if (ntpserver != 0) {
+      mySerial->print(ntpserver);
+    } else {
+      mySerial->print(F("pool.ntp.org"));
+    }
+    mySerial->println(F("\",0"));
+    readline(FONA_DEFAULT_TIMEOUT_MS); 
+    if (strcmp(replybuffer, "OK") != 0)
+      return false;
+
+    if (! sendCheckReply(F("AT+CNTP"), F("OK"), 10000))
+      return false;
+
+    uint16_t status;
+    readline(10000); 
+    if (! parseReply(F("+CNTP:"), &status)) 
+      return false;
+  } else {
+    if (! sendCheckReply(F("AT+CNTPCID=0"), F("OK")))
+      return false;    
+  }
+
+  return true;
+}
+
+boolean Adafruit_FONA::getTime(char *buff, uint16_t maxlen) {
+  getReply(F("AT+CCLK?"), (uint16_t) 10000);
+  if (strncmp(replybuffer, "+CCLK: ", 7) != 0)
+    return false;
+
+  char *p = replybuffer+7;
+  uint16_t lentocopy = min(maxlen-1, strlen(p));
+  strncpy(buff, p, lentocopy+1);
+  buff[lentocopy] = 0;
+
+  readline(); // eat OK
+
+  return true;
+}
+
 /********* GPRS **********************************************************/
 
 boolean Adafruit_FONA::enableGPRS(boolean onoff) {
