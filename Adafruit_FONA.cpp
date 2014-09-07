@@ -40,6 +40,7 @@ Adafruit_FONA::Adafruit_FONA(NewSoftSerial *ssm, int8_t rst)
   apnusername = 0;
   apnpassword = 0;
   httpsredirect = false;
+  useragent = F("FONA");
 }
 
 boolean Adafruit_FONA::begin(uint16_t baudrate) {
@@ -441,14 +442,83 @@ boolean Adafruit_FONA::getGSMLoc(uint16_t *errorcode, char *buff, uint16_t maxle
 }
 
 boolean Adafruit_FONA::HTTP_GET_start(char *url, 
-				      uint16_t *status, uint16_t *datalen){
+              uint16_t *status, uint16_t *datalen){
+  if (! HTTP_initialize(url))
+    return false;
 
-  // wrap up any pending
-  HTTP_GET_end();
+  // HTTP GET
+  if (! sendCheckReply(F("AT+HTTPACTION=0"), F("OK")))
+    return false;
 
+  // HTTP response
+  if (! HTTP_response(status, datalen))
+    return false;
+  
+  return true;
+}
+
+void Adafruit_FONA::HTTP_GET_end(void) {
+  HTTP_terminate();
+}
+
+boolean Adafruit_FONA::HTTP_POST_start(char *url, 
+              const __FlashStringHelper *contenttype,
+              const uint8_t *postdata, uint16_t postdatalen, 
+              uint16_t *status, uint16_t *datalen){
+  if (! HTTP_initialize(url))
+    return false;
+
+  if (! sendCheckReplyQuoted(F("AT+HTTPPARA=\"CONTENT\","), contenttype, F("OK"), 10000))
+    return false;
+
+  // HTTP POST data
+  flushInput();
+  mySerial->print(F("AT+HTTPDATA="));
+  mySerial->print(postdatalen);
+  mySerial->println(",10000");
+  readline(FONA_DEFAULT_TIMEOUT_MS); 
+  if (strcmp(replybuffer, "DOWNLOAD") != 0)
+    return false;
+
+  mySerial->write(postdata, postdatalen);
+  readline(10000); 
+  if (strcmp(replybuffer, "OK") != 0)
+    return false;
+
+  // HTTP POST
+  if (! sendCheckReply(F("AT+HTTPACTION=1"), F("OK")))
+    return false;
+
+  if (! HTTP_response(status, datalen))
+    return false;
+
+  return true;
+}
+
+void Adafruit_FONA::HTTP_POST_end(void) {
+  HTTP_terminate();
+}
+
+void Adafruit_FONA::setUserAgent(const __FlashStringHelper *useragent) {
+  this->useragent = useragent;
+}
+
+void Adafruit_FONA::setHTTPSRedirect(boolean onoff) {
+  httpsredirect = onoff;
+}
+
+/********* HTTP HELPERS ****************************************/
+
+boolean Adafruit_FONA::HTTP_initialize(char *url) {
+  // Handle any pending
+  HTTP_terminate();
+
+  // Initialize and set parameters
   if (! sendCheckReply(F("AT+HTTPINIT"), F("OK")))
     return false;
   if (! sendCheckReply(F("AT+HTTPPARA=\"CID\",1"), F("OK")))
+    return false;
+  if (! sendCheckReplyQuoted(F("AT+HTTPPARA=\"UA\","), useragent, F("OK"), 10000))
     return false;
 
   flushInput();
@@ -468,9 +538,11 @@ boolean Adafruit_FONA::HTTP_GET_start(char *url,
       return false;
   }
 
-  // HTTP GET
-  if (! sendCheckReply(F("AT+HTTPACTION=0"), F("OK")))
-    return false;
+  return true;
+}
+
+boolean Adafruit_FONA::HTTP_response(uint16_t *status, uint16_t *datalen) {
+  // Read response status
   readline(10000); 
 
   if (! parseReply(F("+HTTPACTION:"), status, ',', 1)) 
@@ -481,18 +553,15 @@ boolean Adafruit_FONA::HTTP_GET_start(char *url,
   Serial.print("Status: "); Serial.println(*status);
   Serial.print("Len: "); Serial.println(*datalen);
 
+  // Read response
   getReply(F("AT+HTTPREAD"));
-  
+
   return true;
 }
 
-boolean Adafruit_FONA::HTTP_GET_end(void) {
+void Adafruit_FONA::HTTP_terminate(void) {
   flushInput();
   sendCheckReply(F("AT+HTTPTERM"), F("OK"));
-}
-
-void Adafruit_FONA::setHTTPSRedirect(boolean onoff) {
-  httpsredirect = onoff;
 }
 
 /********* LOW LEVEL *******************************************/

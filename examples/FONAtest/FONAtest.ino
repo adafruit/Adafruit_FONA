@@ -106,6 +106,7 @@ void printMenu(void) {
    Serial.println(F("[g] Disable GPRS"));
    Serial.println(F("[l] Query GSMLOC (GPRS)"));
    Serial.println(F("[w] Read webpage (GPRS)"));
+   Serial.println(F("[W] Post to website (GPRS)"));
    Serial.println(F("[S] create Serial passthru tunnel"));
    Serial.println(F("-------------------------------------"));
    Serial.println(F(""));
@@ -525,7 +526,43 @@ void loop() {
        break;
     }
     
-    
+    case 'W': {
+      // Post data to website
+      uint16_t statuscode;
+      int16_t length;
+      char url[80];
+      char data[80];
+      
+      flushSerial();
+      Serial.println(F("NOTE: in beta! Use simple websites to post!"));
+      Serial.println(F("URL to post (e.g. httpbin.org/post):"));
+      Serial.print(F("http://")); readline(url, 79);
+      Serial.println(url);
+      Serial.println(F("Data to post (e.g. \"foo\" or \"{\"simple\":\"json\"}\"):"));
+      readline(data, 79);
+      Serial.println(data);
+      
+       Serial.println(F("****"));
+       if (!fona.HTTP_POST_start(url, F("text/plain"), (uint8_t *) data, strlen(data), &statuscode, (uint16_t *)&length)) {
+         Serial.println("Failed!");
+         break;
+       }
+       while (length > 0) {
+         while (fona.available()) {
+           char c = fona.read();
+           
+           // Serial.write is too slow, we'll write directly to Serial register!
+           loop_until_bit_is_set(UCSR0A, UDRE0); /* Wait until data register empty. */
+           UDR0 = c;
+           
+           length--;
+           if (! length) break;
+         }
+       }
+       Serial.println(F("\n****"));
+       fona.HTTP_POST_end();
+       break;
+    }
     /*****************************************/
       
     case 'S': {

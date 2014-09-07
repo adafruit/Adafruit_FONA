@@ -101,7 +101,10 @@ class Adafruit_FONA : public Stream {
 
   // HTTP 
   boolean HTTP_GET_start(char *url, uint16_t *status, uint16_t *datalen);
-  boolean HTTP_GET_end(void);
+  void HTTP_GET_end(void);
+  boolean HTTP_POST_start(char *url, const __FlashStringHelper *contenttype, const uint8_t *postdata, uint16_t postdatalen,  uint16_t *status, uint16_t *datalen);
+  void HTTP_POST_end(void);
+  void setUserAgent(const __FlashStringHelper *useragent);
 
   // HTTPS
   void setHTTPSRedirect(boolean onoff);
@@ -121,6 +124,12 @@ class Adafruit_FONA : public Stream {
   const __FlashStringHelper *apnusername;
   const __FlashStringHelper *apnpassword;
   boolean httpsredirect;
+  const __FlashStringHelper *useragent;
+
+  // HTTP helpers
+  boolean HTTP_initialize(char *url);
+  boolean HTTP_response(uint16_t *status, uint16_t *datalen);
+  void HTTP_terminate(void);
 
   void flushInput();
   uint16_t readRaw(uint16_t b);
