@@ -267,6 +267,51 @@ boolean Adafruit_FONA::hangUp(void) {
   return sendCheckReply(F("ATH0"), F("OK"));
 }
 
+void Adafruit_FONA::onIncomingCall(){
+  #ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print(F("> ")); Serial.println(F("Incoming call..."));
+  #endif
+  Adafruit_FONA::_incomingCall = true;
+}
+
+boolean  Adafruit_FONA::_incomingCall = false;
+
+boolean Adafruit_FONA::callerIdNotification(boolean enable, uint8_t interrupt){
+	if(enable){
+		attachInterrupt(interrupt, onIncomingCall, FALLING);
+		return sendCheckReply(F("AT+CLIP=1"), F("OK"));
+	}
+	
+	detachInterrupt(interrupt);
+	return sendCheckReply(F("AT+CLIP=0"), F("OK"));
+}
+
+ boolean Adafruit_FONA::incomingCallNumber(char* phonenum){
+	//+CLIP: "<incoming phone number>",145,"",0,"",0
+  if(!Adafruit_FONA::_incomingCall)
+		return false;
+	
+	ring:
+  readline();
+
+	if(!strcmp_P(replybuffer, (prog_char*)F("RING")) == 0){
+		flushInput();
+		goto ring;
+	}
+	
+	readline(); //reads incoming phone number line
+	
+	parseReply(F("+CLIP: \""), phonenum, '"');
+	
+	#ifdef ADAFRUIT_FONA_DEBUG
+	Serial.print(F("Phone Number: "));
+	Serial.println(replybuffer);
+	#endif
+	
+	Adafruit_FONA::_incomingCall = false;
+  return true;
+ }
+
 /********* SMS **********************************************************/
 
 int8_t Adafruit_FONA::getNumSMS(void) {
@@ -754,7 +799,6 @@ uint8_t Adafruit_FONA::getReplyQuoted(const __FlashStringHelper *prefix, const _
   return l;
 }
 
-
 boolean Adafruit_FONA::sendCheckReply(char *send, char *reply, uint16_t timeout) {
   getReply(send, timeout);
 
@@ -820,6 +864,30 @@ boolean Adafruit_FONA::parseReply(const __FlashStringHelper *toreply,
   return true;
 }
 
+boolean Adafruit_FONA::parseReply(const __FlashStringHelper *toreply, 
+				  char *v, char divider, uint8_t index) {
+	uint8_t i=0;
+  char *p = strstr_P(replybuffer, (prog_char*)toreply);
+  if (p == 0) return false;
+  p+=strlen_P((prog_char*)toreply);
+
+  for (i=0; i<index;i++) {
+    // increment dividers
+    p = strchr(p, divider);
+    if (!p) return false;
+    p++;
+  }
+  
+	for(i=0; i<strlen(p);i++){
+		if(p[i] == divider)
+			break;
+		v[i] = p[i];
+	}
+
+	v[i] = '\0';
+	
+  return true;
+}
 
 boolean Adafruit_FONA::sendParseReply(const __FlashStringHelper *tosend, 
 				      const __FlashStringHelper *toreply, 
