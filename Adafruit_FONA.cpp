@@ -85,6 +85,11 @@ boolean Adafruit_FONA::getBattVoltage(uint16_t *v) {
   return sendParseReply(F("AT+CBC"), F("+CBC: "), v, ',', 2);
 }
 
+/* returns the percentage charge of battery as reported by sim800 */
+boolean Adafruit_FONA::getBattPercent(uint16_t *p) {
+  return sendParseReply(F("AT+CBC"), F("+CBC: "), p, ',', 1);
+}
+
 boolean Adafruit_FONA::getADCVoltage(uint16_t *v) {
   return sendParseReply(F("AT+CADC?"), F("+CADC: 1,"), v);
 }

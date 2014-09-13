@@ -79,7 +79,7 @@ void printMenu(void) {
    Serial.println(F("-------------------------------------"));
    Serial.println(F("[?] Print this menu"));
    Serial.println(F("[a] read the ADC (2.8V max)"));
-   Serial.println(F("[b] read the Battery V"));
+   Serial.println(F("[b] read the Battery V and % charged"));
    Serial.println(F("[C] read the SIM CCID"));
    Serial.println(F("[U] Unlock SIM with PIN code"));
    Serial.println(F("[i] read RSSI"));
@@ -139,13 +139,21 @@ void loop() {
     }
     
     case 'b': {
-        // read the battery voltage
+        // read the battery voltage and percentage
         uint16_t vbat;
         if (! fona.getBattVoltage(&vbat)) {
           Serial.println(F("Failed to read Batt"));
         } else {
           Serial.print(F("VBat = ")); Serial.print(vbat); Serial.println(F(" mV"));
         }
+ 
+
+        if (! fona.getBattPercent(&vbat)) {
+          Serial.println(F("Failed to read Batt"));
+        } else {
+          Serial.print(F("VPct = ")); Serial.print(vbat); Serial.println(F("%"));
+        }
+ 
         break;
     }
 
@@ -374,7 +382,7 @@ void loop() {
       break;     
     }
 
-    case 'P': {
+    case 'p': {
        // pick up! 
       if (! fona.pickUp()) {
         Serial.println(F("Failed"));
