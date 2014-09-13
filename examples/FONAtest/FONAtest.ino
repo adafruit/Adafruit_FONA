@@ -97,7 +97,7 @@ void printMenu(void) {
    Serial.println(F("[P] PWM/Buzzer out"));
    Serial.println(F("[c] make phone Call"));
    Serial.println(F("[h] Hang up phone"));
-   Serial.println(F("[P] Pick up phone"));
+   Serial.println(F("[p] Pick up phone"));
    Serial.println(F("[N] Number of SMSs"));
    Serial.println(F("[r] Read SMS #"));
    Serial.println(F("[R] Read All SMS"));
