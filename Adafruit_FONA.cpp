@@ -267,6 +267,11 @@ boolean Adafruit_FONA::hangUp(void) {
   return sendCheckReply(F("ATH0"), F("OK"));
 }
 
+boolean Adafruit_FONA::pickUp(void) {
+  return sendCheckReply(F("ATA"), F("OK"));
+}
+
+
 /********* SMS **********************************************************/
 
 int8_t Adafruit_FONA::getNumSMS(void) {

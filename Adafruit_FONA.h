@@ -115,6 +115,7 @@ class Adafruit_FONA : public Stream {
   // Phone calls
   boolean callPhone(char *phonenum);
   boolean hangUp(void);
+  boolean pickUp(void);
 
  private: 
   int8_t _rstpin;
