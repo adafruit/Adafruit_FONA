@@ -276,7 +276,7 @@ boolean Adafruit_FONA::pickUp(void) {
   return sendCheckReply(F("ATA"), F("OK"));
 }
 
-void Adafruit_FONA::onIncomingCall(){
+void Adafruit_FONA::onIncomingCall() {
   #ifdef ADAFRUIT_FONA_DEBUG
   Serial.print(F("> ")); Serial.println(F("Incoming call..."));
   #endif
@@ -285,7 +285,7 @@ void Adafruit_FONA::onIncomingCall(){
 
 boolean Adafruit_FONA::_incomingCall = false;
 
-boolean Adafruit_FONA::callerIdNotification(boolean enable, uint8_t interrupt){
+boolean Adafruit_FONA::callerIdNotification(boolean enable, uint8_t interrupt) {
   if(enable){
     attachInterrupt(interrupt, onIncomingCall, FALLING);
     return sendCheckReply(F("AT+CLIP=1"), F("OK"));
@@ -295,17 +295,15 @@ boolean Adafruit_FONA::callerIdNotification(boolean enable, uint8_t interrupt){
   return sendCheckReply(F("AT+CLIP=0"), F("OK"));
 }
 
-boolean Adafruit_FONA::incomingCallNumber(char* phonenum){
+boolean Adafruit_FONA::incomingCallNumber(char* phonenum) {
   //+CLIP: "<incoming phone number>",145,"",0,"",0
   if(!Adafruit_FONA::_incomingCall)
     return false;
 
-  ring:
   readline();
-
-  if(!strcmp_P(replybuffer, (prog_char*)F("RING")) == 0){
+  while(!strcmp_P(replybuffer, (prog_char*)F("RING")) == 0) {
     flushInput();
-    goto ring;
+    readline();
   }
 
   readline(); //reads incoming phone number line
