@@ -62,6 +62,7 @@ class Adafruit_FONA : public Stream {
 
   // Battery and ADC
   boolean getADCVoltage(uint16_t *v);
+  boolean getBattPercent(uint16_t *p);
   boolean getBattVoltage(uint16_t *v);
 
   // SIM query
@@ -120,6 +121,7 @@ class Adafruit_FONA : public Stream {
   // Phone calls
   boolean callPhone(char *phonenum);
   boolean hangUp(void);
+  boolean pickUp(void);
 
  private: 
   int8_t _rstpin;
