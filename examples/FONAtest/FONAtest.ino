@@ -102,6 +102,9 @@ void printMenu(void) {
    Serial.println(F("[R] Read All SMS"));
    Serial.println(F("[d] Delete SMS #"));
    Serial.println(F("[s] Send SMS"));
+   Serial.println(F("[y] Enable network time sync"));   
+   Serial.println(F("[Y] Enable NTP time sync (GPRS)"));   
+   Serial.println(F("[t] Get network time"));   
    Serial.println(F("[G] Enable GPRS"));
    Serial.println(F("[g] Disable GPRS"));
    Serial.println(F("[l] Query GSMLOC (GPRS)"));
@@ -464,6 +467,32 @@ void loop() {
       
       break;
     }
+
+    /*** Time ***/
+
+    case 'y': {
+      // enable network time sync
+      if (!fona.enableNetworkTimeSync(true))
+        Serial.println(F("Failed to enable"));
+      break;
+    }
+
+    case 'Y': {
+      // enable NTP time sync
+      if (!fona.enableNTPTimeSync(true, F("pool.ntp.org")))
+        Serial.println(F("Failed to enable"));
+      break;
+    }
+
+    case 't': {
+        // read the time
+        char buffer[23];
+
+        fona.getTime(buffer, 23);  // make sure replybuffer is at least 23 bytes!
+        Serial.print(F("Time = ")); Serial.println(buffer);
+        break;
+    }
+
     /*********************************** GPRS */
     
     case 'g': {
