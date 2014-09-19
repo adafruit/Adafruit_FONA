@@ -413,8 +413,16 @@ void loop() {
       flushSerial();
       Serial.print(F("Read #"));
       uint8_t smsn = readnumber();
-      
       Serial.print(F("\n\rReading SMS #")); Serial.println(smsn);
+
+      // Retrieve SMS sender address/phone number.
+      if (! fona.getSMSSender(smsn, replybuffer, 250)) {
+        Serial.println("Failed!");
+        break;
+      }
+      Serial.print(F("FROM: ")); Serial.println(replybuffer);
+
+      // Retrieve SMS value.
       uint16_t smslen;
       if (! fona.readSMS(smsn, replybuffer, 250, &smslen)) { // pass in buffer and max len!
         Serial.println("Failed!");

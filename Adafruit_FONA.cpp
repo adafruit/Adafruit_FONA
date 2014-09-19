@@ -368,6 +368,26 @@ boolean Adafruit_FONA::readSMS(uint8_t i, char *smsbuff,
   return true;
 }
 
+// Retrieve the sender of the specified SMS message and copy it as a string to
+// the sender buffer.  Up to senderlen characters of the sender will be copied
+// and a null terminator will be added if less than senderlen charactesr are
+// copied to the result.  Returns true if a result was successfully retrieved,
+// otherwise false.
+boolean Adafruit_FONA::getSMSSender(uint8_t i, char *sender, int senderlen) {
+  // Ensure text mode and all text mode parameters are sent.
+  if (! sendCheckReply(F("AT+CMGF=1"), F("OK"))) return false;
+  if (! sendCheckReply(F("AT+CSDH=1"), F("OK"))) return false;
+  // Send command to retrieve SMS message and parse a line of response.
+  mySerial->print(F("AT+CMGR="));
+  mySerial->println(i);
+  readline(1000);
+  // Parse the second field in the response.
+  boolean result = parseReplyQuoted(F("+CMGR:"), sender, senderlen, ',', 1);
+  // Drop any remaining data from the response.
+  flushInput();
+  return result;
+}
+
 boolean Adafruit_FONA::sendSMS(char *smsaddr, char *smsmsg) {
   if (! sendCheckReply("AT+CMGF=1", "OK")) return -1;
 
@@ -915,7 +935,7 @@ boolean Adafruit_FONA::sendCheckReplyQuoted(const __FlashStringHelper *prefix, c
 
 
 boolean Adafruit_FONA::parseReply(const __FlashStringHelper *toreply,
-				  uint16_t *v, char divider, uint8_t index) {
+          uint16_t *v, char divider, uint8_t index) {
   char *p = strstr_P(replybuffer, (prog_char*)toreply);  // get the pointer to the voltage
   if (p == 0) return false;
   p+=strlen_P((prog_char*)toreply);
@@ -934,8 +954,8 @@ boolean Adafruit_FONA::parseReply(const __FlashStringHelper *toreply,
 }
 
 boolean Adafruit_FONA::parseReply(const __FlashStringHelper *toreply,
-				  char *v, char divider, uint8_t index) {
-	uint8_t i=0;
+          char *v, char divider, uint8_t index) {
+  uint8_t i=0;
   char *p = strstr_P(replybuffer, (prog_char*)toreply);
   if (p == 0) return false;
   p+=strlen_P((prog_char*)toreply);
@@ -954,6 +974,44 @@ boolean Adafruit_FONA::parseReply(const __FlashStringHelper *toreply,
   }
 
   v[i] = '\0';
+
+  return true;
+}
+
+// Parse a quoted string in the response fields and copy its value (without quotes)
+// to the specified character array (v).  Only up to maxlen characters are copied
+// into the result buffer, so make sure to pass a large enough buffer to handle the
+// response.
+boolean Adafruit_FONA::parseReplyQuoted(const __FlashStringHelper *toreply,
+          char *v, int maxlen, char divider, uint8_t index) {
+  uint8_t i=0, j;
+  // Verify response starts with toreply.
+  char *p = strstr_P(replybuffer, (prog_char*)toreply);
+  if (p == 0) return false;
+  p+=strlen_P((prog_char*)toreply);
+
+  // Find location of desired response field.
+  for (i=0; i<index;i++) {
+    // increment dividers
+    p = strchr(p, divider);
+    if (!p) return false;
+    p++;
+  }
+
+  // Copy characters from response field into result string.
+  for(i=0, j=0; j<maxlen && i<strlen(p); ++i) {
+    // Stop if a divier is found.
+    if(p[i] == divider)
+      break;
+    // Skip any quotation marks.
+    else if(p[i] == '"')
+      continue;
+    v[j++] = p[i];
+  }
+
+  // Add a null terminator if result string buffer was not filled.
+  if (j < maxlen)
+    v[j] = '\0';
 
   return true;
 }

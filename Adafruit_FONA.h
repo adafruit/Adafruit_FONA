@@ -93,6 +93,7 @@ class Adafruit_FONA : public Stream {
   boolean readSMS(uint8_t i, char *smsbuff, uint16_t max, uint16_t *readsize);
   boolean sendSMS(char *smsaddr, char *smsmsg);
   boolean deleteSMS(uint8_t i);
+  boolean getSMSSender(uint8_t i, char *sender, int senderlen);
 
   // Time
   boolean enableNetworkTimeSync(boolean onoff);
@@ -159,13 +160,15 @@ class Adafruit_FONA : public Stream {
 
 
   boolean parseReply(const __FlashStringHelper *toreply,
-				  uint16_t *v, char divider  = ',', uint8_t index=0);
+          uint16_t *v, char divider  = ',', uint8_t index=0);
   boolean parseReply(const __FlashStringHelper *toreply,
-				  char *v, char divider  = ',', uint8_t index=0);
+          char *v, char divider  = ',', uint8_t index=0);
+  boolean parseReplyQuoted(const __FlashStringHelper *toreply,
+          char *v, int maxlen, char divider, uint8_t index);
 
   boolean sendParseReply(const __FlashStringHelper *tosend,
-			 const __FlashStringHelper *toreply,
-			 uint16_t *v, char divider = ',', uint8_t index=0);
+       const __FlashStringHelper *toreply,
+       uint16_t *v, char divider = ',', uint8_t index=0);
 
   static boolean _incomingCall;
   static void onIncomingCall();
