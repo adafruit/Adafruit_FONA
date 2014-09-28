@@ -51,6 +51,9 @@ class Adafruit_FONA : public Stream {
 #else
   Adafruit_FONA(NewSoftSerial *, int8_t r);
 #endif
+	
+	Adafruit_FONA(HardwareSerial *, int8_t r);
+
   boolean begin(uint16_t baud);
 
   // Stream
@@ -178,4 +181,5 @@ class Adafruit_FONA : public Stream {
 #else
   NewSoftSerial *mySerial;
 #endif
+	HardwareSerial *hwSerial;
 };
