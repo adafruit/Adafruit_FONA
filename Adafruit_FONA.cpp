@@ -43,6 +43,17 @@ Adafruit_FONA::Adafruit_FONA(NewSoftSerial *ssm, int8_t rst)
   useragent = F("FONA");
 }
 
+Adafruit_FONA::Adafruit_FONA(HardwareSerial *hs, int8_t rst)
+{
+  _rstpin = rst;
+  hwSerial = hs;
+  apn = F("FONAnet");
+  apnusername = 0;
+  apnpassword = 0;
+  httpsredirect = false;
+  useragent = F("FONA");
+}
+
 boolean Adafruit_FONA::begin(uint16_t baudrate) {
   pinMode(_rstpin, OUTPUT);
   digitalWrite(_rstpin, HIGH);
@@ -54,10 +65,19 @@ boolean Adafruit_FONA::begin(uint16_t baudrate) {
   // give 3 seconds to reboot
   delay(3000);
 
-  mySerial->begin(baudrate);
+  if(mySerial)
+		mySerial->begin(baudrate);
+	else
+		hwSerial->begin(baudrate);
+		
   delay(500);
-  while (mySerial->available()) mySerial->read();
-
+  while (mySerial ? mySerial->available() : hwSerial->available())
+	{
+		if(mySerial)
+			mySerial->read();
+		else
+			hwSerial->read();
+	}
   sendCheckReply(F("AT"), F("OK"));
   delay(100);
   sendCheckReply(F("AT"), F("OK"));
@@ -276,6 +296,14 @@ boolean Adafruit_FONA::pickUp(void) {
   return sendCheckReply(F("ATA"), F("OK"));
 }
 
+boolean Adafruit_FONA::acceptIncomingCalls(void) {
+  return sendCheckReply(F("AT+GSMBUSY=0"), F("OK"));
+}
+
+boolean Adafruit_FONA::rejectIncomingCalls(void) {
+  return sendCheckReply(F("AT+GSMBUSY=1"), F("OK"));
+}
+
 void Adafruit_FONA::onIncomingCall() {
   #ifdef ADAFRUIT_FONA_DEBUG
   Serial.print(F("> ")); Serial.println(F("Incoming call..."));
@@ -301,7 +329,11 @@ boolean Adafruit_FONA::incomingCallNumber(char* phonenum) {
     return false;
 
   readline();
+  unsigned long now = millis();
   while(!strcmp_P(replybuffer, (prog_char*)F("RING")) == 0) {
+    if(millis() - now >= 500)
+      return false;
+
     flushInput();
     readline();
   }
@@ -346,8 +378,16 @@ boolean Adafruit_FONA::readSMS(uint8_t i, char *smsbuff,
   uint16_t thesmslen = 0;
 
   //getReply(F("AT+CMGR="), i, 1000);  //  do not print debug!
-  mySerial->print(F("AT+CMGR="));
-  mySerial->println(i);
+  if(mySerial)
+  {
+		mySerial->print(F("AT+CMGR="));
+		mySerial->println(i);
+  }
+  else
+  {
+		hwSerial->print(F("AT+CMGR="));
+		hwSerial->println(i);
+	}
   readline(1000); // timeout
 
   // parse it out...
@@ -378,8 +418,16 @@ boolean Adafruit_FONA::getSMSSender(uint8_t i, char *sender, int senderlen) {
   if (! sendCheckReply(F("AT+CMGF=1"), F("OK"))) return false;
   if (! sendCheckReply(F("AT+CSDH=1"), F("OK"))) return false;
   // Send command to retrieve SMS message and parse a line of response.
-  mySerial->print(F("AT+CMGR="));
-  mySerial->println(i);
+  if(mySerial)
+  {
+		mySerial->print(F("AT+CMGR="));
+		mySerial->println(i);
+  }
+  else
+  {
+		hwSerial->print(F("AT+CMGR="));
+		hwSerial->println(i);
+	}
   readline(1000);
   // Parse the second field in the response.
   boolean result = parseReplyQuoted(F("+CMGR:"), sender, senderlen, ',', 1);
@@ -399,9 +447,18 @@ boolean Adafruit_FONA::sendSMS(char *smsaddr, char *smsmsg) {
 #ifdef ADAFRUIT_FONA_DEBUG
   Serial.print("> "); Serial.println(smsmsg);
 #endif
-  mySerial->println(smsmsg);
-  mySerial->println();
-  mySerial->write(0x1A);
+  if(mySerial)
+	{
+		mySerial->println(smsmsg);
+		mySerial->println();
+		mySerial->write(0x1A);
+	}
+	else
+	{
+		hwSerial->println(smsmsg);
+		hwSerial->println();
+		hwSerial->write(0x1A);
+	}
 #ifdef ADAFRUIT_FONA_DEBUG
   Serial.println("^Z");
 #endif
@@ -455,13 +512,26 @@ boolean Adafruit_FONA::enableNTPTimeSync(boolean onoff, const __FlashStringHelpe
     if (! sendCheckReply(F("AT+CNTPCID=1"), F("OK")))
       return false;
 
-    mySerial->print(F("AT+CNTP=\""));
+    if(mySerial)
+			mySerial->print(F("AT+CNTP=\""));
+		else
+			hwSerial->print(F("AT+CNTP=\""));
     if (ntpserver != 0) {
-      mySerial->print(ntpserver);
+      if(mySerial)
+				mySerial->print(ntpserver);
+			else
+				hwSerial->print(ntpserver);
     } else {
-      mySerial->print(F("pool.ntp.org"));
+			if(mySerial)
+				mySerial->print(F("pool.ntp.org"));
+			else
+				hwSerial->print(F("pool.ntp.org"));
     }
-    mySerial->println(F("\",0"));
+    
+    if(mySerial)
+			mySerial->println(F("\",0"));
+    else
+			hwSerial->println(F("\",0"));
     readline(FONA_DEFAULT_TIMEOUT_MS);
     if (strcmp(replybuffer, "OK") != 0)
       return false;
@@ -607,14 +677,26 @@ boolean Adafruit_FONA::HTTP_POST_start(char *url,
 
   // HTTP POST data
   flushInput();
-  mySerial->print(F("AT+HTTPDATA="));
-  mySerial->print(postdatalen);
-  mySerial->println(",10000");
+  if(mySerial)
+  {
+		mySerial->print(F("AT+HTTPDATA="));
+		mySerial->print(postdatalen);
+		mySerial->println(",10000");
+  }
+  else
+  {
+		hwSerial->print(F("AT+HTTPDATA="));
+		hwSerial->print(postdatalen);
+		hwSerial->println(",10000");
+	}
   readline(FONA_DEFAULT_TIMEOUT_MS);
   if (strcmp(replybuffer, "DOWNLOAD") != 0)
     return false;
 
-  mySerial->write(postdata, postdatalen);
+  if(mySerial)
+		mySerial->write(postdata, postdatalen);
+	else
+		hwSerial->write(postdata, postdatalen);
   readline(10000);
   if (strcmp(replybuffer, "OK") != 0)
     return false;
@@ -656,9 +738,18 @@ boolean Adafruit_FONA::HTTP_initialize(char *url) {
     return false;
 
   flushInput();
-  mySerial->print(F("AT+HTTPPARA=\"URL\",\""));
-  mySerial->print(url);
-  mySerial->println("\"");
+  if(mySerial)
+  {
+		mySerial->print(F("AT+HTTPPARA=\"URL\",\""));
+		mySerial->print(url);
+		mySerial->println("\"");
+  }
+  else
+  {
+		hwSerial->print(F("AT+HTTPPARA=\"URL\",\""));
+		hwSerial->print(url);
+		hwSerial->println("\"");
+	}
   readline(FONA_DEFAULT_TIMEOUT_MS);
   if (strcmp(replybuffer, "OK") != 0)
     return false;
@@ -701,23 +792,26 @@ void Adafruit_FONA::HTTP_terminate(void) {
 /********* LOW LEVEL *******************************************/
 
 inline int Adafruit_FONA::available(void) {
-  return mySerial->available();
+  return mySerial ? mySerial->available() : hwSerial->available();
 }
 
 inline size_t Adafruit_FONA::write(uint8_t x) {
-  return mySerial->write(x);
+  return mySerial ? mySerial->write(x) : hwSerial->write(x);
 }
 
 inline int Adafruit_FONA::read(void) {
-  return mySerial->read();
+  return mySerial ? mySerial->read() : hwSerial->read();
 }
 
 inline int Adafruit_FONA::peek(void) {
-  return mySerial->peek();
+  return mySerial ? mySerial->peek() : hwSerial->peek();
 }
 
 inline void Adafruit_FONA::flush() {
-  mySerial->flush();
+  if(mySerial)
+		mySerial->flush();
+	else
+		hwSerial->flush();
 }
 
 void Adafruit_FONA::flushInput() {
@@ -751,8 +845,8 @@ uint8_t Adafruit_FONA::readline(uint16_t timeout, boolean multiline) {
       break;
     }
 
-    while(mySerial->available()) {
-      char c =  mySerial->read();
+    while(mySerial ? mySerial->available() : hwSerial->available()) {
+      char c =  mySerial ? mySerial->read() : hwSerial->read();
       if (c == '\r') continue;
       if (c == 0xA) {
         if (replyidx == 0)   // the first 0x0A is ignored
@@ -785,7 +879,10 @@ uint8_t Adafruit_FONA::getReply(char *send, uint16_t timeout) {
     Serial.print("\t---> "); Serial.println(send);
 #endif
 
-  mySerial->println(send);
+  if(mySerial)
+		mySerial->println(send);
+	else
+		hwSerial->println(send);
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
@@ -801,7 +898,10 @@ uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *send, uint16_t timeou
   Serial.print("\t---> "); Serial.println(send);
 #endif
 
-  mySerial->println(send);
+  if(mySerial)
+		mySerial->println(send);
+	else
+		hwSerial->println(send);
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
@@ -818,9 +918,17 @@ uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *prefix, char *suffix,
   Serial.print("\t---> "); Serial.print(prefix); Serial.println(suffix);
 #endif
 
-  mySerial->print(prefix);
-  mySerial->println(suffix);
-
+  if(mySerial)
+	{
+		mySerial->print(prefix);
+		mySerial->println(suffix);
+	}
+	else
+	{
+		hwSerial->print(prefix);
+		hwSerial->println(suffix);
+	}
+	
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
     Serial.print ("\t<--- "); Serial.println(replybuffer);
@@ -836,8 +944,16 @@ uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *prefix, int32_t suffi
   Serial.print("\t---> "); Serial.print(prefix); Serial.println(suffix, DEC);
 #endif
 
-  mySerial->print(prefix);
-  mySerial->println(suffix, DEC);
+  if(mySerial)
+	{
+		mySerial->print(prefix);
+		mySerial->println(suffix, DEC);
+	}
+	else
+	{
+		hwSerial->print(prefix);
+		hwSerial->println(suffix, DEC);
+	}
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
@@ -855,10 +971,20 @@ uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *prefix, int32_t suffi
   Serial.print(suffix1, DEC); Serial.print(","); Serial.println(suffix2, DEC);
 #endif
 
-  mySerial->print(prefix);
-  mySerial->print(suffix1);
-  mySerial->print(',');
-  mySerial->println(suffix2, DEC);
+  if(mySerial)
+	{
+		mySerial->print(prefix);
+		mySerial->print(suffix1);
+		mySerial->print(',');
+		mySerial->println(suffix2, DEC);
+	}
+	else
+	{
+		hwSerial->print(prefix);
+		hwSerial->print(suffix1);
+		hwSerial->print(',');
+		hwSerial->println(suffix2, DEC);
+	}
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
@@ -876,10 +1002,20 @@ uint8_t Adafruit_FONA::getReplyQuoted(const __FlashStringHelper *prefix, const _
   Serial.print('"'); Serial.print(suffix); Serial.println('"');
 #endif
 
-  mySerial->print(prefix);
-  mySerial->print('"');
-  mySerial->print(suffix);
-  mySerial->println('"');
+  if(mySerial)
+	{
+		mySerial->print(prefix);
+		mySerial->print('"');
+		mySerial->print(suffix);
+		mySerial->println('"');
+	}
+	else
+	{
+		hwSerial->print(prefix);
+		hwSerial->print('"');
+		hwSerial->print(suffix);
+		hwSerial->println('"');
+	}
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
