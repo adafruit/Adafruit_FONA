@@ -17,6 +17,7 @@ Check out the links above for our tutorials and wiring diagrams
 
 Written by Limor Fried/Ladyada for Adafruit Industries.  
 BSD license, all text above must be included in any redistribution
+With updates from Samy Kamkar
 
 To download. click the DOWNLOADS button in the top right corner, rename the uncompressed folder Adafruit_FONA 
 Check that the Adafruit_FONA folder contains Adafruit_FONA.cpp and Adafruit_FONA.h
