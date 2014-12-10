@@ -19,19 +19,27 @@
 // Make sure this interrupt pin is connected to FONA RI!
 #define FONA_RI_INTERRUPT  0
                              
+// or comment this out & use a hardware serial port like Serial1 (see below)
 SoftwareSerial fonaSS = SoftwareSerial(FONA_TX, FONA_RX);
-Adafruit_FONA fona = Adafruit_FONA(&fonaSS, FONA_RST);
+
+Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
 
 void setup() {
   Serial.begin(115200);
   Serial.println(F("FONA incoming call example"));
   Serial.println(F("Initializing....(May take 3 seconds)"));
 
+  // make it slow so its easy to read!
+  fonaSS.begin(4800); // if you're using software serial
+  //Serial1.begin(4800); // if you're using hardware serial
+
   // Initialize FONA.
-  if (! fona.begin(4800)) {  // make it slow so its easy to read!
+  // See if the FONA is responding
+  if (! fona.begin(fonaSS)) {           // can also try fona.begin(Serial1) 
     Serial.println(F("Couldn't find FONA"));
     while (1);
   }
+
   Serial.println(F("FONA is OK"));
   
   // Enable incoming call notification.
