@@ -46,12 +46,8 @@
 
 class Adafruit_FONA : public Stream {
  public:
-#if ARDUINO >= 100
-  Adafruit_FONA(SoftwareSerial *, int8_t r);
-#else
-  Adafruit_FONA(NewSoftSerial *, int8_t r);
-#endif
-  boolean begin(uint16_t baud);
+  Adafruit_FONA(int8_t r);
+  boolean begin(Stream &port);
 
   // Stream
   int available(void);
@@ -177,9 +173,5 @@ class Adafruit_FONA : public Stream {
   static boolean _incomingCall;
   static void onIncomingCall();
 
-#if ARDUINO >= 100
-  SoftwareSerial *mySerial;
-#else
-  NewSoftSerial *mySerial;
-#endif
+  Stream *mySerial;
 };

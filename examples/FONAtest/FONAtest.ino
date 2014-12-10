@@ -35,19 +35,26 @@ the commented section below at the end of the setup() function.
 // this is a large buffer for replies
 char replybuffer[255];
 
+// or comment this out & use a hardware serial port like Serial1 (see below)
 SoftwareSerial fonaSS = SoftwareSerial(FONA_TX, FONA_RX);
-Adafruit_FONA fona = Adafruit_FONA(&fonaSS, FONA_RST);
+
+Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
 
 uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout = 0);
 
 void setup() {
+  while (!Serial);
+
   Serial.begin(115200);
   Serial.println(F("FONA basic test"));
   Serial.println(F("Initializing....(May take 3 seconds)"));
 
-  
+  // make it slow so its easy to read!
+  fonaSS.begin(4800); // if you're using software serial
+  //Serial1.begin(4800); // if you're using hardware serial
+
   // See if the FONA is responding
-  if (! fona.begin(4800)) {  // make it slow so its easy to read!
+  if (! fona.begin(fonaSS)) {           // can also try fona.begin(Serial1) 
     Serial.println(F("Couldn't find FONA"));
     while (1);
   }
@@ -570,9 +577,12 @@ void loop() {
            char c = fona.read();
            
            // Serial.write is too slow, we'll write directly to Serial register!
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
            loop_until_bit_is_set(UCSR0A, UDRE0); /* Wait until data register empty. */
            UDR0 = c;
-           
+#else
+           Serial.write(c);
+#endif
            length--;
            if (! length) break;
          }
@@ -607,9 +617,12 @@ void loop() {
          while (fona.available()) {
            char c = fona.read();
            
-           // Serial.write is too slow, we'll write directly to Serial register!
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
            loop_until_bit_is_set(UCSR0A, UDRE0); /* Wait until data register empty. */
            UDR0 = c;
+#else
+           Serial.write(c);
+#endif
            
            length--;
            if (! length) break;

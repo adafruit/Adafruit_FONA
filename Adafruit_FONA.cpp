@@ -28,22 +28,21 @@
 
 #include "Adafruit_FONA.h"
 
-#if ARDUINO >= 100
-Adafruit_FONA::Adafruit_FONA(SoftwareSerial *ss, int8_t rst)
-#else
-Adafruit_FONA::Adafruit_FONA(NewSoftSerial *ssm, int8_t rst)
-#endif
+Adafruit_FONA::Adafruit_FONA(int8_t rst)
 {
   _rstpin = rst;
-  mySerial = ss;
+  
   apn = F("FONAnet");
   apnusername = 0;
   apnpassword = 0;
+  mySerial = 0;
   httpsredirect = false;
   useragent = F("FONA");
 }
 
-boolean Adafruit_FONA::begin(uint16_t baudrate) {
+boolean Adafruit_FONA::begin(Stream &port) {
+  mySerial = &port;
+
   pinMode(_rstpin, OUTPUT);
   digitalWrite(_rstpin, HIGH);
   delay(10);
@@ -54,8 +53,6 @@ boolean Adafruit_FONA::begin(uint16_t baudrate) {
   // give 3 seconds to reboot
   delay(3000);
 
-  mySerial->begin(baudrate);
-  delay(500);
   while (mySerial->available()) mySerial->read();
 
   sendCheckReply(F("AT"), F("OK"));
