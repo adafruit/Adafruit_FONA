@@ -70,6 +70,23 @@ boolean Adafruit_FONA::begin(uint16_t baudrate) {
 }
 
 
+/********* Real Time Clock ********************************************/
+
+/* returns value in mV (uint16_t) */
+boolean Adafruit_FONA::readRTC(uint8_t *year, uint8_t *month, uint8_t *date, uint8_t *hr, uint8_t *min, uint8_t *sec) {
+  uint16_t v;
+  sendParseReply(F("AT+CCLK?"), F("+CCLK: "), &v, '/', 0);
+  *year = v;
+
+  Serial.println(*year);
+}
+
+boolean Adafruit_FONA::enableRTC(uint8_t i) {
+  if (! sendCheckReply(F("AT+CLTS="), i, F("OK"))) 
+    return false;
+  return sendCheckReply(F("AT&W"), F("OK"));
+}
+
 
 /********* BATTERY & ADC ********************************************/
 

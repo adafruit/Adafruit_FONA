@@ -60,6 +60,10 @@ class Adafruit_FONA : public Stream {
   int peek(void);
   void flush();
 
+  // RTC
+  boolean enableRTC(uint8_t i);
+  boolean readRTC(uint8_t *year, uint8_t *month, uint8_t *date, uint8_t *hr, uint8_t *min, uint8_t *sec);
+
   // Battery and ADC
   boolean getADCVoltage(uint16_t *v);
   boolean getBattVoltage(uint16_t *v);
