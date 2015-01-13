@@ -335,6 +335,18 @@ boolean Adafruit_FONA::incomingCallNumber(char* phonenum) {
 
 /********* SMS **********************************************************/
 
+uint8_t Adafruit_FONA::getSMSInterrupt(void) {
+  uint16_t reply;
+
+  if (! sendParseReply(F("AT+CFGRI?"), F("+CFGRI: "), &reply) ) return 0;
+
+  return reply;
+}
+
+boolean Adafruit_FONA::setSMSInterrupt(uint8_t i) {
+  return sendCheckReply(F("AT+CFGRI="), i, F("OK"));
+}
+
 int8_t Adafruit_FONA::getNumSMS(void) {
   uint16_t numsms;
 
