@@ -747,10 +747,15 @@ inline void Adafruit_FONA::flush() {
 }
 
 void Adafruit_FONA::flushInput() {
-  // Read all available serial input to flush pending data.
-  while(available()) {
-     read();
-  }
+    // Read all available serial input to flush pending data.
+    uint16_t timeoutloop = 0;
+    while (timeoutloop++ < 40) {
+        while(available()) {
+            read();
+            timeoutloop = 0;  // If char was received reset the timer
+        }
+        delay(1);
+    }
 }
 
 uint16_t Adafruit_FONA::readRaw(uint16_t b) {
