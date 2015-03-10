@@ -460,6 +460,15 @@ boolean Adafruit_FONA::deleteSMS(uint8_t i) {
   return sendCheckReply(sendbuff, "OK", 2000);
 }
 
+boolean Adafruit_FONA::deleteAllSMS(uint8_t delflag) {
+	if (! sendCheckReply("AT+CMGF=1", "OK")) return -1;
+	//Using "DELFLAG" of AT+CMGD command : from 0 to 4 (see SIM800 AT commands manual)
+	if (delflag > 4) return -1;
+	char sendbuff[12] = "AT+CMGD=1,0";
+	sendbuff[10] = delflag + '0';
+	return sendCheckReply(sendbuff, "OK", 2000);
+}
+
 /********* TIME **********************************************************/
 
 boolean Adafruit_FONA::enableNetworkTimeSync(boolean onoff) {
