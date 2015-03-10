@@ -96,6 +96,7 @@ class Adafruit_FONA : public Stream {
   boolean sendSMS(char *smsaddr, char *smsmsg);
   boolean deleteSMS(uint8_t i);
   boolean getSMSSender(uint8_t i, char *sender, int senderlen);
+  boolean deleteAllSMS();
 
   // Time
   boolean enableNetworkTimeSync(boolean onoff);
