@@ -460,13 +460,22 @@ boolean Adafruit_FONA::deleteSMS(uint8_t i) {
   return sendCheckReply(sendbuff, "OK", 2000);
 }
 
+//Delete multiple SMS using "Delflag" option of CMGD command:
+// 0 (or omitted)	Delete the message at specified <index>
+// if delflag != 0 then "index" is ignored
+// 1	Delete all "REC READ" messages from the store
+// 2	Delete all "REC READ" and "STO SENT" messages from the store
+// 3	Delete all "REC READ", "STO SENT" and "STO UNSENT" messages from the store
+// 4	Delete all messages from the store
 boolean Adafruit_FONA::deleteAllSMS(uint8_t delflag) {
 	if (! sendCheckReply("AT+CMGF=1", "OK")) return -1;
-	//Using "DELFLAG" of AT+CMGD command : from 0 to 4 (see SIM800 AT commands manual)
 	if (delflag > 4) return -1;
+	
 	char sendbuff[12] = "AT+CMGD=1,0";
 	sendbuff[10] = delflag + '0';
 	return sendCheckReply(sendbuff, "OK", 2000);
+	//AT commands manual announce 5s and 25s of max resp. time for respectively deleting
+	//1 and 150 messages. Timeout of 2s is kept here 
 }
 
 /********* TIME **********************************************************/
