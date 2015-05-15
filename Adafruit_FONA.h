@@ -16,11 +16,13 @@
  ****************************************************/
 
 #if (ARDUINO >= 100)
- #include "Arduino.h"
- #include <SoftwareSerial.h>
+  #include "Arduino.h"
+  #ifndef __SAM3X8E__  // Arduino Due doesn't support SoftwareSerial
+    #include <SoftwareSerial.h>
+  #endif
 #else
- #include "WProgram.h"
- #include <NewSoftSerial.h>
+  #include "WProgram.h"
+  #include <NewSoftSerial.h>
 #endif
 
 //#define ADAFRUIT_FONA_DEBUG
@@ -119,7 +121,7 @@ class Adafruit_FONA : public Stream {
   void setHTTPSRedirect(boolean onoff);
 
   // PWM (buzzer)
-  boolean PWM(uint16_t period, uint8_t duty = 50);
+  boolean setPWM(uint16_t period, uint8_t duty = 50);
 
   // Phone calls
   boolean callPhone(char *phonenum);

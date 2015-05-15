@@ -357,7 +357,7 @@ void loop() {
       Serial.print(F("PWM Freq, 0 = Off, (1-2000): "));
       uint16_t freq= readnumber();
       Serial.println();
-      if (! fona.PWM(freq)) {
+      if (! fona.setPWM(freq)) {
         Serial.println(F("Failed"));
       } else {
         Serial.println(F("OK!"));
