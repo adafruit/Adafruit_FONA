@@ -4,9 +4,10 @@
   Designed specifically to work with the Adafruit FONA 
   ----> http://www.adafruit.com/products/1946
   ----> http://www.adafruit.com/products/1963
+  ----> http://www.adafruit.com/products/2468
 
-  These displays use TTL Serial to communicate, 2 pins are required to 
-  interface
+  These cellular modules use TTL Serial to communicate, 2 pins are 
+  required to interface
   Adafruit invests time and resources providing this open source code, 
   please support Adafruit and open-source hardware by purchasing 
   products from Adafruit!

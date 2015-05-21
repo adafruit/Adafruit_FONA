@@ -82,6 +82,7 @@ class Adafruit_FONA : public Stream {
   uint8_t getVolume(void);
   boolean playToolkitTone(uint8_t t, uint16_t len);
   boolean setMicVolume(uint8_t a, uint8_t level);
+  boolean playDTMF(char tone);
 
   // FM radio functions.
   boolean tuneFMradio(uint16_t station);

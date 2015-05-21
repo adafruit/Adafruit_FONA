@@ -189,6 +189,15 @@ boolean Adafruit_FONA::setVolume(uint8_t i) {
 }
 
 
+boolean Adafruit_FONA::playDTMF(char dtmf) {
+  char str[4];
+  str[0] = '\"';
+  str[1] = dtmf;
+  str[2] = '\"';
+  str[3] = 0;
+  return sendCheckReply(F("AT+CLDTMF=3,"), str, F("OK"));
+}
+
 boolean Adafruit_FONA::playToolkitTone(uint8_t t, uint16_t len) {
   return sendCheckReply(F("AT+STTONE=1,"), t, len, F("OK"));
 }
