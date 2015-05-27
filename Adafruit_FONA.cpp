@@ -686,7 +686,7 @@ boolean Adafruit_FONA::HTTP_initialize(char *url) {
   // Initialize and set parameters
   if (! sendCheckReply(F("AT+HTTPINIT"), F("OK")))
     return false;
-  if (! sendCheckReply(F("AT+HTTPPARA=\"CID\",1"), F("OK")))
+  if (! sendCheckReply(F("AT+HTTPPARA=\"CID\",\"1\""), F("OK")))
     return false;
   if (! sendCheckReplyQuoted(F("AT+HTTPPARA=\"UA\","), useragent, F("OK"), 10000))
     return false;
