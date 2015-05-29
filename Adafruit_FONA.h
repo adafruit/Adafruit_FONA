@@ -25,7 +25,7 @@
   #include <NewSoftSerial.h>
 #endif
 
-//#define ADAFRUIT_FONA_DEBUG
+#define ADAFRUIT_FONA_DEBUG
 
 #define FONA_HEADSETAUDIO 0
 #define FONA_EXTAUDIO 1
@@ -110,6 +110,12 @@ class Adafruit_FONA : public Stream {
   uint8_t GPRSstate(void);
   boolean getGSMLoc(uint16_t *replycode, char *buff, uint16_t maxlen);
   void setGPRSNetworkSettings(const __FlashStringHelper *apn, const __FlashStringHelper *username=0, const __FlashStringHelper *password=0);
+
+  // GPS handling
+  boolean enableGPS(boolean onoff);
+  int8_t GPSstatus(void);
+  uint8_t getGPSlocation(char *buffer, uint8_t maxbuff);
+  boolean enableGPSNMEA(uint8_t nmea);
 
   // HTTP 
   boolean HTTP_GET_start(char *url, uint16_t *status, uint16_t *datalen);

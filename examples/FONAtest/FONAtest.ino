@@ -5,6 +5,7 @@
   ----> http://www.adafruit.com/products/1946
   ----> http://www.adafruit.com/products/1963
   ----> http://www.adafruit.com/products/2468
+  ----> http://www.adafruit.com/products/2542
 
   These cellular modules use TTL Serial to communicate, 2 pins are 
   required to interface
@@ -23,7 +24,6 @@ Open up the serial console on the Arduino at 115200 baud to interact with FONA
 
 Note that if you need to set a GPRS APN, username, and password scroll down to
 the commented section below at the end of the setup() function.
-
 */
 
 #include <SoftwareSerial.h>
@@ -97,28 +97,46 @@ void printMenu(void) {
    Serial.println(F("[H] set Headphone audio"));
    Serial.println(F("[e] set External audio"));
    Serial.println(F("[T] play audio Tone"));
+   Serial.println(F("[P] PWM/Buzzer out"));
+      
+   // FM (SIM800 only)
    Serial.println(F("[f] tune FM radio"));
    Serial.println(F("[F] turn off FM"));
    Serial.println(F("[m] set FM volume"));
    Serial.println(F("[M] get FM volume"));
    Serial.println(F("[q] get FM station signal level"));
-   Serial.println(F("[P] PWM/Buzzer out"));
+   
+   // Phone
    Serial.println(F("[c] make phone Call"));
    Serial.println(F("[h] Hang up phone"));
    Serial.println(F("[p] Pick up phone"));
+   
+   // SMS
    Serial.println(F("[N] Number of SMSs"));
    Serial.println(F("[r] Read SMS #"));
    Serial.println(F("[R] Read All SMS"));
    Serial.println(F("[d] Delete SMS #"));
    Serial.println(F("[s] Send SMS"));
+   
+   // Time
    Serial.println(F("[y] Enable network time sync"));   
    Serial.println(F("[Y] Enable NTP time sync (GPRS)"));   
    Serial.println(F("[t] Get network time"));   
+
+   // GPRS
    Serial.println(F("[G] Enable GPRS"));
    Serial.println(F("[g] Disable GPRS"));
    Serial.println(F("[l] Query GSMLOC (GPRS)"));
    Serial.println(F("[w] Read webpage (GPRS)"));
    Serial.println(F("[W] Post to website (GPRS)"));
+   
+   // GPS
+   Serial.println(F("[O] Turn GPS on (SIM808)"));
+   Serial.println(F("[o] Turn GPS off (SIM808)"));
+   Serial.println(F("[x] GPS fix status (SIM808)"));
+   Serial.println(F("[L] Query GPS location (SIM808)"));
+   Serial.println(F("[E] Raw NMEA out (SIM808)"));
+   
    Serial.println(F("[S] create Serial passthru tunnel"));
    Serial.println(F("-------------------------------------"));
    Serial.println(F(""));
@@ -126,7 +144,11 @@ void printMenu(void) {
 }
 void loop() {
   Serial.print(F("FONA> "));
-  while (! Serial.available() );
+  while (! Serial.available() ) {
+    if (fona.available()) {
+        Serial.write(fona.read());
+    }
+  }
   
   char command = Serial.read();
   Serial.println(command);
@@ -528,6 +550,55 @@ void loop() {
         break;
     }
 
+
+    /*********************************** GPS (SIM808 only) */
+    
+    case 'o': {
+       // turn GPS off
+       if (!fona.enableGPS(false))  
+         Serial.println(F("Failed to turn off"));
+       break;
+    }
+    case 'O': {
+       // turn GPS on
+       if (!fona.enableGPS(true))  
+         Serial.println(F("Failed to turn on"));
+       break;
+    }
+    case 'x': {
+       int8_t stat;
+       // check GPS fix
+       stat = fona.GPSstatus();
+       if (stat < 0)  
+         Serial.println(F("Failed to query"));
+       if (stat == 0) Serial.println(F("GPS off"));
+       if (stat == 1) Serial.println(F("No fix"));
+       if (stat == 2) Serial.println(F("2D fix"));
+       if (stat == 3) Serial.println(F("3D fix"));
+       break;
+    }
+    
+    case 'L': {
+       // check for GPS location
+       char gpsdata[80];
+       fona.getGPSlocation(gpsdata, 80);
+       Serial.println(F("Reply in format: mode,longitude,latitude,altitude,utctime(yyyymmddHHMMSS),ttff,satellites,speed,course"));
+       Serial.println(gpsdata);
+
+       break;
+    }
+
+    case 'E': {
+      flushSerial();
+      Serial.print(F("GPS NMEA output sentences (0 = off, 34 = RMC+GGA, 255 = all)"));
+      uint8_t nmeaout = readnumber();
+
+       // turn on NMEA output
+       fona.enableGPSNMEA(nmeaout);
+
+       break;
+    }
+    
     /*********************************** GPRS */
     
     case 'g': {
@@ -725,3 +796,4 @@ uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout) {
   buff[buffidx] = 0;  // null term
   return buffidx;
 }
+

@@ -532,7 +532,82 @@ boolean Adafruit_FONA::getTime(char *buff, uint16_t maxlen) {
   return true;
 }
 
+/********* GPS **********************************************************/
+
+
+boolean Adafruit_FONA::enableGPS(boolean onoff) {
+  uint16_t state;
+
+  // first check if its already on or off
+  if (! sendParseReply(F("AT+CGPSPWR?"), F("+CGPSPWR: "), &state) )
+    return false;
+  
+  if (onoff && !state) {
+    if (! sendCheckReply(F("AT+CGPSPWR=1"), F("OK")))
+      return false;
+  } else if (!onoff && state) {
+    if (! sendCheckReply(F("AT+CGPSPWR=0"), F("OK")))
+      return false;
+  }
+  return true;
+}
+
+int8_t Adafruit_FONA::GPSstatus(void) {
+  uint16_t state;
+
+  getReply(F("AT+CGPSSTATUS?"));
+
+  char *p = strstr_P(replybuffer, (prog_char*)F("+CGPSSTATUS: Location "));
+  if (p == 0) return -1;
+
+  p+=22;
+  //Serial.println(p);
+
+  readline(); // eat 'OK'
+
+
+  if (p[0] == 'U') return 0;
+  if (p[0] == 'N') return 1;
+  if (p[0] == '2') return 2;
+  if (p[0] == '3') return 3;
+
+ // else
+  return 0;
+}
+
+uint8_t Adafruit_FONA::getGPSlocation(char *buffer, uint8_t maxbuff) {
+
+  getReply(F("AT+CGPSINF=0"));
+
+  char *p = strstr_P(replybuffer, (prog_char*)F("CGPSINF: "));
+  if (p == 0){
+    buffer[0] = 0;
+    return -1;
+  }
+  p+=9;
+  uint8_t len = max(maxbuff-1, strlen(p));
+  strncpy(buffer, p, len);
+  buffer[len] = 0;
+
+  readline(); // eat 'OK'
+  return len;
+}
+
+boolean Adafruit_FONA::enableGPSNMEA(uint8_t i) {
+
+  char sendbuff[15] = "AT+CGPSOUT=000";
+  sendbuff[11] = (i / 100) + '0';
+  i %= 100;
+  sendbuff[12] = (i / 10) + '0';
+  i %= 10;
+  sendbuff[13] = i + '0';
+
+  return sendCheckReply(sendbuff, "OK", 2000);
+}
+
+
 /********* GPRS **********************************************************/
+
 
 boolean Adafruit_FONA::enableGPRS(boolean onoff) {
 
