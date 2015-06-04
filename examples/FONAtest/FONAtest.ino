@@ -710,6 +710,7 @@ void loop() {
       Serial.println(F("Creating SERIAL TUBE"));
       while (1) {
         while (Serial.available()) {
+	  delay(1);
           fona.write(Serial.read());
         }
         if (fona.available()) {
