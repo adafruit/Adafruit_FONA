@@ -14,6 +14,8 @@
   Written by Limor Fried/Ladyada for Adafruit Industries.
   BSD license, all text above must be included in any redistribution
  ****************************************************/
+#ifndef ADAFRUIT_FONA_H
+#define ADAFRUIT_FONA_H
 
 #if (ARDUINO >= 100)
   #include "Arduino.h"
@@ -25,7 +27,7 @@
   #include <NewSoftSerial.h>
 #endif
 
-#define ADAFRUIT_FONA_DEBUG
+//#define ADAFRUIT_FONA_DEBUG
 
 #define FONA_HEADSETAUDIO 0
 #define FONA_EXTAUDIO 1
@@ -45,6 +47,10 @@
 #define FONA_STTONE_USADIALTONE 20
 
 #define FONA_DEFAULT_TIMEOUT_MS 500
+
+#define FONA_HTTP_GET   0
+#define FONA_HTTP_POST  1
+#define FONA_HTTP_HEAD  2 
 
 class Adafruit_FONA : public Stream {
  public:
@@ -117,7 +123,20 @@ class Adafruit_FONA : public Stream {
   uint8_t getGPSlocation(char *buffer, uint8_t maxbuff);
   boolean enableGPSNMEA(uint8_t nmea);
 
-  // HTTP 
+  // HTTP low level interface (maps directly to SIM800 commands).
+  boolean HTTP_init();
+  boolean HTTP_term();
+  void HTTP_para_start(const __FlashStringHelper *parameter, boolean quoted = true);
+  boolean HTTP_para_end(boolean quoted = true);
+  boolean HTTP_para(const __FlashStringHelper *parameter, const char *value);
+  boolean HTTP_para(const __FlashStringHelper *parameter, const __FlashStringHelper *value);
+  boolean HTTP_para(const __FlashStringHelper *parameter, int32_t value);
+  boolean HTTP_data(uint32_t size, uint32_t maxTime=10000);
+  boolean HTTP_action(uint8_t method, uint16_t *status, uint16_t *datalen, int32_t timeout = 10000);
+  boolean HTTP_readall(uint16_t *datalen);
+  boolean HTTP_ssl(boolean onoff);
+
+  // HTTP high level interface (easier to use, less flexible).
   boolean HTTP_GET_start(char *url, uint16_t *status, uint16_t *datalen);
   void HTTP_GET_end(void);
   boolean HTTP_POST_start(char *url, const __FlashStringHelper *contenttype, const uint8_t *postdata, uint16_t postdatalen,  uint16_t *status, uint16_t *datalen);
@@ -137,6 +156,9 @@ class Adafruit_FONA : public Stream {
   boolean callerIdNotification(boolean enable, uint8_t interrupt = 0);
   boolean incomingCallNumber(char* phonenum);
 
+  // Helper functions to verify responses.
+  boolean expectReply(const __FlashStringHelper *reply, uint16_t timeout = 10000);
+
  private:
   int8_t _rstpin;
 
@@ -148,9 +170,7 @@ class Adafruit_FONA : public Stream {
   const __FlashStringHelper *useragent;
 
   // HTTP helpers
-  boolean HTTP_initialize(char *url);
-  boolean HTTP_response(uint16_t *status, uint16_t *datalen);
-  void HTTP_terminate(void);
+  boolean HTTP_setup(char *url);
 
   void flushInput();
   uint16_t readRaw(uint16_t b);
@@ -186,3 +206,5 @@ class Adafruit_FONA : public Stream {
 
   Stream *mySerial;
 };
+
+#endif
