@@ -705,6 +705,14 @@ boolean Adafruit_FONA::TCPconnect(char *server, uint16_t port) {
   // manually read data
   if (! sendCheckReply(F("AT+CIPRXGET=1"), F("OK")) ) return false;
 
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print(F("AT+CIPSTART=\"TCP\",\""));
+  Serial.print(server);
+  Serial.print(F("\",\""));
+  Serial.print(port);
+  Serial.println(F("\""));
+#endif
+
   mySerial->print(F("AT+CIPSTART=\"TCP\",\""));
   mySerial->print(server);
   mySerial->print(F("\",\""));
@@ -720,8 +728,8 @@ boolean Adafruit_FONA::TCPclose(void) {
 }
 
 boolean Adafruit_FONA::TCPconnected(void) {
-  if (! sendCheckReply(F("AT+CIPSTATUS"), F("OK")) ) return false;
-  readline();
+  if (! sendCheckReply(F("AT+CIPSTATUS"), F("OK"), 100) ) return false;
+  readline(100);
 #ifdef ADAFRUIT_FONA_DEBUG
   Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
