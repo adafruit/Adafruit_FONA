@@ -123,6 +123,14 @@ class Adafruit_FONA : public Stream {
   uint8_t getGPSlocation(char *buffer, uint8_t maxbuff);
   boolean enableGPSNMEA(uint8_t nmea);
 
+  // TCP raw connections
+  boolean TCPconnect(char *server, uint16_t port);
+  boolean TCPclose(void);
+  boolean TCPconnected(void);
+  boolean TCPsend(char *packet, uint8_t len);
+  uint16_t TCPavailable(void);
+  uint16_t TCPread(uint8_t *buff, uint8_t len);
+
   // HTTP low level interface (maps directly to SIM800 commands).
   boolean HTTP_init();
   boolean HTTP_term();

@@ -433,7 +433,7 @@ boolean Adafruit_FONA::sendSMS(char *smsaddr, char *smsmsg) {
 
   if (! sendCheckReply(sendcmd, "> ")) return false;
 #ifdef ADAFRUIT_FONA_DEBUG
-  Serial.print("> "); Serial.println(smsmsg);
+  Serial.print(F("> ")); Serial.println(smsmsg);
 #endif
   mySerial->println(smsmsg);
   mySerial->println();
@@ -643,6 +643,10 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
     if (! sendCheckReply(F("AT+SAPBR=1,1"), F("OK"), 10000))
       return false;
   } else {
+    // disconnect all sockets
+    if (! sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000))
+      return false;
+
     // close GPRS context
     if (! sendCheckReply(F("AT+SAPBR=0,1"), F("OK"), 10000))
       return false;
@@ -685,6 +689,113 @@ boolean Adafruit_FONA::getGSMLoc(uint16_t *errorcode, char *buff, uint16_t maxle
 
   return true;
 }
+
+/********* TCP FUNCTIONS  ************************************/
+
+
+boolean Adafruit_FONA::TCPconnect(char *server, uint16_t port) {
+  flushInput();
+
+  // close all old connections
+  if (! sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000) ) return false;
+
+  // single connection at a time
+  if (! sendCheckReply(F("AT+CIPMUX=0"), F("OK")) ) return false;
+
+  // manually read data
+  if (! sendCheckReply(F("AT+CIPRXGET=1"), F("OK")) ) return false;
+
+  mySerial->print(F("AT+CIPSTART=\"TCP\",\""));
+  mySerial->print(server);
+  mySerial->print(F("\",\""));
+  mySerial->print(port);
+  mySerial->println(F("\""));
+
+  if (! expectReply(F("OK"))) return false;
+  if (! expectReply(F("CONNECT OK"))) return false;
+}
+
+boolean Adafruit_FONA::TCPclose(void) {
+  return sendCheckReply(F("AT+CIPCLOSE"), F("OK"));
+}
+
+boolean Adafruit_FONA::TCPconnected(void) {
+  if (! sendCheckReply(F("AT+CIPSTATUS"), F("OK")) ) return false;
+  readline();
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print (F("\t<--- ")); Serial.println(replybuffer);
+#endif
+  return (strcmp(replybuffer, "STATE: CONNECT OK") == 0);
+}
+
+boolean Adafruit_FONA::TCPsend(char *packet, uint8_t len) {
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print(F("AT+CIPSEND="));
+  Serial.println(len);
+
+  for (uint16_t i=0; i<len; i++) {
+    Serial.print(" 0x");
+    Serial.print(packet[i], HEX);
+  }
+  Serial.println();
+#endif
+
+
+  mySerial->print(F("AT+CIPSEND="));
+  mySerial->println(len);
+  readline();
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print (F("\t<--- ")); Serial.println(replybuffer);
+#endif
+  if (replybuffer[0] != '>') return false;
+
+  mySerial->write(packet, len);
+  readline(3000); // wait up to 3 seconds to send the data
+#ifdef ADAFRUIT_FONA_DEBUG
+  //Serial.print (F("\t<--- ")); Serial.println(replybuffer);
+#endif
+    
+  return (strcmp(replybuffer, "SEND OK") == 0);
+}
+
+uint16_t Adafruit_FONA::TCPavailable(void) {
+  uint16_t avail;
+
+  sendParseReply(F("AT+CIPRXGET=4"), F("+CIPRXGET: 4,"), &avail, ',', 0);
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print (avail); Serial.println(F(" bytes available"));
+#endif
+    
+  return avail;
+}
+
+
+uint16_t Adafruit_FONA::TCPread(uint8_t *buff, uint8_t len) {
+  uint16_t avail;
+
+  mySerial->print(F("AT+CIPRXGET=2,"));
+  mySerial->println(len);
+  readline();
+  parseReply(F("+CIPRXGET: 2,"), &avail, ',', 0);
+
+  readRaw(avail);
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print (avail); Serial.println(F(" bytes read"));
+  for (uint8_t i=0;i<avail;i++) {
+    Serial.print(" 0x"); Serial.print(replybuffer[i], HEX);
+  }
+  Serial.println(); 
+#endif
+
+  memcpy(buff, replybuffer, avail);
+    
+  return avail;
+}
+
+
 
 /********* HTTP LOW LEVEL FUNCTIONS  ************************************/
 
@@ -895,7 +1006,7 @@ boolean Adafruit_FONA::expectReply(const __FlashStringHelper *reply,
                                    uint16_t timeout) {
   readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
-  Serial.print("\t<--- "); Serial.println(replybuffer);
+  Serial.print(F("\t<--- ")); Serial.println(replybuffer);
 #endif
   return (strcmp_P(replybuffer, (prog_char*)reply) == 0);
 }
@@ -996,7 +1107,7 @@ uint8_t Adafruit_FONA::getReply(char *send, uint16_t timeout) {
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
-    Serial.print ("\t<--- "); Serial.println(replybuffer);
+    Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
   return l;
 }
@@ -1012,7 +1123,7 @@ uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *send, uint16_t timeou
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
-    Serial.print ("\t<--- "); Serial.println(replybuffer);
+    Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
   return l;
 }
@@ -1030,7 +1141,7 @@ uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *prefix, char *suffix,
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
-    Serial.print ("\t<--- "); Serial.println(replybuffer);
+    Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
   return l;
 }
@@ -1048,7 +1159,7 @@ uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *prefix, int32_t suffi
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
-    Serial.print ("\t<--- "); Serial.println(replybuffer);
+    Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
   return l;
 }
@@ -1069,7 +1180,7 @@ uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *prefix, int32_t suffi
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
-    Serial.print ("\t<--- "); Serial.println(replybuffer);
+    Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
   return l;
 }
@@ -1090,7 +1201,7 @@ uint8_t Adafruit_FONA::getReplyQuoted(const __FlashStringHelper *prefix, const _
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
-    Serial.print ("\t<--- "); Serial.println(replybuffer);
+    Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
   return l;
 }
