@@ -764,7 +764,7 @@ boolean Adafruit_FONA::TCPsend(char *packet, uint8_t len) {
   mySerial->write(packet, len);
   readline(3000); // wait up to 3 seconds to send the data
 #ifdef ADAFRUIT_FONA_DEBUG
-  //Serial.print (F("\t<--- ")); Serial.println(replybuffer);
+  Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
     
   return (strcmp(replybuffer, "SEND OK") == 0);
@@ -773,7 +773,7 @@ boolean Adafruit_FONA::TCPsend(char *packet, uint8_t len) {
 uint16_t Adafruit_FONA::TCPavailable(void) {
   uint16_t avail;
 
-  sendParseReply(F("AT+CIPRXGET=4"), F("+CIPRXGET: 4,"), &avail, ',', 0);
+  if (! sendParseReply(F("AT+CIPRXGET=4"), F("+CIPRXGET: 4,"), &avail, ',', 0) ) return false;
 
 #ifdef ADAFRUIT_FONA_DEBUG
   Serial.print (avail); Serial.println(F(" bytes available"));
@@ -789,7 +789,7 @@ uint16_t Adafruit_FONA::TCPread(uint8_t *buff, uint8_t len) {
   mySerial->print(F("AT+CIPRXGET=2,"));
   mySerial->println(len);
   readline();
-  parseReply(F("+CIPRXGET: 2,"), &avail, ',', 0);
+  if (! parseReply(F("+CIPRXGET: 2,"), &avail, ',', 0)) return false;
 
   readRaw(avail);
 
