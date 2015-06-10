@@ -612,6 +612,9 @@ boolean Adafruit_FONA::enableGPSNMEA(uint8_t i) {
 boolean Adafruit_FONA::enableGPRS(boolean onoff) {
 
   if (onoff) {
+    // disconnect all sockets
+    sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000);
+
     if (! sendCheckReply(F("AT+CGATT=1"), F("OK"), 10000))
       return false;
 
