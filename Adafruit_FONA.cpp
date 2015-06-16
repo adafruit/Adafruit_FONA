@@ -575,9 +575,10 @@ int8_t Adafruit_FONA::GPSstatus(void) {
   return 0;
 }
 
-uint8_t Adafruit_FONA::getGPSlocation(char *buffer, uint8_t maxbuff) {
+uint8_t Adafruit_FONA::getGPSlocation(uint8_t arg, char *buffer, uint8_t maxbuff) {
+  int32_t x = arg;
 
-  getReply(F("AT+CGPSINF=0"));
+  getReply(F("AT+CGPSINF="), x);
 
   char *p = strstr_P(replybuffer, (prog_char*)F("CGPSINF: "));
   if (p == 0){

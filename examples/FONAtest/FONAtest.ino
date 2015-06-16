@@ -581,7 +581,7 @@ void loop() {
     case 'L': {
        // check for GPS location
        char gpsdata[80];
-       fona.getGPSlocation(gpsdata, 80);
+       fona.getGPSlocation(0, gpsdata, 80);
        Serial.println(F("Reply in format: mode,longitude,latitude,altitude,utctime(yyyymmddHHMMSS),ttff,satellites,speed,course"));
        Serial.println(gpsdata);
 
@@ -797,4 +797,3 @@ uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout) {
   buff[buffidx] = 0;  // null term
   return buffidx;
 }
-
