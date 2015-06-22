@@ -602,7 +602,7 @@ boolean Adafruit_FONA::getGPS(float *lat, float *lon, float *speed_kph, float *h
   if (GPSstatus() < 2)
     return false;
 
-  // grab the gps csv from the sim808
+  // grab the mode 2^5 gps csv from the sim808
   uint8_t res_len = getGPSresponse(32, gpsbuffer, 120);
 
   // make sure we have a response
@@ -662,7 +662,8 @@ boolean Adafruit_FONA::getGPS(float *lat, float *lon, float *speed_kph, float *h
 
   *lon = degrees;
 
-  if(speed_kph != NULL) {
+  // only grab speed if needed
+  if (speed_kph != NULL) {
 
     // grab the speed in knots
     char *speedp = strtok(NULL, ",");
@@ -673,7 +674,8 @@ boolean Adafruit_FONA::getGPS(float *lat, float *lon, float *speed_kph, float *h
 
   }
 
-  if(heading != NULL) {
+  // only grab heading if needed
+  if (heading != NULL) {
 
     // grab the speed in knots
     char *coursep = strtok(NULL, ",");
@@ -683,6 +685,40 @@ boolean Adafruit_FONA::getGPS(float *lat, float *lon, float *speed_kph, float *h
 
   }
 
+  // no need to continue
+  if (altitude == NULL)
+    return true;
+
+  // we need at least a 3D fix for altitude
+  if (GPSstatus() < 3)
+    return false;
+
+  // grab the mode 0 gps csv from the sim808
+  res_len = getGPSresponse(0, gpsbuffer, 120);
+
+  // make sure we have a response
+  if (res_len == 0)
+    return false;
+
+  // skip mode
+  tok = strtok(gpsbuffer, ",");
+  if (! tok) return false;
+
+  // skip lat
+  tok = strtok(NULL, ",");
+  if (! tok) return false;
+
+  // skip long
+  tok = strtok(NULL, ",");
+  if (! tok) return false;
+
+  // grab altitude
+  char *altp = strtok(NULL, ",");
+  if (! altp) return false;
+
+  *altitude = atof(altp);
+
+  return true;
 
 }
 
