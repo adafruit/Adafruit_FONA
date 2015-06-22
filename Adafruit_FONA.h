@@ -115,12 +115,13 @@ class Adafruit_FONA : public Stream {
   boolean enableGPRS(boolean onoff);
   uint8_t GPRSstate(void);
   boolean getGSMLoc(uint16_t *replycode, char *buff, uint16_t maxlen);
+  boolean getGSMLoc(float *lat, float *lon);
   void setGPRSNetworkSettings(const __FlashStringHelper *apn, const __FlashStringHelper *username=0, const __FlashStringHelper *password=0);
 
   // GPS handling
   boolean enableGPS(boolean onoff);
   int8_t GPSstatus(void);
-  uint8_t getGPSresponse(uint8_t arg, char *buffer, uint8_t maxbuff);
+  uint8_t getGPS(uint8_t arg, char *buffer, uint8_t maxbuff);
   boolean getGPS(float *lat, float *lon, float *speed_kph=0, float *heading=0, float *altitude=0);
   boolean enableGPSNMEA(uint8_t nmea);
 

@@ -575,7 +575,7 @@ int8_t Adafruit_FONA::GPSstatus(void) {
   return 0;
 }
 
-uint8_t Adafruit_FONA::getGPSresponse(uint8_t arg, char *buffer, uint8_t maxbuff) {
+uint8_t Adafruit_FONA::getGPS(uint8_t arg, char *buffer, uint8_t maxbuff) {
   int32_t x = arg;
 
   getReply(F("AT+CGPSINF="), x);
@@ -603,7 +603,7 @@ boolean Adafruit_FONA::getGPS(float *lat, float *lon, float *speed_kph, float *h
     return false;
 
   // grab the mode 2^5 gps csv from the sim808
-  uint8_t res_len = getGPSresponse(32, gpsbuffer, 120);
+  uint8_t res_len = getGPS(32, gpsbuffer, 120);
 
   // make sure we have a response
   if (res_len == 0)
@@ -694,7 +694,7 @@ boolean Adafruit_FONA::getGPS(float *lat, float *lon, float *speed_kph, float *h
     return false;
 
   // grab the mode 0 gps csv from the sim808
-  res_len = getGPSresponse(0, gpsbuffer, 120);
+  res_len = getGPS(0, gpsbuffer, 120);
 
   // make sure we have a response
   if (res_len == 0)
@@ -822,6 +822,32 @@ boolean Adafruit_FONA::getGSMLoc(uint16_t *errorcode, char *buff, uint16_t maxle
   return true;
 }
 
+boolean Adafruit_FONA::getGSMLoc(float *lat, float *lon) {
+
+  uint16_t returncode;
+  char gpsbuffer[120];
+
+  // make sure we could get a response
+  if (! getGSMLoc(&returncode, gpsbuffer, 120))
+    return false;
+
+  // make sure we have a valid return code
+  if (returncode != 0)
+    return false;
+
+  // tokenize the gps buffer to locate the lat & long
+  char *latp = strtok(gpsbuffer, ",");
+  if (! latp) return false;
+
+  char *longp = strtok(NULL, ",");
+  if (! longp) return false;
+
+  *lat = atof(latp);
+  *lon = atof(longp);
+
+  return true;
+
+}
 /********* TCP FUNCTIONS  ************************************/
 
 
