@@ -386,8 +386,12 @@ boolean Adafruit_FONA::readSMS(uint8_t i, char *smsbuff,
   mySerial->println(i);
   readline(1000); // timeout
 
+  //Serial.print(F("Reply: ")); Serial.println(replybuffer);
   // parse it out...
-  parseReply(F("+CMGR:"), &thesmslen, ',', 11);
+  if (! parseReply(F("+CMGR:"), &thesmslen, ',', 11)) {
+    *readlen = 0;
+    return false;
+  }
 
   readRaw(thesmslen);
 
