@@ -12,6 +12,7 @@ install:
   - arduino --install-library "Adafruit SleepyDog Library,Adafruit MQTT Library"
 script:
   - arduino --verify --board arduino:avr:uno $PWD/examples/FONAtest/FONAtest.ino
+  - arduino --verify --board arduino:avr:leonardo $PWD/examples/Leo_FONAtest/Leo_FONAtest.ino
   - arduino --verify --board arduino:avr:uno $PWD/examples/IncomingCall/IncomingCall.ino
   - arduino --verify --board arduino:avr:uno $PWD/examples/AdafruitIO_GPS/AdafruitIO_GPS.ino
 notifications:
