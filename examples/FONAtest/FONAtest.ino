@@ -1,23 +1,23 @@
-/*************************************************** 
+/***************************************************
   This is an example for our Adafruit FONA Cellular Module
 
-  Designed specifically to work with the Adafruit FONA 
+  Designed specifically to work with the Adafruit FONA
   ----> http://www.adafruit.com/products/1946
   ----> http://www.adafruit.com/products/1963
   ----> http://www.adafruit.com/products/2468
   ----> http://www.adafruit.com/products/2542
 
-  These cellular modules use TTL Serial to communicate, 2 pins are 
+  These cellular modules use TTL Serial to communicate, 2 pins are
   required to interface
-  Adafruit invests time and resources providing this open source code, 
-  please support Adafruit and open-source hardware by purchasing 
+  Adafruit invests time and resources providing this open source code,
+  please support Adafruit and open-source hardware by purchasing
   products from Adafruit!
 
-  Written by Limor Fried/Ladyada for Adafruit Industries.  
+  Written by Limor Fried/Ladyada for Adafruit Industries.
   BSD license, all text above must be included in any redistribution
  ****************************************************/
 
-/* 
+/*
 THIS CODE IS STILL IN PROGRESS!
 
 Open up the serial console on the Arduino at 115200 baud to interact with FONA
@@ -55,7 +55,7 @@ void setup() {
   //Serial1.begin(4800); // if you're using hardware serial
 
   // See if the FONA is responding
-  if (! fona.begin(fonaSS)) {           // can also try fona.begin(Serial1) 
+  if (! fona.begin(fonaSS)) {           // can also try fona.begin(Serial1)
     Serial.println(F("Couldn't find FONA"));
     while (1);
   }
@@ -98,30 +98,33 @@ void printMenu(void) {
    Serial.println(F("[e] set External audio"));
    Serial.println(F("[T] play audio Tone"));
    Serial.println(F("[P] PWM/Buzzer out"));
-      
+
    // FM (SIM800 only)
    Serial.println(F("[f] tune FM radio"));
    Serial.println(F("[F] turn off FM"));
    Serial.println(F("[m] set FM volume"));
    Serial.println(F("[M] get FM volume"));
    Serial.println(F("[q] get FM station signal level"));
-   
+
    // Phone
    Serial.println(F("[c] make phone Call"));
    Serial.println(F("[h] Hang up phone"));
    Serial.println(F("[p] Pick up phone"));
-   
+
    // SMS
    Serial.println(F("[N] Number of SMSs"));
    Serial.println(F("[r] Read SMS #"));
    Serial.println(F("[R] Read All SMS"));
    Serial.println(F("[d] Delete SMS #"));
    Serial.println(F("[s] Send SMS"));
-   
+
+   // USSD
+   Serial.println(F("[u] Send USSD"));
+
    // Time
-   Serial.println(F("[y] Enable network time sync"));   
-   Serial.println(F("[Y] Enable NTP time sync (GPRS)"));   
-   Serial.println(F("[t] Get network time"));   
+   Serial.println(F("[y] Enable network time sync"));
+   Serial.println(F("[Y] Enable NTP time sync (GPRS)"));
+   Serial.println(F("[t] Get network time"));
 
    // GPRS
    Serial.println(F("[G] Enable GPRS"));
@@ -129,18 +132,18 @@ void printMenu(void) {
    Serial.println(F("[l] Query GSMLOC (GPRS)"));
    Serial.println(F("[w] Read webpage (GPRS)"));
    Serial.println(F("[W] Post to website (GPRS)"));
-   
+
    // GPS
    Serial.println(F("[O] Turn GPS on (SIM808)"));
    Serial.println(F("[o] Turn GPS off (SIM808)"));
    Serial.println(F("[x] GPS fix status (SIM808)"));
    Serial.println(F("[L] Query GPS location (SIM808)"));
    Serial.println(F("[E] Raw NMEA out (SIM808)"));
-   
+
    Serial.println(F("[S] create Serial passthru tunnel"));
    Serial.println(F("-------------------------------------"));
    Serial.println(F(""));
-  
+
 }
 void loop() {
   Serial.print(F("FONA> "));
@@ -149,17 +152,17 @@ void loop() {
         Serial.write(fona.read());
     }
   }
-  
+
   char command = Serial.read();
   Serial.println(command);
-  
-  
+
+
   switch (command) {
     case '?': {
       printMenu();
       break;
     }
-    
+
     case 'a': {
       // read the ADC
       uint16_t adc;
@@ -170,7 +173,7 @@ void loop() {
       }
       break;
     }
-    
+
     case 'b': {
         // read the battery voltage and percentage
         uint16_t vbat;
@@ -179,14 +182,14 @@ void loop() {
         } else {
           Serial.print(F("VBat = ")); Serial.print(vbat); Serial.println(F(" mV"));
         }
- 
+
 
         if (! fona.getBattPercent(&vbat)) {
           Serial.println(F("Failed to read Batt"));
         } else {
           Serial.print(F("VPct = ")); Serial.print(vbat); Serial.println(F("%"));
         }
- 
+
         break;
     }
 
@@ -202,7 +205,7 @@ void loop() {
           Serial.println(F("Failed"));
         } else {
           Serial.println(F("OK!"));
-        }        
+        }
         break;
     }
 
@@ -217,7 +220,7 @@ void loop() {
         // read the RSSI
         uint8_t n = fona.getRSSI();
         int8_t r;
-        
+
         Serial.print(F("RSSI = ")); Serial.print(n); Serial.print(": ");
         if (n == 0) r = -115;
         if (n == 1) r = -111;
@@ -226,14 +229,14 @@ void loop() {
           r = map(n, 2, 30, -110, -54);
         }
         Serial.print(r); Serial.println(F(" dBm"));
-       
+
         break;
     }
-    
+
     case 'n': {
         // read the network/cellular status
         uint8_t n = fona.getNetworkStatus();
-        Serial.print(F("Network status ")); 
+        Serial.print(F("Network status "));
         Serial.print(n);
         Serial.print(F(": "));
         if (n == 0) Serial.println(F("Not registered"));
@@ -244,7 +247,7 @@ void loop() {
         if (n == 5) Serial.println(F("Registered roaming"));
         break;
     }
-    
+
     /*** Audio ***/
     case 'v': {
       // set volume
@@ -263,10 +266,10 @@ void loop() {
     case 'V': {
       uint8_t v = fona.getVolume();
       Serial.print(v); Serial.println("%");
-    
-      break; 
+
+      break;
     }
-    
+
     case 'H': {
       // Set Headphone output
       if (! fona.setAudio(FONA_HEADSETAUDIO)) {
@@ -303,9 +306,9 @@ void loop() {
       }
       break;
     }
-    
+
     /*** FM Radio ***/
-    
+
     case 'f': {
       // get freq
       flushSerial();
@@ -371,9 +374,9 @@ void loop() {
       }
       break;
     }
-    
+
     /*** PWM ***/
-    
+
     case 'P': {
       // PWM Buzzer output @ 2KHz max
       flushSerial();
@@ -389,7 +392,7 @@ void loop() {
     }
 
     /*** Call ***/
-    case 'c': {      
+    case 'c': {
       // call a phone!
       char number[30];
       flushSerial();
@@ -402,38 +405,38 @@ void loop() {
       } else {
         Serial.println(F("Sent!"));
       }
-      
+
       break;
     }
     case 'h': {
-       // hang up! 
+       // hang up!
       if (! fona.hangUp()) {
         Serial.println(F("Failed"));
       } else {
         Serial.println(F("OK!"));
       }
-      break;     
+      break;
     }
 
     case 'p': {
-       // pick up! 
+       // pick up!
       if (! fona.pickUp()) {
         Serial.println(F("Failed"));
       } else {
         Serial.println(F("OK!"));
       }
-      break;     
+      break;
     }
-    
+
     /*** SMS ***/
-    
+
     case 'N': {
         // read the number of SMS's!
         int8_t smsnum = fona.getNumSMS();
         if (smsnum < 0) {
           Serial.println(F("Could not read # SMS"));
         } else {
-          Serial.print(smsnum); 
+          Serial.print(smsnum);
           Serial.println(F(" SMS's on SIM card!"));
         }
         break;
@@ -458,11 +461,11 @@ void loop() {
         Serial.println("Failed!");
         break;
       }
-      Serial.print(F("***** SMS #")); Serial.print(smsn); 
+      Serial.print(F("***** SMS #")); Serial.print(smsn);
       Serial.print(" ("); Serial.print(smslen); Serial.println(F(") bytes *****"));
       Serial.println(replybuffer);
       Serial.println(F("*****"));
-      
+
       break;
     }
     case 'R': {
@@ -482,8 +485,8 @@ void loop() {
           smsnum++;
           continue;
         }
-        
-        Serial.print(F("***** SMS #")); Serial.print(smsn); 
+
+        Serial.print(F("***** SMS #")); Serial.print(smsn);
         Serial.print(" ("); Serial.print(smslen); Serial.println(F(") bytes *****"));
         Serial.println(replybuffer);
         Serial.println(F("*****"));
@@ -496,7 +499,7 @@ void loop() {
       flushSerial();
       Serial.print(F("Delete #"));
       uint8_t smsn = readnumber();
-      
+
       Serial.print(F("\n\rDeleting SMS #")); Serial.println(smsn);
       if (fona.deleteSMS(smsn)) {
         Serial.println(F("OK!"));
@@ -505,7 +508,7 @@ void loop() {
       }
       break;
     }
-    
+
     case 's': {
       // send an SMS!
       char sendto[21], message[141];
@@ -521,7 +524,31 @@ void loop() {
       } else {
         Serial.println(F("Sent!"));
       }
-      
+
+      break;
+    }
+
+    /*** USSD ***/
+
+    case 'u': {
+      // send a USSD!
+      char message[141];
+      flushSerial();
+      Serial.print(F("Type out one-line message (140 char): "));
+      readline(message, 140);
+      Serial.println(message);
+
+      uint16_t ussdlen;
+      if (!fona.sendUSSD(message, replybuffer, 250, &ussdlen)) { // pass in buffer and max len!
+        Serial.println(F("Failed"));
+      } else {
+        Serial.println(F("Sent!"));
+        Serial.print(F("***** USSD Reply"));
+        Serial.print(" ("); Serial.print(ussdlen); Serial.println(F(") bytes *****"));
+        Serial.println(replybuffer);
+        Serial.println(F("*****"));
+      }
+
       break;
     }
 
@@ -552,16 +579,16 @@ void loop() {
 
 
     /*********************************** GPS (SIM808 only) */
-    
+
     case 'o': {
        // turn GPS off
-       if (!fona.enableGPS(false))  
+       if (!fona.enableGPS(false))
          Serial.println(F("Failed to turn off"));
        break;
     }
     case 'O': {
        // turn GPS on
-       if (!fona.enableGPS(true))  
+       if (!fona.enableGPS(true))
          Serial.println(F("Failed to turn on"));
        break;
     }
@@ -569,7 +596,7 @@ void loop() {
        int8_t stat;
        // check GPS fix
        stat = fona.GPSstatus();
-       if (stat < 0)  
+       if (stat < 0)
          Serial.println(F("Failed to query"));
        if (stat == 0) Serial.println(F("GPS off"));
        if (stat == 1) Serial.println(F("No fix"));
@@ -577,7 +604,7 @@ void loop() {
        if (stat == 3) Serial.println(F("3D fix"));
        break;
     }
-    
+
     case 'L': {
        // check for GPS location
        char gpsdata[80];
@@ -598,25 +625,25 @@ void loop() {
 
        break;
     }
-    
+
     /*********************************** GPRS */
-    
+
     case 'g': {
        // turn GPRS off
-       if (!fona.enableGPRS(false))  
+       if (!fona.enableGPRS(false))
          Serial.println(F("Failed to turn off"));
        break;
     }
     case 'G': {
        // turn GPRS on
-       if (!fona.enableGPRS(true))  
+       if (!fona.enableGPRS(true))
          Serial.println(F("Failed to turn on"));
        break;
     }
     case 'l': {
        // check for GSMLOC (requires GPRS)
        uint16_t returncode;
-       
+
        if (!fona.getGSMLoc(&returncode, replybuffer, 250))
          Serial.println(F("Failed!"));
        if (returncode == 0) {
@@ -624,7 +651,7 @@ void loop() {
        } else {
          Serial.print(F("Fail code #")); Serial.println(returncode);
        }
-       
+
        break;
     }
     case 'w': {
@@ -632,13 +659,13 @@ void loop() {
       uint16_t statuscode;
       int16_t length;
       char url[80];
-      
+
       flushSerial();
       Serial.println(F("NOTE: in beta! Use small webpages to read!"));
       Serial.println(F("URL to read (e.g. www.adafruit.com/testwifi/index.html):"));
       Serial.print(F("http://")); readline(url, 79);
       Serial.println(url);
-      
+
        Serial.println(F("****"));
        if (!fona.HTTP_GET_start(url, &statuscode, (uint16_t *)&length)) {
          Serial.println("Failed!");
@@ -647,7 +674,7 @@ void loop() {
        while (length > 0) {
          while (fona.available()) {
            char c = fona.read();
-           
+
            // Serial.write is too slow, we'll write directly to Serial register!
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
            loop_until_bit_is_set(UCSR0A, UDRE0); /* Wait until data register empty. */
@@ -663,14 +690,14 @@ void loop() {
        fona.HTTP_GET_end();
        break;
     }
-    
+
     case 'W': {
       // Post data to website
       uint16_t statuscode;
       int16_t length;
       char url[80];
       char data[80];
-      
+
       flushSerial();
       Serial.println(F("NOTE: in beta! Use simple websites to post!"));
       Serial.println(F("URL to post (e.g. httpbin.org/post):"));
@@ -679,7 +706,7 @@ void loop() {
       Serial.println(F("Data to post (e.g. \"foo\" or \"{\"simple\":\"json\"}\"):"));
       readline(data, 79);
       Serial.println(data);
-      
+
        Serial.println(F("****"));
        if (!fona.HTTP_POST_start(url, F("text/plain"), (uint8_t *) data, strlen(data), &statuscode, (uint16_t *)&length)) {
          Serial.println("Failed!");
@@ -688,14 +715,14 @@ void loop() {
        while (length > 0) {
          while (fona.available()) {
            char c = fona.read();
-           
+
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
            loop_until_bit_is_set(UCSR0A, UDRE0); /* Wait until data register empty. */
            UDR0 = c;
 #else
            Serial.write(c);
 #endif
-           
+
            length--;
            if (! length) break;
          }
@@ -705,7 +732,7 @@ void loop() {
        break;
     }
     /*****************************************/
-      
+
     case 'S': {
       Serial.println(F("Creating SERIAL TUBE"));
       while (1) {
@@ -719,7 +746,7 @@ void loop() {
       }
       break;
     }
-    
+
     default: {
       Serial.println(F("Unknown command"));
       printMenu();
@@ -735,7 +762,7 @@ void loop() {
 }
 
 void flushSerial() {
-    while (Serial.available()) 
+    while (Serial.available())
     Serial.read();
 }
 
@@ -758,12 +785,12 @@ uint16_t readnumber() {
   }
   return x;
 }
-  
+
 uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout) {
   uint16_t buffidx = 0;
   boolean timeoutvalid = true;
   if (timeout == 0) timeoutvalid = false;
-  
+
   while (true) {
     if (buffidx > maxbuff) {
       //Serial.println(F("SPACE"));
@@ -779,7 +806,7 @@ uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout) {
       if (c == 0xA) {
         if (buffidx == 0)   // the first 0x0A is ignored
           continue;
-        
+
         timeout = 0;         // the second 0x0A is the end of the line
         timeoutvalid = true;
         break;
@@ -787,7 +814,7 @@ uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout) {
       buff[buffidx] = c;
       buffidx++;
     }
-    
+
     if (timeoutvalid && timeout == 0) {
       //Serial.println(F("TIMEOUT"));
       break;
