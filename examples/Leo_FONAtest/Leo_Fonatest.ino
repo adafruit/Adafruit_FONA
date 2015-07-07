@@ -20,6 +20,8 @@
 /*
 THIS CODE IS STILL IN PROGRESS!
 
+This code is intended for use with Arduino Leonardo and other ATmega32U4-based Arduinos
+
 Open up the serial console on the Arduino at 115200 baud to interact with FONA
 
 Note that if you need to set a GPRS APN, username, and password scroll down to
@@ -29,8 +31,8 @@ the commented section below at the end of the setup() function.
 #include <SoftwareSerial.h>
 #include "Adafruit_FONA.h"
 
-#define FONA_RX 2
-#define FONA_TX 3
+#define FONA_RX 7
+#define FONA_TX 8
 #define FONA_RST 4
 
 // this is a large buffer for replies
