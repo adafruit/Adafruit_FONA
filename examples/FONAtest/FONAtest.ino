@@ -26,7 +26,9 @@ Note that if you need to set a GPRS APN, username, and password scroll down to
 the commented section below at the end of the setup() function.
 */
 
-#include <SoftwareSerial.h>
+#ifdef __AVR__
+  #include <SoftwareSerial.h>
+#endif
 #include "Adafruit_FONA.h"
 
 #define FONA_RX 2
@@ -36,8 +38,9 @@ the commented section below at the end of the setup() function.
 // this is a large buffer for replies
 char replybuffer[255];
 
-// or comment this out & use a hardware serial port like Serial1 (see below)
-SoftwareSerial fonaSS = SoftwareSerial(FONA_TX, FONA_RX);
+#ifdef __AVR__
+  SoftwareSerial fonaSS = SoftwareSerial(FONA_TX, FONA_RX);
+#endif
 
 Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
 
@@ -50,15 +53,24 @@ void setup() {
   Serial.println(F("FONA basic test"));
   Serial.println(F("Initializing....(May take 3 seconds)"));
 
-  // make it slow so its easy to read!
-  fonaSS.begin(4800); // if you're using software serial
-  //Serial1.begin(4800); // if you're using hardware serial
+  #if not defined (_VARIANT_ARDUINO_DUE_X_)
 
-  // See if the FONA is responding
-  if (! fona.begin(fonaSS)) {           // can also try fona.begin(Serial1) 
-    Serial.println(F("Couldn't find FONA"));
-    while (1);
-  }
+    fonaSS.begin(4800); // if you're using software serial
+
+    if (! fona.begin(fonaSS)) {
+      Serial.println(F("Couldn't find FONA"));
+      return;
+    }
+
+  #else
+
+    if (! fona.begin(Serial1)) {
+      Serial.println(F("Couldn't find FONA"));
+      return;
+    }
+
+  #endif
+
   Serial.println(F("FONA is OK"));
 
   // Print SIM card IMEI number.
