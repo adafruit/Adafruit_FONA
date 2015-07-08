@@ -9,9 +9,7 @@ before_install:
   - sudo ln -s /usr/local/share/arduino/arduino /usr/local/bin/arduino
 install:
   - ln -s $PWD /usr/local/share/arduino/libraries/Adafruit_FONA
-  - arduino --pref "boardsmanager.additional.urls=http://arduino.esp8266.com/package_esp8266com_index.json" --save-prefs
   - arduino --install-boards arduino:sam
-  - arduino --install-boards esp8266:esp8266
   - arduino --install-library "Adafruit SleepyDog Library,Adafruit MQTT Library"
 script:
   - arduino --verify --board arduino:avr:uno $PWD/examples/FONAtest/FONAtest.ino
@@ -20,9 +18,6 @@ script:
   - arduino --verify --board arduino:sam:due $PWD/examples/FONAtest/FONAtest.ino
   - arduino --verify --board arduino:sam:due $PWD/examples/IncomingCall/IncomingCall.ino
   - arduino --verify --board arduino:sam:due $PWD/examples/AdafruitIO_GPS/AdafruitIO_GPS.ino
-  - arduino --verify --board esp8266:esp8266:generic $PWD/examples/FONAtest/FONAtest.ino
-  - arduino --verify --board esp8266:esp8266:generic $PWD/examples/IncomingCall/IncomingCall.ino
-  - arduino --verify --board esp8266:esp8266:generic $PWD/examples/AdafruitIO_GPS/AdafruitIO_GPS.ino
 notifications:
   email:
     on_success: change
