@@ -26,7 +26,7 @@ Note that if you need to set a GPRS APN, username, and password scroll down to
 the commented section below at the end of the setup() function.
 */
 
-#ifdef __AVR__
+#if not defined (_VARIANT_ARDUINO_DUE_X_)
   #include <SoftwareSerial.h>
 #endif
 #include "Adafruit_FONA.h"
@@ -38,7 +38,7 @@ the commented section below at the end of the setup() function.
 // this is a large buffer for replies
 char replybuffer[255];
 
-#ifdef __AVR__
+#if not defined (_VARIANT_ARDUINO_DUE_X_)
   SoftwareSerial fonaSS = SoftwareSerial(FONA_TX, FONA_RX);
 #endif
 
