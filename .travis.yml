@@ -14,9 +14,9 @@ script:
   - arduino --verify --board arduino:avr:uno $PWD/examples/FONAtest/FONAtest.ino
   - arduino --verify --board arduino:avr:uno $PWD/examples/IncomingCall/IncomingCall.ino
   - arduino --verify --board arduino:avr:uno $PWD/examples/GPS/GPS.ino
-  - arduino --verify --board arduino:sam:due $PWD/examples/FONAtest/FONAtest.ino
-  - arduino --verify --board arduino:sam:due $PWD/examples/IncomingCall/IncomingCall.ino
-  - arduino --verify --board arduino:sam:due $PWD/examples/GPS/GPS.ino
+  - arduino --verify --board arduino:sam:arduino_due_x_dbg $PWD/examples/FONAtest/FONAtest.ino
+  - arduino --verify --board arduino:sam:arduino_due_x_dbg $PWD/examples/IncomingCall/IncomingCall.ino
+  - arduino --verify --board arduino:sam:arduino_due_x_dbg $PWD/examples/GPS/GPS.ino
 notifications:
   email:
     on_success: change
