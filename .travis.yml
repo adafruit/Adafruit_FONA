@@ -9,11 +9,15 @@ before_install:
   - sudo ln -s /usr/local/share/arduino/arduino /usr/local/bin/arduino
 install:
   - ln -s $PWD /usr/local/share/arduino/libraries/Adafruit_FONA
+  - arduino --install-boards arduino:sam
   - arduino --install-library "Adafruit SleepyDog Library,Adafruit MQTT Library"
 script:
   - arduino --verify --board arduino:avr:uno $PWD/examples/FONAtest/FONAtest.ino
   - arduino --verify --board arduino:avr:uno $PWD/examples/IncomingCall/IncomingCall.ino
   - arduino --verify --board arduino:avr:uno $PWD/examples/AdafruitIO_GPS/AdafruitIO_GPS.ino
+  - arduino --verify --board arduino:sam:due $PWD/examples/FONAtest/FONAtest.ino
+  - arduino --verify --board arduino:sam:due $PWD/examples/IncomingCall/IncomingCall.ino
+  - arduino --verify --board arduino:sam:due $PWD/examples/AdafruitIO_GPS/AdafruitIO_GPS.ino
 notifications:
   email:
     on_success: change
