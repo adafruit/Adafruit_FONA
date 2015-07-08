@@ -9,7 +9,7 @@ before_install:
   - sudo ln -s /usr/local/share/arduino/arduino /usr/local/bin/arduino
 install:
   - ln -s $PWD /usr/local/share/arduino/libraries/Adafruit_FONA
-  - arduino --install-boards arduino:sam
+  - arduino --install-boards arduino:sam > /dev/null
   - arduino --install-library "Adafruit SleepyDog Library,Adafruit MQTT Library"
 script:
   - arduino --verify --board arduino:avr:uno $PWD/examples/FONAtest/FONAtest.ino
