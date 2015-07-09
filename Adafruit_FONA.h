@@ -27,7 +27,7 @@
   #include <NewSoftSerial.h>
 #endif
 
-// #define ADAFRUIT_FONA_DEBUG
+//#define ADAFRUIT_FONA_DEBUG
 
 #define FONA_HEADSETAUDIO 0
 #define FONA_EXTAUDIO 1

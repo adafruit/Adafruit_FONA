@@ -479,8 +479,8 @@ boolean Adafruit_FONA::deleteSMS(uint8_t i) {
 boolean Adafruit_FONA::sendUSSD(char *ussdmsg, char *ussdbuff, uint16_t maxlen, uint16_t *readlen) {
   if (! sendCheckReply("AT+CUSD=1", "OK")) return -1;
 
-  char sendcmd[30] = "AT+CUSD=1,\"";
-  strncpy(sendcmd+11, ussdmsg, 30-11-2);  // 11 bytes beginning, 2 bytes for close quote + null
+  char sendcmd[182+12] = "AT+CUSD=1,\""; // 182 chars in message max (7 bit data coding scheme)
+  strncpy(sendcmd+11, ussdmsg, 182);  // 11 bytes beginning, 2 bytes for close quote
   sendcmd[strlen(sendcmd)] = '\"';
 
   if (! sendCheckReply(sendcmd, "OK")) {

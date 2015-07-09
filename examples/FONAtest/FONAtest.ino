@@ -532,10 +532,10 @@ void loop() {
 
     case 'u': {
       // send a USSD!
-      char message[141];
+      char message[182+1]; //182 chars max + null
       flushSerial();
-      Serial.print(F("Type out one-line message (140 char): "));
-      readline(message, 140);
+      Serial.print(F("Type out one-line message (182 char): "));
+      readline(message, 182);
       Serial.println(message);
 
       uint16_t ussdlen;
