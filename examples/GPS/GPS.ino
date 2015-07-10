@@ -15,9 +15,9 @@
 #include "Adafruit_FONA.h"
 
 // standard pins for the 808 shield
-#define FONA_RX 3
-#define FONA_TX 4
-#define FONA_RST 5
+#define FONA_RX 2
+#define FONA_TX 3
+#define FONA_RST 4
 
 // This is to handle the absence of software serial on platforms
 // like the Arduino Due. Modify this code if you are using different

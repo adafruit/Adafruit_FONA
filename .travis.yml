@@ -15,6 +15,10 @@ script:
   - arduino --verify $PWD/examples/FONAtest/FONAtest.ino
   - arduino --verify $PWD/examples/IncomingCall/IncomingCall.ino
   - arduino --verify $PWD/examples/GPS/GPS.ino
+  - arduino --board arduino:avr:leonardo --save-prefs
+  - arduino --verify $PWD/examples/FONAtest/FONAtest.ino
+  - arduino --verify $PWD/examples/IncomingCall/IncomingCall.ino
+  - arduino --verify $PWD/examples/GPS/GPS.ino
   - arduino --board arduino:sam:arduino_due_x --save-prefs
   - arduino --verify $PWD/examples/FONAtest/FONAtest.ino
   - arduino --verify $PWD/examples/IncomingCall/IncomingCall.ino
