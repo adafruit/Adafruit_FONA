@@ -1,10 +1,6 @@
 // FONA Incoming Call Number Example
 // Listens for a call and displays the phone number of the caller (if available).
 // Use this example to add phone call detection to your own FONA sketch.
-
-#ifdef __AVR__
-  #include <SoftwareSerial.h>
-#endif
 #include "Adafruit_FONA.h"
 
 // Pins which are connected to the FONA.
@@ -21,8 +17,16 @@
 // Make sure this interrupt pin is connected to FONA RI!
 #define FONA_RI_INTERRUPT  0
 
+// This is to handle the absence of software serial on platforms
+// like the Arduino Due. Modify this code if you are using different
+// hardware serial port, or if you are using a non-avr platform
+// that supports software serial.
 #ifdef __AVR__
+  #include <SoftwareSerial.h>
   SoftwareSerial fonaSS = SoftwareSerial(FONA_TX, FONA_RX);
+  SoftwareSerial *fonaSerial = &fonaSS;
+#else
+  HardwareSerial *fonaSerial = &Serial1;
 #endif
 
 Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
@@ -32,26 +36,13 @@ void setup() {
   Serial.println(F("FONA incoming call example"));
   Serial.println(F("Initializing....(May take 3 seconds)"));
 
-  #if not defined (_VARIANT_ARDUINO_DUE_X_)
-
-    fonaSS.begin(4800); // if you're using software serial
-
-    if (! fona.begin(fonaSS)) {
-      Serial.println(F("Couldn't find FONA"));
-      return;
-    }
-
-  #else
-
-    if (! fona.begin(Serial1)) {
-      Serial.println(F("Couldn't find FONA"));
-      return;
-    }
-
-  #endif
-
+  fonaSerial->begin(4800);
+  if (! fona.begin(*fonaSerial)) {
+    Serial.println(F("Couldn't find FONA"));
+    while(1);
+  }
   Serial.println(F("FONA is OK"));
-  
+
   // Enable incoming call notification.
   if(fona.callerIdNotification(true, FONA_RI_INTERRUPT)) {
     Serial.println(F("Caller id notification enabled."));

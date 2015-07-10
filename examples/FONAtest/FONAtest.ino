@@ -25,10 +25,6 @@ Open up the serial console on the Arduino at 115200 baud to interact with FONA
 Note that if you need to set a GPRS APN, username, and password scroll down to
 the commented section below at the end of the setup() function.
 */
-
-#if not defined (_VARIANT_ARDUINO_DUE_X_)
-  #include <SoftwareSerial.h>
-#endif
 #include "Adafruit_FONA.h"
 
 #define FONA_RX 2
@@ -38,8 +34,16 @@ the commented section below at the end of the setup() function.
 // this is a large buffer for replies
 char replybuffer[255];
 
-#if not defined (_VARIANT_ARDUINO_DUE_X_)
+// This is to handle the absence of software serial on platforms
+// like the Arduino Due. Modify this code if you are using different
+// hardware serial port, or if you are using a non-avr platform
+// that supports software serial.
+#ifdef __AVR__
+  #include <SoftwareSerial.h>
   SoftwareSerial fonaSS = SoftwareSerial(FONA_TX, FONA_RX);
+  SoftwareSerial *fonaSerial = &fonaSS;
+#else
+  HardwareSerial *fonaSerial = &Serial1;
 #endif
 
 Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
@@ -53,24 +57,11 @@ void setup() {
   Serial.println(F("FONA basic test"));
   Serial.println(F("Initializing....(May take 3 seconds)"));
 
-  #if not defined (_VARIANT_ARDUINO_DUE_X_)
-
-    fonaSS.begin(4800); // if you're using software serial
-
-    if (! fona.begin(fonaSS)) {
-      Serial.println(F("Couldn't find FONA"));
-      return;
-    }
-
-  #else
-
-    if (! fona.begin(Serial1)) {
-      Serial.println(F("Couldn't find FONA"));
-      return;
-    }
-
-  #endif
-
+  fonaSerial->begin(4800);
+  if (! fona.begin(*fonaSerial)) {
+    Serial.println(F("Couldn't find FONA"));
+    while(1);
+  }
   Serial.println(F("FONA is OK"));
 
   // Print SIM card IMEI number.
