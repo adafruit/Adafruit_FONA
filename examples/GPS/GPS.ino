@@ -23,11 +23,17 @@
 // like the Arduino Due. Modify this code if you are using different
 // hardware serial port, or if you are using a non-avr platform
 // that supports software serial.
-#ifdef __AVR__
+#if defined(__AVR_ATmega32U4__)
+  // leonardo & micro need to use Serial1 to communicate via serial
+  // on pins 0 (RX) and 1 (TX)
+  HardwareSerial *fonaSerial = &Serial1;
+#elif defined(__AVR__)
+  // all other AVR chips
   #include <SoftwareSerial.h>
   SoftwareSerial fonaSS = SoftwareSerial(FONA_TX, FONA_RX);
   SoftwareSerial *fonaSerial = &fonaSS;
 #else
+  // due, etc
   HardwareSerial *fonaSerial = &Serial1;
 #endif
 
