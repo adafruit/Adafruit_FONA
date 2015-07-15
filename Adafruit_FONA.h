@@ -82,6 +82,14 @@ class Adafruit_FONA : public Stream {
   // IMEI
   uint8_t getIMEI(char *imei);
 
+  //Phonebook
+  boolean setPBstorage(uint8_t Sto); //Select PB storage
+  uint8_t getPBused(void); //Get number of entries used
+  uint8_t getPBtotal(void); //Get total number of entries
+  boolean WritePBentry(uint8_t i, char *Number, uint8_t Type, char *Text); //Write PB entry
+  boolean ReadPBentry(uint8_t i, char *Number, uint16_t *Type, char *Text); //Read PB entry
+  boolean DeletePBentry(uint8_t i); //Delete PB entry
+  
   // set Audio output
   boolean setAudio(uint8_t a);
   boolean setVolume(uint8_t i);
