@@ -19,11 +19,13 @@
 #define prog_char  char PROGMEM
 
 #if (ARDUINO >= 100)
- #include "Arduino.h"
- #include <SoftwareSerial.h>
+  #include "Arduino.h"
+  #ifndef __SAM3X8E__  // Arduino Due doesn't support SoftwareSerial
+    #include <SoftwareSerial.h>
+  #endif
 #else
- #include "WProgram.h"
- #include <NewSoftSerial.h>
+  #include "WProgram.h"
+  #include <NewSoftSerial.h>
 #endif
 
 #include "Adafruit_FONA.h"
@@ -76,7 +78,6 @@ boolean Adafruit_FONA::begin(Stream &port) {
 
 /********* Real Time Clock ********************************************/
 
-/* returns value in mV (uint16_t) */
 boolean Adafruit_FONA::readRTC(uint8_t *year, uint8_t *month, uint8_t *date, uint8_t *hr, uint8_t *min, uint8_t *sec) {
   uint16_t v;
   sendParseReply(F("AT+CCLK?"), F("+CCLK: "), &v, '/', 0);
@@ -188,6 +189,15 @@ boolean Adafruit_FONA::setVolume(uint8_t i) {
 }
 
 
+boolean Adafruit_FONA::playDTMF(char dtmf) {
+  char str[4];
+  str[0] = '\"';
+  str[1] = dtmf;
+  str[2] = '\"';
+  str[3] = 0;
+  return sendCheckReply(F("AT+CLDTMF=3,"), str, F("OK"));
+}
+
 boolean Adafruit_FONA::playToolkitTone(uint8_t t, uint16_t len) {
   return sendCheckReply(F("AT+STTONE=1,"), t, len, F("OK"));
 }
@@ -263,7 +273,7 @@ int8_t Adafruit_FONA::getFMSignalLevel(uint16_t station) {
 
 /********* PWM/BUZZER **************************************************/
 
-boolean Adafruit_FONA::PWM(uint16_t period, uint8_t duty) {
+boolean Adafruit_FONA::setPWM(uint16_t period, uint8_t duty) {
   if (period > 2000) return false;
   if (duty > 100) return false;
 
@@ -376,8 +386,12 @@ boolean Adafruit_FONA::readSMS(uint8_t i, char *smsbuff,
   mySerial->println(i);
   readline(1000); // timeout
 
+  //Serial.print(F("Reply: ")); Serial.println(replybuffer);
   // parse it out...
-  parseReply(F("+CMGR:"), &thesmslen, ',', 11);
+  if (! parseReply(F("+CMGR:"), &thesmslen, ',', 11)) {
+    *readlen = 0;
+    return false;
+  }
 
   readRaw(thesmslen);
 
@@ -423,7 +437,7 @@ boolean Adafruit_FONA::sendSMS(char *smsaddr, char *smsmsg) {
 
   if (! sendCheckReply(sendcmd, "> ")) return false;
 #ifdef ADAFRUIT_FONA_DEBUG
-  Serial.print("> "); Serial.println(smsmsg);
+  Serial.print(F("> ")); Serial.println(smsmsg);
 #endif
   mySerial->println(smsmsg);
   mySerial->println();
@@ -540,11 +554,218 @@ boolean Adafruit_FONA::getTime(char *buff, uint16_t maxlen) {
   return true;
 }
 
+/********* GPS **********************************************************/
+
+
+boolean Adafruit_FONA::enableGPS(boolean onoff) {
+  uint16_t state;
+
+  // first check if its already on or off
+  if (! sendParseReply(F("AT+CGPSPWR?"), F("+CGPSPWR: "), &state) )
+    return false;
+  
+  if (onoff && !state) {
+    if (! sendCheckReply(F("AT+CGPSPWR=1"), F("OK")))
+      return false;
+  } else if (!onoff && state) {
+    if (! sendCheckReply(F("AT+CGPSPWR=0"), F("OK")))
+      return false;
+  }
+  return true;
+}
+
+int8_t Adafruit_FONA::GPSstatus(void) {
+  uint16_t state;
+
+  getReply(F("AT+CGPSSTATUS?"));
+
+  char *p = strstr_P(replybuffer, (prog_char*)F("+CGPSSTATUS: Location "));
+  if (p == 0) return -1;
+
+  p+=22;
+  //Serial.println(p);
+
+  readline(); // eat 'OK'
+
+
+  if (p[0] == 'U') return 0;
+  if (p[0] == 'N') return 1;
+  if (p[0] == '2') return 2;
+  if (p[0] == '3') return 3;
+
+ // else
+  return 0;
+}
+
+uint8_t Adafruit_FONA::getGPS(uint8_t arg, char *buffer, uint8_t maxbuff) {
+  int32_t x = arg;
+
+  getReply(F("AT+CGPSINF="), x);
+
+  char *p = strstr_P(replybuffer, (prog_char*)F("CGPSINF: "));
+  if (p == 0){
+    buffer[0] = 0;
+    return 0;
+  }
+  p+=9;
+  uint8_t len = max(maxbuff-1, strlen(p));
+  strncpy(buffer, p, len);
+  buffer[len] = 0;
+
+  readline(); // eat 'OK'
+  return len;
+}
+
+boolean Adafruit_FONA::getGPS(float *lat, float *lon, float *speed_kph, float *heading, float *altitude) {
+
+  char gpsbuffer[120];
+
+  // we need at least a 2D fix
+  if (GPSstatus() < 2)
+    return false;
+
+  // grab the mode 2^5 gps csv from the sim808
+  uint8_t res_len = getGPS(32, gpsbuffer, 120);
+
+  // make sure we have a response
+  if (res_len == 0)
+    return false;
+
+  // skip mode
+  char *tok = strtok(gpsbuffer, ",");
+  if (! tok) return false;
+
+  // skip date
+  tok = strtok(NULL, ",");
+  if (! tok) return false;
+
+  // skip fix
+  tok = strtok(NULL, ",");
+  if (! tok) return false;
+
+  // grab the latitude
+  char *latp = strtok(NULL, ",");
+  if (! latp) return false;
+
+  // grab latitude direction
+  char *latdir = strtok(NULL, ",");
+  if (! latdir) return false;
+
+  // grab longitude
+  char *longp = strtok(NULL, ",");
+  if (! longp) return false;
+
+  // grab longitude direction
+  char *longdir = strtok(NULL, ",");
+  if (! longdir) return false;
+
+  double latitude = atof(latp);
+  double longitude = atof(longp);
+
+  // convert latitude from minutes to decimal
+  float degrees = floor(latitude / 100);
+  double minutes = latitude - (100 * degrees);
+  minutes /= 60;
+  degrees += minutes;
+
+  // turn direction into + or -
+  if (latdir[0] == 'S') degrees *= -1;
+
+  *lat = degrees;
+
+  // convert longitude from minutes to decimal
+  degrees = floor(longitude / 100);
+  minutes = longitude - (100 * degrees);
+  minutes /= 60;
+  degrees += minutes;
+
+  // turn direction into + or -
+  if (longdir[0] == 'W') degrees *= -1;
+
+  *lon = degrees;
+
+  // only grab speed if needed
+  if (speed_kph != NULL) {
+
+    // grab the speed in knots
+    char *speedp = strtok(NULL, ",");
+    if (! speedp) return false;
+
+    // convert to kph
+    *speed_kph = atof(speedp) * 1.852;
+
+  }
+
+  // only grab heading if needed
+  if (heading != NULL) {
+
+    // grab the speed in knots
+    char *coursep = strtok(NULL, ",");
+    if (! coursep) return false;
+
+    *heading = atof(coursep);
+
+  }
+
+  // no need to continue
+  if (altitude == NULL)
+    return true;
+
+  // we need at least a 3D fix for altitude
+  if (GPSstatus() < 3)
+    return false;
+
+  // grab the mode 0 gps csv from the sim808
+  res_len = getGPS(0, gpsbuffer, 120);
+
+  // make sure we have a response
+  if (res_len == 0)
+    return false;
+
+  // skip mode
+  tok = strtok(gpsbuffer, ",");
+  if (! tok) return false;
+
+  // skip lat
+  tok = strtok(NULL, ",");
+  if (! tok) return false;
+
+  // skip long
+  tok = strtok(NULL, ",");
+  if (! tok) return false;
+
+  // grab altitude
+  char *altp = strtok(NULL, ",");
+  if (! altp) return false;
+
+  *altitude = atof(altp);
+
+  return true;
+
+}
+
+boolean Adafruit_FONA::enableGPSNMEA(uint8_t i) {
+
+  char sendbuff[15] = "AT+CGPSOUT=000";
+  sendbuff[11] = (i / 100) + '0';
+  i %= 100;
+  sendbuff[12] = (i / 10) + '0';
+  i %= 10;
+  sendbuff[13] = i + '0';
+
+  return sendCheckReply(sendbuff, "OK", 2000);
+}
+
+
 /********* GPRS **********************************************************/
+
 
 boolean Adafruit_FONA::enableGPRS(boolean onoff) {
 
   if (onoff) {
+    // disconnect all sockets
+    sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000);
+
     if (! sendCheckReply(F("AT+CGATT=1"), F("OK"), 10000))
       return false;
 
@@ -576,6 +797,10 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
     if (! sendCheckReply(F("AT+SAPBR=1,1"), F("OK"), 10000))
       return false;
   } else {
+    // disconnect all sockets
+    if (! sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000))
+      return false;
+
     // close GPRS context
     if (! sendCheckReply(F("AT+SAPBR=0,1"), F("OK"), 10000))
       return false;
@@ -590,7 +815,7 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
 uint8_t Adafruit_FONA::GPRSstate(void) {
   uint16_t state;
 
-  if (! sendParseReply(F("AT+CGATT?"), F("+AT+CGATT: "), &state) )
+  if (! sendParseReply(F("AT+CGATT?"), F("+CGATT: "), &state) )
     return -1;
 
   return state;
@@ -619,62 +844,312 @@ boolean Adafruit_FONA::getGSMLoc(uint16_t *errorcode, char *buff, uint16_t maxle
   return true;
 }
 
+boolean Adafruit_FONA::getGSMLoc(float *lat, float *lon) {
+
+  uint16_t returncode;
+  char gpsbuffer[120];
+
+  // make sure we could get a response
+  if (! getGSMLoc(&returncode, gpsbuffer, 120))
+    return false;
+
+  // make sure we have a valid return code
+  if (returncode != 0)
+    return false;
+
+  // tokenize the gps buffer to locate the lat & long
+  char *latp = strtok(gpsbuffer, ",");
+  if (! latp) return false;
+
+  char *longp = strtok(NULL, ",");
+  if (! longp) return false;
+
+  *lat = atof(latp);
+  *lon = atof(longp);
+
+  return true;
+
+}
+/********* TCP FUNCTIONS  ************************************/
+
+
+boolean Adafruit_FONA::TCPconnect(char *server, uint16_t port) {
+  flushInput();
+
+  // close all old connections
+  if (! sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000) ) return false;
+
+  // single connection at a time
+  if (! sendCheckReply(F("AT+CIPMUX=0"), F("OK")) ) return false;
+
+  // manually read data
+  if (! sendCheckReply(F("AT+CIPRXGET=1"), F("OK")) ) return false;
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print(F("AT+CIPSTART=\"TCP\",\""));
+  Serial.print(server);
+  Serial.print(F("\",\""));
+  Serial.print(port);
+  Serial.println(F("\""));
+#endif
+
+  mySerial->print(F("AT+CIPSTART=\"TCP\",\""));
+  mySerial->print(server);
+  mySerial->print(F("\",\""));
+  mySerial->print(port);
+  mySerial->println(F("\""));
+
+  if (! expectReply(F("OK"))) return false;
+  if (! expectReply(F("CONNECT OK"))) return false;
+}
+
+boolean Adafruit_FONA::TCPclose(void) {
+  return sendCheckReply(F("AT+CIPCLOSE"), F("OK"));
+}
+
+boolean Adafruit_FONA::TCPconnected(void) {
+  if (! sendCheckReply(F("AT+CIPSTATUS"), F("OK"), 100) ) return false;
+  readline(100);
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print (F("\t<--- ")); Serial.println(replybuffer);
+#endif
+  return (strcmp(replybuffer, "STATE: CONNECT OK") == 0);
+}
+
+boolean Adafruit_FONA::TCPsend(char *packet, uint8_t len) {
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print(F("AT+CIPSEND="));
+  Serial.println(len);
+
+  for (uint16_t i=0; i<len; i++) {
+    Serial.print(" 0x");
+    Serial.print(packet[i], HEX);
+  }
+  Serial.println();
+#endif
+
+
+  mySerial->print(F("AT+CIPSEND="));
+  mySerial->println(len);
+  readline();
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print (F("\t<--- ")); Serial.println(replybuffer);
+#endif
+  if (replybuffer[0] != '>') return false;
+
+  mySerial->write(packet, len);
+  readline(3000); // wait up to 3 seconds to send the data
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print (F("\t<--- ")); Serial.println(replybuffer);
+#endif
+    
+  return (strcmp(replybuffer, "SEND OK") == 0);
+}
+
+uint16_t Adafruit_FONA::TCPavailable(void) {
+  uint16_t avail;
+
+  if (! sendParseReply(F("AT+CIPRXGET=4"), F("+CIPRXGET: 4,"), &avail, ',', 0) ) return false;
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print (avail); Serial.println(F(" bytes available"));
+#endif
+    
+  return avail;
+}
+
+
+uint16_t Adafruit_FONA::TCPread(uint8_t *buff, uint8_t len) {
+  uint16_t avail;
+
+  mySerial->print(F("AT+CIPRXGET=2,"));
+  mySerial->println(len);
+  readline();
+  if (! parseReply(F("+CIPRXGET: 2,"), &avail, ',', 0)) return false;
+
+  readRaw(avail);
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print (avail); Serial.println(F(" bytes read"));
+  for (uint8_t i=0;i<avail;i++) {
+    Serial.print(" 0x"); Serial.print(replybuffer[i], HEX);
+  }
+  Serial.println(); 
+#endif
+
+  memcpy(buff, replybuffer, avail);
+    
+  return avail;
+}
+
+
+
+/********* HTTP LOW LEVEL FUNCTIONS  ************************************/
+
+boolean Adafruit_FONA::HTTP_init() {
+  return sendCheckReply(F("AT+HTTPINIT"), F("OK"));
+}
+
+boolean Adafruit_FONA::HTTP_term() {
+  return sendCheckReply(F("AT+HTTPTERM"), F("OK"));
+}
+
+void Adafruit_FONA::HTTP_para_start(const __FlashStringHelper *parameter,
+                                    boolean quoted) {
+  flushInput();
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print("\t---> "); 
+  Serial.print(F("AT+HTTPPARA=\""));
+  Serial.print(parameter);
+  Serial.println('"');
+#endif
+
+  mySerial->print(F("AT+HTTPPARA=\""));
+  mySerial->print(parameter);
+  if (quoted)
+    mySerial->print(F("\",\""));
+  else
+    mySerial->print(F("\","));
+}
+
+boolean Adafruit_FONA::HTTP_para_end(boolean quoted) {
+  if (quoted)
+    mySerial->println('"');
+  else
+    mySerial->println();
+
+  return expectReply(F("OK"));
+}
+
+boolean Adafruit_FONA::HTTP_para(const __FlashStringHelper *parameter, 
+                                 const char *value) {
+  HTTP_para_start(parameter, true);
+  mySerial->print(value);
+  return HTTP_para_end(true);
+}
+
+boolean Adafruit_FONA::HTTP_para(const __FlashStringHelper *parameter, 
+                                 const __FlashStringHelper *value) {
+  HTTP_para_start(parameter, true);
+  mySerial->print(value);
+  return HTTP_para_end(true);
+}
+
+boolean Adafruit_FONA::HTTP_para(const __FlashStringHelper *parameter, 
+                                 int32_t value) {
+  HTTP_para_start(parameter, false);
+  mySerial->print(value);
+  return HTTP_para_end(false);
+}
+
+boolean Adafruit_FONA::HTTP_data(uint32_t size, uint32_t maxTime) {
+  flushInput();
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print("\t---> "); 
+  Serial.print(F("AT+HTTPDATA="));
+  Serial.print(size);
+  Serial.print(",");
+  Serial.println(maxTime);
+#endif
+
+  mySerial->print(F("AT+HTTPDATA="));
+  mySerial->print(size);
+  mySerial->print(",");
+  mySerial->println(maxTime);
+
+  return expectReply(F("DOWNLOAD"));
+}
+
+boolean Adafruit_FONA::HTTP_action(uint8_t method, uint16_t *status, 
+                                   uint16_t *datalen, int32_t timeout) {
+  // Send request.
+  if (! sendCheckReply(F("AT+HTTPACTION="), method, F("OK")))
+    return false;
+
+  // Parse response status and size.
+  readline(timeout);
+  if (! parseReply(F("+HTTPACTION:"), status, ',', 1))
+    return false;
+  if (! parseReply(F("+HTTPACTION:"), datalen, ',', 2))
+    return false;
+
+  return true;
+}
+
+boolean Adafruit_FONA::HTTP_readall(uint16_t *datalen) {
+  getReply(F("AT+HTTPREAD"));
+  if (! parseReply(F("+HTTPREAD:"), datalen, ',', 0))
+    return false;
+
+  return true;
+}
+
+boolean Adafruit_FONA::HTTP_ssl(boolean onoff) {
+  return sendCheckReply(F("AT+HTTPSSL="), onoff ? 1 : 0, F("OK"));
+}
+
+/********* HTTP HIGH LEVEL FUNCTIONS ***************************/
+
 boolean Adafruit_FONA::HTTP_GET_start(char *url,
               uint16_t *status, uint16_t *datalen){
-  if (! HTTP_initialize(url))
+  if (! HTTP_setup(url))
     return false;
 
   // HTTP GET
-  if (! sendCheckReply(F("AT+HTTPACTION=0"), F("OK")))
+  if (! HTTP_action(FONA_HTTP_GET, status, datalen))
     return false;
 
-  // HTTP response
-  if (! HTTP_response(status, datalen))
+  Serial.print("Status: "); Serial.println(*status);
+  Serial.print("Len: "); Serial.println(*datalen);
+
+  // HTTP response data
+  if (! HTTP_readall(datalen))
     return false;
 
   return true;
 }
 
 void Adafruit_FONA::HTTP_GET_end(void) {
-  HTTP_terminate();
+  HTTP_term();
 }
 
 boolean Adafruit_FONA::HTTP_POST_start(char *url,
               const __FlashStringHelper *contenttype,
               const uint8_t *postdata, uint16_t postdatalen,
               uint16_t *status, uint16_t *datalen){
-  if (! HTTP_initialize(url))
+  if (! HTTP_setup(url))
     return false;
 
-  if (! sendCheckReplyQuoted(F("AT+HTTPPARA=\"CONTENT\","), contenttype, F("OK"), 10000))
+  if (! HTTP_para(F("CONTENT"), contenttype)) {
     return false;
+  }
 
   // HTTP POST data
-  flushInput();
-  mySerial->print(F("AT+HTTPDATA="));
-  mySerial->print(postdatalen);
-  mySerial->println(",10000");
-  readline(FONA_DEFAULT_TIMEOUT_MS);
-  if (strcmp(replybuffer, "DOWNLOAD") != 0)
+  if (! HTTP_data(postdatalen, 10000))
     return false;
-
   mySerial->write(postdata, postdatalen);
-  readline(10000);
-  if (strcmp(replybuffer, "OK") != 0)
+  if (! expectReply(F("OK")))
     return false;
 
   // HTTP POST
-  if (! sendCheckReply(F("AT+HTTPACTION=1"), F("OK")))
+  if (! HTTP_action(FONA_HTTP_POST, status, datalen))
     return false;
 
-  if (! HTTP_response(status, datalen))
+  Serial.print("Status: "); Serial.println(*status);
+  Serial.print("Len: "); Serial.println(*datalen);
+
+  // HTTP response data
+  if (! HTTP_readall(datalen))
     return false;
 
   return true;
 }
 
 void Adafruit_FONA::HTTP_POST_end(void) {
-  HTTP_terminate();
+  HTTP_term();
 }
 
 void Adafruit_FONA::setUserAgent(const __FlashStringHelper *useragent) {
@@ -687,59 +1162,41 @@ void Adafruit_FONA::setHTTPSRedirect(boolean onoff) {
 
 /********* HTTP HELPERS ****************************************/
 
-boolean Adafruit_FONA::HTTP_initialize(char *url) {
+boolean Adafruit_FONA::HTTP_setup(char *url) {
   // Handle any pending
-  HTTP_terminate();
+  HTTP_term();
 
   // Initialize and set parameters
-  if (! sendCheckReply(F("AT+HTTPINIT"), F("OK")))
+  if (! HTTP_init())
     return false;
-  if (! sendCheckReply(F("AT+HTTPPARA=\"CID\",1"), F("OK")))
+  if (! HTTP_para(F("CID"), 1))
     return false;
-  if (! sendCheckReplyQuoted(F("AT+HTTPPARA=\"UA\","), useragent, F("OK"), 10000))
+  if (! HTTP_para(F("UA"), useragent))
     return false;
-
-  flushInput();
-  mySerial->print(F("AT+HTTPPARA=\"URL\",\""));
-  mySerial->print(url);
-  mySerial->println("\"");
-  readline(FONA_DEFAULT_TIMEOUT_MS);
-  if (strcmp(replybuffer, "OK") != 0)
+  if (! HTTP_para(F("URL"), url))
     return false;
 
   // HTTPS redirect
   if (httpsredirect) {
-    if (! sendCheckReply(F("AT+HTTPPARA=\"REDIR\",1"), F("OK")))
+    if (! HTTP_para(F("REDIR"),1))
       return false;
 
-    if (! sendCheckReply(F("AT+HTTPSSL=1"), F("OK")))
+    if (! HTTP_ssl(true))
       return false;
   }
 
   return true;
 }
 
-boolean Adafruit_FONA::HTTP_response(uint16_t *status, uint16_t *datalen) {
-  // Read response status
-  readline(10000);
+/********* HELPERS *********************************************/
 
-  if (! parseReply(F("+HTTPACTION:"), status, ',', 1))
-    return false;
-  if (! parseReply(F("+HTTPACTION:"), datalen, ',', 2))
-    return false;
-
-  Serial.print("Status: "); Serial.println(*status);
-  Serial.print("Len: "); Serial.println(*datalen);
-
-  // Read response
-  getReply(F("AT+HTTPREAD"));
-
-  return true;
-}
-
-void Adafruit_FONA::HTTP_terminate(void) {
-  flushInput();
-  sendCheckReply(F("AT+HTTPTERM"), F("OK"));
+boolean Adafruit_FONA::expectReply(const __FlashStringHelper *reply,
+                                   uint16_t timeout) {
+  readline(timeout);
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print(F("\t<--- ")); Serial.println(replybuffer);
+#endif
+  return (strcmp_P(replybuffer, (prog_char*)reply) == 0);
 }
 
 /********* LOW LEVEL *******************************************/
@@ -838,7 +1295,7 @@ uint8_t Adafruit_FONA::getReply(char *send, uint16_t timeout) {
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
-    Serial.print ("\t<--- "); Serial.println(replybuffer);
+    Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
   return l;
 }
@@ -854,7 +1311,7 @@ uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *send, uint16_t timeou
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
-    Serial.print ("\t<--- "); Serial.println(replybuffer);
+    Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
   return l;
 }
@@ -872,7 +1329,7 @@ uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *prefix, char *suffix,
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
-    Serial.print ("\t<--- "); Serial.println(replybuffer);
+    Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
   return l;
 }
@@ -890,7 +1347,7 @@ uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *prefix, int32_t suffi
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
-    Serial.print ("\t<--- "); Serial.println(replybuffer);
+    Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
   return l;
 }
@@ -911,7 +1368,7 @@ uint8_t Adafruit_FONA::getReply(const __FlashStringHelper *prefix, int32_t suffi
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
-    Serial.print ("\t<--- "); Serial.println(replybuffer);
+    Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
   return l;
 }
@@ -932,7 +1389,7 @@ uint8_t Adafruit_FONA::getReplyQuoted(const __FlashStringHelper *prefix, const _
 
   uint8_t l = readline(timeout);
 #ifdef ADAFRUIT_FONA_DEBUG
-    Serial.print ("\t<--- "); Serial.println(replybuffer);
+    Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
   return l;
 }
