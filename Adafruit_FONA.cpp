@@ -148,6 +148,94 @@ uint8_t Adafruit_FONA::getIMEI(char *imei) {
   return strlen(imei);
 }
 
+/********* Phonebook **********************************************************/
+boolean Adafruit_FONA::setPBstorage(uint8_t Sto){
+	char Storage[14] = "AT+CPBS=\"XX\"";
+	
+	switch(Sto){
+		case 0:
+			Storage[9] = 'O';
+			Storage[10] = 'N';
+			break;
+			
+		case 1:
+			Storage[9] = 'S';
+			Storage[10] = 'M';
+			break;
+			
+		case 2:
+			Storage[9] = 'M';
+			Storage[10] = 'E';
+			break;
+			
+		default:
+			return false;
+			break;
+	}
+	
+	boolean status = sendCheckReply(Storage,"OK",3000);
+	return status;
+}
+
+//Get number of used slots in the selected phonebook storage
+uint8_t Adafruit_FONA::getPBused(void){
+	uint16_t used;
+	if (! sendParseReply(F("AT+CPBS?"), F("+CPBS: "), &used, ',', 1)) return -1;
+	return used;
+}
+
+//Get total number of slots in the selected phonebook storage
+uint8_t Adafruit_FONA::getPBtotal(void){
+	uint16_t total;
+	if (! sendParseReply(F("AT+CPBS?"), F("+CPBS: "), &total, ',', 2)) return -1;
+	return total;
+}
+
+//Write an entry in the selected phonebook storage
+boolean Adafruit_FONA::WritePBentry(uint8_t i, char *Number, uint8_t Type, char *Text){
+	mySerial->print(F("AT+CPBW="));
+	if(i != 0){
+		mySerial->print(i);
+	}
+	mySerial->print(F(",\""));
+	mySerial->print(Number);
+	mySerial->print(F("\","));
+	mySerial->print(Type);
+	mySerial->print(F(",\""));
+	mySerial->print(Text);
+	mySerial->println(F("\""));
+	
+	readline(3000); //3 secs max. response time
+	if (strcmp(replybuffer, "OK") != 0) return false;
+	
+	return true;
+}
+
+boolean Adafruit_FONA::ReadPBentry(uint8_t i, char *Number, uint16_t *Type, char *Text){
+
+	  mySerial->print(F("AT+CPBR="));
+	  mySerial->println(i);
+	  readline(3000); //3 secs max. response time
+	  // Parse the fields in the response
+	  if(! parseReplyQuoted(F("+CPBR:"), Number, 40, ',', 1) ) return false;
+	  if(! parseReply(F("+CPBR:"), Type, ',', 2) ) return false;
+	  if(! parseReplyQuoted(F("+CPBR:"), Text, 14, ',', 3) ) return false;
+	  // Drop any remaining data from the response.
+	  flushInput();
+	  return true;
+}
+boolean Adafruit_FONA::DeletePBentry(uint8_t i){
+	char sendbuff[12] = "AT+CPBW=000";
+	sendbuff[8] = (i / 100) + '0';
+	i %= 100;
+	sendbuff[9] = (i / 10) + '0';
+	i %= 10;
+	sendbuff[10] = i + '0';
+	
+	boolean status = sendCheckReply(sendbuff,"OK",3000);
+	return status;
+}
+
 /********* NETWORK *******************************************************/
 
 uint8_t Adafruit_FONA::getNetworkStatus(void) {
