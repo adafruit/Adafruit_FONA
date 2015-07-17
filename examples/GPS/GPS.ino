@@ -15,19 +15,25 @@
 #include "Adafruit_FONA.h"
 
 // standard pins for the 808 shield
-#define FONA_RX 3
-#define FONA_TX 4
-#define FONA_RST 5
+#define FONA_RX 2
+#define FONA_TX 3
+#define FONA_RST 4
 
 // This is to handle the absence of software serial on platforms
 // like the Arduino Due. Modify this code if you are using different
 // hardware serial port, or if you are using a non-avr platform
 // that supports software serial.
-#ifdef __AVR__
+#if defined(__AVR_ATmega32U4__)
+  // leonardo & micro need to use Serial1 to communicate via serial
+  // on pins 0 (RX) and 1 (TX)
+  HardwareSerial *fonaSerial = &Serial1;
+#elif defined(__AVR__)
+  // all other AVR chips
   #include <SoftwareSerial.h>
   SoftwareSerial fonaSS = SoftwareSerial(FONA_TX, FONA_RX);
   SoftwareSerial *fonaSerial = &fonaSS;
 #else
+  // due, etc
   HardwareSerial *fonaSerial = &Serial1;
 #endif
 
