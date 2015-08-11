@@ -106,6 +106,10 @@ class Adafruit_FONA : public Stream {
   boolean deleteSMS(uint8_t i);
   boolean getSMSSender(uint8_t i, char *sender, int senderlen);
 
+  //USSD handling
+
+  boolean sendUSSD(char *ussdmsg, char *ussdbuff, uint16_t maxlen, uint16_t *readlen);
+
   // Time
   boolean enableNetworkTimeSync(boolean onoff);
   boolean enableNTPTimeSync(boolean onoff, const __FlashStringHelper *ntpserver=0);
