@@ -29,6 +29,10 @@
 
 #define ADAFRUIT_FONA_DEBUG
 
+#define FONA800 1
+#define FONA808 2
+#define FONA3G 3
+
 #define FONA_HEADSETAUDIO 0
 #define FONA_EXTAUDIO 1
 
@@ -56,6 +60,7 @@ class Adafruit_FONA : public Stream {
  public:
   Adafruit_FONA(int8_t r);
   boolean begin(Stream &port);
+  uint8_t type();
 
   // Stream
   int available(void);
@@ -177,6 +182,7 @@ class Adafruit_FONA : public Stream {
 
  protected:
   int8_t _rstpin;
+  uint8_t _type;
 
   char replybuffer[255];
   const __FlashStringHelper *apn;
@@ -224,16 +230,15 @@ class Adafruit_FONA : public Stream {
 class Adafruit_FONA_3G : public Adafruit_FONA {
 
  public:
-  Adafruit_FONA_3G (int8_t r) : Adafruit_FONA(r) {}
-  
+  Adafruit_FONA_3G (int8_t r) : Adafruit_FONA(r) { _type = FONA3G; }
+    
     boolean getBattVoltage(uint16_t *v);
-  
+    boolean playToolkitTone(uint8_t t, uint16_t len);
 
  protected:
-  
-  boolean parseReply(const __FlashStringHelper *toreply,
+    boolean parseReply(const __FlashStringHelper *toreply,
 		       float *f, char divider, uint8_t index);
-  
+    
     boolean sendParseReply(const __FlashStringHelper *tosend,
 				      const __FlashStringHelper *toreply,
 					 float *f, char divider, uint8_t index);  

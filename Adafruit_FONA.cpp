@@ -34,12 +34,18 @@ Adafruit_FONA::Adafruit_FONA(int8_t rst)
 {
   _rstpin = rst;
   
+  _type = FONA800;
+
   apn = F("FONAnet");
   apnusername = 0;
   apnpassword = 0;
   mySerial = 0;
   httpsredirect = false;
   useragent = F("FONA");
+}
+
+uint8_t Adafruit_FONA::type(void) {
+  return _type;
 }
 
 boolean Adafruit_FONA::begin(Stream &port) {
@@ -139,8 +145,14 @@ uint8_t Adafruit_FONA::unlockSIM(char *pin)
 
 uint8_t Adafruit_FONA::getSIMCCID(char *ccid) {
   getReply("AT+CCID");
-  // up to 20 chars
-  strncpy(ccid, replybuffer, 20);
+  // up to 28 chars for reply, 20 char total ccid
+  if (replybuffer[0] == '+') {
+    // fona 3g?
+    strncpy(ccid, replybuffer+8, 20);
+  } else {
+    // fona 800 or 800
+    strncpy(ccid, replybuffer, 20);
+  }
   ccid[20] = 0;
 
   readline(); // eat 'OK'
@@ -214,6 +226,13 @@ boolean Adafruit_FONA::playDTMF(char dtmf) {
 
 boolean Adafruit_FONA::playToolkitTone(uint8_t t, uint16_t len) {
   return sendCheckReply(F("AT+STTONE=1,"), t, len, F("OK"));
+}
+
+boolean Adafruit_FONA_3G::playToolkitTone(uint8_t t, uint16_t len) {
+  if (! sendCheckReply(F("AT+CPTONE="), t, F("OK")))
+    return false;
+  delay(len);
+  sendCheckReply(F("AT+CPTONE=0"), F("OK"));
 }
 
 boolean Adafruit_FONA::setMicVolume(uint8_t a, uint8_t level) {
