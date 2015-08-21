@@ -58,8 +58,8 @@ boolean Adafruit_FONA::begin(Stream &port) {
   delay(100);
   digitalWrite(_rstpin, HIGH);
 
-  // give 3 seconds to reboot
-  delay(3000);
+  // give 7 seconds to reboot
+  delay(7000);
 
   while (mySerial->available()) mySerial->read();
 
@@ -77,6 +77,9 @@ boolean Adafruit_FONA::begin(Stream &port) {
   if (! sendCheckReply(F("ATE0"), F("OK"))) {
     return false;
   }
+
+  // turn on hangupitude
+  sendCheckReply(F("AT+CVHU=0"), F("OK"));
 
   return true;
 }
@@ -329,9 +332,20 @@ boolean Adafruit_FONA::hangUp(void) {
   return sendCheckReply(F("ATH0"), F("OK"));
 }
 
+boolean Adafruit_FONA_3G::hangUp(void) {
+  getReply(F("ATH"));
+
+  return (strstr_P(replybuffer, (prog_char *)F("VOICE CALL: END")) != 0);
+}
+
 boolean Adafruit_FONA::pickUp(void) {
   return sendCheckReply(F("ATA"), F("OK"));
 }
+
+boolean Adafruit_FONA_3G::pickUp(void) {
+  return sendCheckReply(F("ATA"), F("VOICE CALL: BEGIN"));
+}
+
 
 void Adafruit_FONA::onIncomingCall() {
   #ifdef ADAFRUIT_FONA_DEBUG
@@ -393,11 +407,15 @@ boolean Adafruit_FONA::setSMSInterrupt(uint8_t i) {
 int8_t Adafruit_FONA::getNumSMS(void) {
   uint16_t numsms;
 
+  // get into text mode
   if (! sendCheckReply(F("AT+CMGF=1"), F("OK"))) return -1;
+
   // ask how many sms are stored
-
-  if (! sendParseReply(F("AT+CPMS?"), F("+CPMS: \"SM_P\","), &numsms) ) return -1;
-
+  if (_type == FONA3G) {
+    if (! sendParseReply(F("AT+CPMS?"), F("+CPMS: \"ME\","), &numsms) ) return -1;
+  } else {
+    if (! sendParseReply(F("AT+CPMS?"), F("+CPMS: \"SM_P\","), &numsms) ) return -1;
+  }
   return numsms;
 }
 
@@ -478,8 +496,15 @@ boolean Adafruit_FONA::sendSMS(char *smsaddr, char *smsmsg) {
 #ifdef ADAFRUIT_FONA_DEBUG
   Serial.println("^Z");
 #endif
+  if (_type == FONA3G) {
+    // Eat two sets of CRLF
+    readline(200);
+    //Serial.print("Line 1: "); Serial.println(strlen(replybuffer));
+    readline(200);
+    //Serial.print("Line 2: "); Serial.println(strlen(replybuffer));
+  }
   readline(10000); // read the +CMGS reply, wait up to 10 seconds!!!
-  //Serial.print("* "); Serial.println(replybuffer);
+  //Serial.print("Line 3: "); Serial.println(strlen(replybuffer));
   if (strstr(replybuffer, "+CMGS") == 0) {
     return false;
   }
@@ -827,6 +852,66 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
   return true;
 }
 
+boolean Adafruit_FONA_3G::enableGPRS(boolean onoff) {
+
+  if (onoff) {
+    // disconnect all sockets
+    //sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000);
+
+    if (! sendCheckReply(F("AT+CGATT=1"), F("OK"), 10000))
+      return false;
+
+
+    // set bearer profile access point name
+    if (apn) {
+      // Send command AT+CGSOCKCONT=1,"IP","<apn value>" where <apn value> is the configured APN name.
+      if (! sendCheckReplyQuoted(F("AT+CGSOCKCONT=1,\"IP\","), apn, F("OK"), 10000))
+        return false;
+
+      // set username/password
+      if (apnusername) {
+	char authstring[100] = "AT+CGAUTH=1,1,\"";
+	char *strp = authstring + strlen(authstring);
+	strcpy_P(strp, (prog_char *)apnusername);
+	strp+=strlen_P((prog_char *)apnusername);
+	strp[0] = '\"';
+	strp++;
+	strp[0] = 0;
+      
+	if (apnpassword) {
+	  strp[0] = ','; strp++;
+	  strp[0] = '\"'; strp++;
+	  strcpy_P(strp, (prog_char *)apnpassword);
+	  strp+=strlen_P((prog_char *)apnpassword);
+	  strp[0] = '\"';
+	  strp++;
+	  strp[0] = 0;
+	}
+
+	if (! sendCheckReply(authstring, "OK", 10000))
+	  return false;
+      }
+    }
+
+    // connect in transparent
+    if (! sendCheckReply(F("AT+CIPMODE=1"), F("OK"), 10000))
+      return false;
+    // open network (?)
+    if (! sendCheckReply(F("AT+NETOPEN=,,1"), F("Network opened"), 10000))
+      return false;
+    
+    readline(); // eat 'OK'
+  } else {
+    // close GPRS context
+    if (! sendCheckReply(F("AT+NETCLOSE"), F("Network closed"), 10000))
+      return false;
+
+    readline(); // eat 'OK'
+  }
+
+  return true;
+}
+
 uint8_t Adafruit_FONA::GPRSstate(void) {
   uint16_t state;
 
@@ -1126,6 +1211,42 @@ boolean Adafruit_FONA::HTTP_GET_start(char *url,
 
   return true;
 }
+
+/*
+boolean Adafruit_FONA_3G::HTTP_GET_start(char *ipaddr, char *path, uint16_t port
+				      uint16_t *status, uint16_t *datalen){
+  char send[100] = "AT+CHTTPACT=\"";
+  char *sendp = send + strlen(send);
+  memset(sendp, 0, 100 - strlen(send));
+
+  strcpy(sendp, ipaddr);
+  sendp+=strlen(ipaddr);
+  sendp[0] = '\"';
+  sendp++;
+  sendp[0] = ',';
+  itoa(sendp, port);
+  getReply(send, 500);
+
+  return;
+
+  if (! HTTP_setup(url))
+
+    return false;
+
+  // HTTP GET
+  if (! HTTP_action(FONA_HTTP_GET, status, datalen))
+    return false;
+
+  Serial.print("Status: "); Serial.println(*status);
+  Serial.print("Len: "); Serial.println(*datalen);
+
+  // HTTP response data
+  if (! HTTP_readall(datalen))
+    return false;
+
+  return true;
+}
+*/
 
 void Adafruit_FONA::HTTP_GET_end(void) {
   HTTP_term();

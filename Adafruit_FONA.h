@@ -234,6 +234,9 @@ class Adafruit_FONA_3G : public Adafruit_FONA {
     
     boolean getBattVoltage(uint16_t *v);
     boolean playToolkitTone(uint8_t t, uint16_t len);
+    boolean hangUp(void);
+    boolean pickUp(void);
+    boolean enableGPRS(boolean onoff);
 
  protected:
     boolean parseReply(const __FlashStringHelper *toreply,
