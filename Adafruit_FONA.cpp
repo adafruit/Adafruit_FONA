@@ -76,6 +76,11 @@ boolean Adafruit_FONA::begin(Stream &port) {
 }
 
 
+/********* Serial port ********************************************/
+boolean Adafruit_FONA::setBaudrate(uint16_t baud) {
+  return sendCheckReply(F("AT+IPREX="), baud, F("OK"));
+}
+
 /********* Real Time Clock ********************************************/
 
 boolean Adafruit_FONA::readRTC(uint8_t *year, uint8_t *month, uint8_t *date, uint8_t *hr, uint8_t *min, uint8_t *sec) {
@@ -99,6 +104,15 @@ boolean Adafruit_FONA::enableRTC(uint8_t i) {
 boolean Adafruit_FONA::getBattVoltage(uint16_t *v) {
   return sendParseReply(F("AT+CBC"), F("+CBC: "), v, ',', 2);
 }
+
+/* returns value in mV (uint16_t) */
+boolean Adafruit_FONA_3G::getBattVoltage(uint16_t *v) {
+  float f;
+  boolean b = sendParseReply(F("AT+CBC"), F("+CBC: "), &f, ',', 2);
+  *v = f*1000;
+  return b;
+}
+
 
 /* returns the percentage charge of battery as reported by sim800 */
 boolean Adafruit_FONA::getBattPercent(uint16_t *p) {
@@ -1512,6 +1526,41 @@ boolean Adafruit_FONA::sendParseReply(const __FlashStringHelper *tosend,
   if (! parseReply(toreply, v, divider, index)) return false;
 
   readline(); // eat 'OK'
+
+  return true;
+}
+
+
+// needed for CBC and others
+
+boolean Adafruit_FONA_3G::sendParseReply(const __FlashStringHelper *tosend,
+				      const __FlashStringHelper *toreply,
+				      float *f, char divider, uint8_t index) {
+  getReply(tosend);
+
+  if (! parseReply(toreply, f, divider, index)) return false;
+
+  readline(); // eat 'OK'
+
+  return true;
+}
+
+
+boolean Adafruit_FONA_3G::parseReply(const __FlashStringHelper *toreply,
+          float *f, char divider, uint8_t index) {
+  char *p = strstr_P(replybuffer, (prog_char*)toreply);  // get the pointer to the voltage
+  if (p == 0) return false;
+  p+=strlen_P((prog_char*)toreply);
+  //Serial.println(p);
+  for (uint8_t i=0; i<index;i++) {
+    // increment dividers
+    p = strchr(p, divider);
+    if (!p) return false;
+    p++;
+    //Serial.println(p);
+
+  }
+  *f = atof(p);
 
   return true;
 }

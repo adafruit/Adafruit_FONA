@@ -27,7 +27,7 @@
   #include <NewSoftSerial.h>
 #endif
 
-//#define ADAFRUIT_FONA_DEBUG
+#define ADAFRUIT_FONA_DEBUG
 
 #define FONA_HEADSETAUDIO 0
 #define FONA_EXTAUDIO 1
@@ -63,6 +63,9 @@ class Adafruit_FONA : public Stream {
   int read(void);
   int peek(void);
   void flush();
+
+  // FONE 3G requirements
+  boolean setBaudrate(uint16_t baud);
 
   // RTC
   boolean enableRTC(uint8_t i);
@@ -172,7 +175,7 @@ class Adafruit_FONA : public Stream {
   boolean sendCheckReply(const __FlashStringHelper *send, const __FlashStringHelper *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
 
 
- private:
+ protected:
   int8_t _rstpin;
 
   char replybuffer[255];
@@ -216,6 +219,24 @@ class Adafruit_FONA : public Stream {
   static void onIncomingCall();
 
   Stream *mySerial;
+};
+
+class Adafruit_FONA_3G : public Adafruit_FONA {
+
+ public:
+  Adafruit_FONA_3G (int8_t r) : Adafruit_FONA(r) {}
+  
+    boolean getBattVoltage(uint16_t *v);
+  
+
+ protected:
+  
+  boolean parseReply(const __FlashStringHelper *toreply,
+		       float *f, char divider, uint8_t index);
+  
+    boolean sendParseReply(const __FlashStringHelper *tosend,
+				      const __FlashStringHelper *toreply,
+					 float *f, char divider, uint8_t index);  
 };
 
 #endif
