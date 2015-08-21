@@ -1,13 +1,11 @@
 /***************************************************
   This is an example for our Adafruit FONA Cellular Module
 
-  Designed specifically to work with the Adafruit FONA 800, 808 & 3G
+  Designed specifically to work with the Adafruit FONA
   ----> http://www.adafruit.com/products/1946
   ----> http://www.adafruit.com/products/1963
   ----> http://www.adafruit.com/products/2468
   ----> http://www.adafruit.com/products/2542
-  ----> http://www.adafruit.com/products/2691
-  ----> http://www.adafruit.com/products/2687
 
   These cellular modules use TTL Serial to communicate, 2 pins are
   required to interface
@@ -140,11 +138,11 @@ void printMenu(void) {
   Serial.println(F("[W] Post to website (GPRS)"));
 
   // GPS
-  Serial.println(F("[O] Turn GPS on (SIM808)"));
-  Serial.println(F("[o] Turn GPS off (SIM808)"));
-  Serial.println(F("[x] GPS fix status (SIM808)"));
-  Serial.println(F("[L] Query GPS location (SIM808)"));
-  Serial.println(F("[E] Raw NMEA out (SIM808)"));
+  Serial.println(F("[O] Turn GPS on (FONA 808 & 3G)"));
+  Serial.println(F("[o] Turn GPS off (FONA 808 & 3G)"));
+  Serial.println(F("[L] Query GPS location (FONA 808 & 3G)"));
+  Serial.println(F("[x] GPS fix status (FONA808)"));
+  Serial.println(F("[E] Raw NMEA out (FONA808)"));
 
   Serial.println(F("[S] create Serial passthru tunnel"));
   Serial.println(F("-------------------------------------"));

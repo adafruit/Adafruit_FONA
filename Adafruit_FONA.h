@@ -237,14 +237,15 @@ class Adafruit_FONA_3G : public Adafruit_FONA {
     boolean hangUp(void);
     boolean pickUp(void);
     boolean enableGPRS(boolean onoff);
+    boolean enableGPS(boolean onoff);
 
  protected:
     boolean parseReply(const __FlashStringHelper *toreply,
 		       float *f, char divider, uint8_t index);
     
     boolean sendParseReply(const __FlashStringHelper *tosend,
-				      const __FlashStringHelper *toreply,
-					 float *f, char divider, uint8_t index);  
+			   const __FlashStringHelper *toreply,
+			   float *f, char divider = ',', uint8_t index=0);  
 };
 
 #endif
