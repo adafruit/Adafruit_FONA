@@ -53,6 +53,8 @@ Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
 
 uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout = 0);
 
+uint8_t type;
+
 void setup() {
   while (!Serial);
 
@@ -61,13 +63,30 @@ void setup() {
   Serial.println(F("Initializing....(May take 3 seconds)"));
 
   fonaSerial->begin(4800);
-
   if (! fona.begin(*fonaSerial)) {
     Serial.println(F("Couldn't find FONA"));
     while (1);
   }
+  type = fona.type();
   Serial.println(F("FONA is OK"));
-
+  Serial.print(F("Found "));
+  switch (type) {
+    case FONA800L:
+      Serial.println(F("FONA 800L")); break;
+    case FONA800H:
+      Serial.println(F("FONA 800L")); break;
+    case FONA808_V1:
+      Serial.println(F("FONA 808 (v1)")); break;
+    case FONA808_V2:
+      Serial.println(F("FONA 808 (v2)")); break;
+    case FONA3G_A:
+      Serial.println(F("FONA 3G (American)")); break;
+    case FONA3G_E:
+      Serial.println(F("FONA 3G (American)")); break;
+    default: 
+      Serial.println(F("???")); break;
+  }
+  
   // Print SIM card IMEI number.
   char imei[15] = {0}; // MUST use a 16 character buffer for IMEI!
   uint8_t imeiLen = fona.getIMEI(imei);
@@ -138,12 +157,16 @@ void printMenu(void) {
   Serial.println(F("[W] Post to website (GPRS)"));
 
   // GPS
-  Serial.println(F("[O] Turn GPS on (FONA 808 & 3G)"));
-  Serial.println(F("[o] Turn GPS off (FONA 808 & 3G)"));
-  Serial.println(F("[L] Query GPS location (FONA 808 & 3G)"));
-  Serial.println(F("[x] GPS fix status (FONA808)"));
-  Serial.println(F("[E] Raw NMEA out (FONA808)"));
-
+  if ((type == FONA3G_A) || (type == FONA3G_E) || (type == FONA808_V1) || (type == FONA808_V2)) {
+    Serial.println(F("[O] Turn GPS on (FONA 808 & 3G)"));
+    Serial.println(F("[o] Turn GPS off (FONA 808 & 3G)"));
+    Serial.println(F("[L] Query GPS location (FONA 808 & 3G)"));
+    if (type == FONA808_V1) {
+      Serial.println(F("[x] GPS fix status (FONA808 v1 only)"));
+    }
+    Serial.println(F("[E] Raw NMEA out (FONA808)"));
+  }
+  
   Serial.println(F("[S] create Serial passthru tunnel"));
   Serial.println(F("-------------------------------------"));
   Serial.println(F(""));
@@ -256,7 +279,7 @@ void loop() {
     case 'v': {
         // set volume
         flushSerial();
-        if (fona.type() == FONA3G) {
+        if ( (type == FONA3G_A) || (type == FONA3G_E) ) {
           Serial.print(F("Set Vol [0-8] "));
         } else {
           Serial.print(F("Set Vol % [0-100] "));
@@ -274,7 +297,7 @@ void loop() {
     case 'V': {
         uint8_t v = fona.getVolume();
         Serial.print(v);
-        if (fona.type() == FONA3G) {
+        if ( (type == FONA3G_A) || (type == FONA3G_E) ) {
           Serial.println(" / 8");
         } else {
           Serial.println("%");
@@ -486,7 +509,7 @@ void loop() {
         uint16_t smslen;
         int8_t smsn;
 
-        if (fona.type() == FONA3G) {
+        if ( (type == FONA3G_A) || (type == FONA3G_E) ) {
           smsn = 0; // zero indexed
           smsnum--;
         } else {
@@ -606,7 +629,10 @@ void loop() {
         // check for GPS location
         char gpsdata[80];
         fona.getGPS(0, gpsdata, 80);
-        Serial.println(F("Reply in format: mode,longitude,latitude,altitude,utctime(yyyymmddHHMMSS),ttff,satellites,speed,course"));
+        if (type == FONA808_V1)
+          Serial.println(F("Reply in format: mode,longitude,latitude,altitude,utctime(yyyymmddHHMMSS),ttff,satellites,speed,course"));
+        else 
+          Serial.println(F("Reply in format: mode,fixstatus,utctime(yyyymmddHHMMSS),latitude,longitude,altitude,speed,course,fixmode,reserved1,HDOP,PDOP,VDOP,reserved2,view_satellites,used_satellites,reserved3,C/N0max,HPA,VPA"));
         Serial.println(gpsdata);
 
         break;
@@ -614,7 +640,11 @@ void loop() {
 
     case 'E': {
         flushSerial();
-        Serial.print(F("GPS NMEA output sentences (0 = off, 34 = RMC+GGA, 255 = all)"));
+        if (type == FONA808_V1) {
+          Serial.print(F("GPS NMEA output sentences (0 = off, 34 = RMC+GGA, 255 = all)"));
+        } else {
+          Serial.print(F("On (1) or Off (0)? "));
+        }
         uint8_t nmeaout = readnumber();
 
         // turn on NMEA output

@@ -34,8 +34,6 @@ Adafruit_FONA::Adafruit_FONA(int8_t rst)
 {
   _rstpin = rst;
   
-  _type = FONA800;
-
   apn = F("FONAnet");
   apnusername = 0;
   apnpassword = 0;
@@ -80,6 +78,20 @@ boolean Adafruit_FONA::begin(Stream &port) {
 
   // turn on hangupitude
   sendCheckReply(F("AT+CVHU=0"), F("OK"));
+
+  delay(100);
+  getReply(F("ATI"));
+  if (strstr_P(replybuffer, (prog_char *)F("SIM808 R14")) != 0) {
+    _type = FONA808_V2;
+  } else if (strstr_P(replybuffer, (prog_char *)F("SIM808 R13")) != 0) {
+    _type = FONA808_V1;
+  } else if (strstr_P(replybuffer, (prog_char *)F("SIM800 R13")) != 0) {
+    _type = FONA800L;
+  } else if (strstr_P(replybuffer, (prog_char *)F("SIMCOM_SIM5320A")) != 0) {
+    _type = FONA3G_A;
+  } else if (strstr_P(replybuffer, (prog_char *)F("SIMCOM_SIM5320E")) != 0) {
+    _type = FONA3G_E;
+  }
 
   return true;
 }
@@ -411,7 +423,7 @@ int8_t Adafruit_FONA::getNumSMS(void) {
   if (! sendCheckReply(F("AT+CMGF=1"), F("OK"))) return -1;
 
   // ask how many sms are stored
-  if (_type == FONA3G) {
+  if ( (_type == FONA3G_A) || (_type == FONA3G_E) ) {
     if (! sendParseReply(F("AT+CPMS?"), F("+CPMS: \"ME\","), &numsms) ) return -1;
   } else {
     if (! sendParseReply(F("AT+CPMS?"), F("+CPMS: \"SM_P\","), &numsms) ) return -1;
@@ -496,7 +508,7 @@ boolean Adafruit_FONA::sendSMS(char *smsaddr, char *smsmsg) {
 #ifdef ADAFRUIT_FONA_DEBUG
   Serial.println("^Z");
 #endif
-  if (_type == FONA3G) {
+  if ( (_type == FONA3G_A) || (_type == FONA3G_E) ) {
     // Eat two sets of CRLF
     readline(200);
     //Serial.print("Line 1: "); Serial.println(strlen(replybuffer));
@@ -601,15 +613,31 @@ boolean Adafruit_FONA::enableGPS(boolean onoff) {
   uint16_t state;
 
   // first check if its already on or off
-  if (! sendParseReply(F("AT+CGPSPWR?"), F("+CGPSPWR: "), &state) )
-    return false;
-  
+
+  if (_type == FONA808_V2) {
+    if (! sendParseReply(F("AT+CGNSPWR?"), F("+CGNSPWR: "), &state) )
+      return false;
+  } else {
+    if (! sendParseReply(F("AT+CGPSPWR?"), F("+CGPSPWR: "), &state))
+      return false;
+  }
+
   if (onoff && !state) {
-    if (! sendCheckReply(F("AT+CGPSPWR=1"), F("OK")))
-      return false;
+    if (_type == FONA808_V2) {
+      if (! sendCheckReply(F("AT+CGNSPWR=1"), F("OK")))  // try GNS command
+	return false;
+    } else {
+      if (! sendCheckReply(F("AT+CGPSPWR=1"), F("OK")))
+	return false;
+    }
   } else if (!onoff && state) {
-    if (! sendCheckReply(F("AT+CGPSPWR=0"), F("OK")))
-      return false;
+    if (_type == FONA808_V2) {
+      if (! sendCheckReply(F("AT+CGNSPWR=0"), F("OK"))) // try GNS command
+	return false;
+    } else {
+      if (! sendCheckReply(F("AT+CGPSPWR=0"), F("OK")))
+	return false;
+    }
   }
   return true;
 }
@@ -638,12 +666,16 @@ boolean Adafruit_FONA_3G::enableGPS(boolean onoff) {
 int8_t Adafruit_FONA::GPSstatus(void) {
   uint16_t state;
 
-  getReply(F("AT+CGPSSTATUS?"));
+  if (_type == FONA808_V2) {
+    getReply(F("AT+CGNSSTATUS?"));
+  } else {
+    getReply(F("AT+CGPSSTATUS?"));
+  }
 
-  char *p = strstr_P(replybuffer, (prog_char*)F("+CGPSSTATUS: Location "));
+  char *p = strstr_P(replybuffer, (prog_char*)F("SSTATUS: Location "));
   if (p == 0) return -1;
 
-  p+=22;
+  p+=18;
   //Serial.println(p);
 
   readline(); // eat 'OK'
@@ -661,19 +693,21 @@ int8_t Adafruit_FONA::GPSstatus(void) {
 uint8_t Adafruit_FONA::getGPS(uint8_t arg, char *buffer, uint8_t maxbuff) {
   int32_t x = arg;
 
-  if (_type == FONA3G) {
+  if ( (_type == FONA3G_A) || (_type == FONA3G_E) ) {
     getReply(F("AT+CGPSINFO"));
-  } else {
+  } else if (_type == FONA808_V1) {
     getReply(F("AT+CGPSINF="), x);
+  } else {
+    getReply(F("AT+CGNSINF"));
   }
 
-  char *p = strstr_P(replybuffer, (prog_char*)F("CGPSINF"));
+  char *p = strstr_P(replybuffer, (prog_char*)F("SINF"));
   if (p == 0) {
     buffer[0] = 0;
     return 0;
   }
 
-  p+=9;
+  p+=6;
 
   uint8_t len = max(maxbuff-1, strlen(p));
   strncpy(buffer, p, len);
@@ -820,7 +854,14 @@ boolean Adafruit_FONA::enableGPSNMEA(uint8_t i) {
   i %= 10;
   sendbuff[13] = i + '0';
 
-  return sendCheckReply(sendbuff, "OK", 2000);
+  if (_type == FONA808_V2) {
+    if (i)
+      return sendCheckReply(F("AT+CGNSTST=1"), F("OK"));
+    else
+      return sendCheckReply(F("AT+CGNSTST=0"), F("OK"));
+  } else {
+    return sendCheckReply(sendbuff, "OK", 2000);
+  }
 }
 
 

@@ -29,9 +29,15 @@
 
 #define ADAFRUIT_FONA_DEBUG
 
-#define FONA800 1
-#define FONA808 2
-#define FONA3G 3
+#define FONA800L 1
+#define FONA800H 6
+
+#define FONA808_V1 2
+#define FONA808_V2 3
+
+#define FONA3G_A 4
+#define FONA3G_E 5
+
 
 #define FONA_HEADSETAUDIO 0
 #define FONA_EXTAUDIO 1
@@ -230,7 +236,7 @@ class Adafruit_FONA : public Stream {
 class Adafruit_FONA_3G : public Adafruit_FONA {
 
  public:
-  Adafruit_FONA_3G (int8_t r) : Adafruit_FONA(r) { _type = FONA3G; }
+  Adafruit_FONA_3G (int8_t r) : Adafruit_FONA(r) { _type = FONA3G_A; }
     
     boolean getBattVoltage(uint16_t *v);
     boolean playToolkitTone(uint8_t t, uint16_t len);
