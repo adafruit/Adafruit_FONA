@@ -74,7 +74,7 @@ void setup() {
     case FONA800L:
       Serial.println(F("FONA 800L")); break;
     case FONA800H:
-      Serial.println(F("FONA 800L")); break;
+      Serial.println(F("FONA 800H")); break;
     case FONA808_V1:
       Serial.println(F("FONA 808 (v1)")); break;
     case FONA808_V2:
@@ -82,7 +82,7 @@ void setup() {
     case FONA3G_A:
       Serial.println(F("FONA 3G (American)")); break;
     case FONA3G_E:
-      Serial.println(F("FONA 3G (American)")); break;
+      Serial.println(F("FONA 3G (European)")); break;
     default: 
       Serial.println(F("???")); break;
   }
