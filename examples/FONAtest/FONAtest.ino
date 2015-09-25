@@ -82,7 +82,7 @@ void setup() {
     case FONA3G_A:
       Serial.println(F("FONA 3G (American)")); break;
     case FONA3G_E:
-      Serial.println(F("FONA 3G (American)")); break;
+      Serial.println(F("FONA 3G (European)")); break;
     default: 
       Serial.println(F("???")); break;
   }
