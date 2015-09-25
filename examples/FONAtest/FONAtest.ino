@@ -74,7 +74,7 @@ void setup() {
     case FONA800L:
       Serial.println(F("FONA 800L")); break;
     case FONA800H:
-      Serial.println(F("FONA 800L")); break;
+      Serial.println(F("FONA 800H")); break;
     case FONA808_V1:
       Serial.println(F("FONA 808 (v1)")); break;
     case FONA808_V2:
