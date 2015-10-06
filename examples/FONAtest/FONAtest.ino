@@ -627,8 +627,8 @@ void loop() {
 
     case 'L': {
         // check for GPS location
-        char gpsdata[80];
-        fona.getGPS(0, gpsdata, 80);
+        char gpsdata[120];
+        fona.getGPS(0, gpsdata, 120);
         if (type == FONA808_V1)
           Serial.println(F("Reply in format: mode,longitude,latitude,altitude,utctime(yyyymmddHHMMSS),ttff,satellites,speed,course"));
         else 
