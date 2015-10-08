@@ -33,7 +33,7 @@
 Adafruit_FONA::Adafruit_FONA(int8_t rst)
 {
   _rstpin = rst;
-  
+
   apn = F("FONAnet");
   apnusername = 0;
   apnpassword = 0;
@@ -113,7 +113,7 @@ boolean Adafruit_FONA::readRTC(uint8_t *year, uint8_t *month, uint8_t *date, uin
 }
 
 boolean Adafruit_FONA::enableRTC(uint8_t i) {
-  if (! sendCheckReply(F("AT+CLTS="), i, F("OK"))) 
+  if (! sendCheckReply(F("AT+CLTS="), i, F("OK")))
     return false;
   return sendCheckReply(F("AT&W"), F("OK"));
 }
@@ -433,7 +433,7 @@ int8_t Adafruit_FONA::getNumSMS(void) {
 
 // Reading SMS's is a bit involved so we don't use helpers that may cause delays or debug
 // printouts!
-boolean Adafruit_FONA::readSMS(uint8_t i, char *smsbuff, 
+boolean Adafruit_FONA::readSMS(uint8_t i, char *smsbuff,
 			       uint16_t maxlen, uint16_t *readlen) {
   // text mode
   if (! sendCheckReply(F("AT+CMGF=1"), F("OK"))) return false;
@@ -650,7 +650,7 @@ boolean Adafruit_FONA_3G::enableGPS(boolean onoff) {
   // first check if its already on or off
   if (! Adafruit_FONA::sendParseReply(F("AT+CGPS?"), F("+CGPS: "), &state) )
     return false;
-  
+
   if (onoff && !state) {
     if (! sendCheckReply(F("AT+CGPS=1"), F("OK")))
       return false;
@@ -664,29 +664,33 @@ boolean Adafruit_FONA_3G::enableGPS(boolean onoff) {
 }
 
 int8_t Adafruit_FONA::GPSstatus(void) {
-  uint16_t state;
-
   if (_type == FONA808_V2) {
-    getReply(F("AT+CGNSSTATUS?"));
-  } else {
-    getReply(F("AT+CGPSSTATUS?"));
+    // 808 V2 uses GNS commands and doesn't have an explicit 2D/3D fix status.
+    // Instead just look for a fix and if found assume it's a 3D fix.
+    getReply(F("AT+CGNSINF"));
+    char *p = strstr_P(replybuffer, (prog_char*)F("+CGNSINF: "));
+    if (p == 0) return -1;
+    p+=12; // Skip to second value, fix status.
+    readline(); // eat 'OK'
+    //Serial.println(p);
+    // Assume if the fix status is '1' then we have a 3D fix, otherwise no fix.
+    if (p[0] == '1') return 3;
+    else return 0;
   }
-
-  char *p = strstr_P(replybuffer, (prog_char*)F("SSTATUS: Location "));
-  if (p == 0) return -1;
-
-  p+=18;
-  //Serial.println(p);
-
-  readline(); // eat 'OK'
-
-
-  if (p[0] == 'U') return 0;
-  if (p[0] == 'N') return 1;
-  if (p[0] == '2') return 2;
-  if (p[0] == '3') return 3;
-
- // else
+  else {
+    // 808 V1 looks for specific 2D or 3D fix state.
+    getReply(F("AT+CGPSSTATUS?"));
+    char *p = strstr_P(replybuffer, (prog_char*)F("SSTATUS: Location "));
+    if (p == 0) return -1;
+    p+=18;
+    readline(); // eat 'OK'
+    //Serial.println(p);
+    if (p[0] == 'U') return 0;
+    if (p[0] == 'N') return 1;
+    if (p[0] == '2') return 2;
+    if (p[0] == '3') return 3;
+  }
+  // else
   return 0;
 }
 
@@ -732,114 +736,173 @@ boolean Adafruit_FONA::getGPS(float *lat, float *lon, float *speed_kph, float *h
   if (res_len == 0)
     return false;
 
-  // skip mode
-  char *tok = strtok(gpsbuffer, ",");
-  if (! tok) return false;
+  if (_type == FONA808_V2) {
+    // Parse 808 V2 response.  See table 2-3 from here for format:
+    // http://www.adafruit.com/datasheets/SIM800%20Series_GNSS_Application%20Note%20V1.00.pdf
 
-  // skip date
-  tok = strtok(NULL, ",");
-  if (! tok) return false;
+    // skip GPS run status
+    char *tok = strtok(gpsbuffer, ",");
+    if (! tok) return false;
 
-  // skip fix
-  tok = strtok(NULL, ",");
-  if (! tok) return false;
+    // skip fix status
+    tok = strtok(NULL, ",");
+    if (! tok) return false;
 
-  // grab the latitude
-  char *latp = strtok(NULL, ",");
-  if (! latp) return false;
+    // skip date
+    tok = strtok(NULL, ",");
+    if (! tok) return false;
 
-  // grab latitude direction
-  char *latdir = strtok(NULL, ",");
-  if (! latdir) return false;
+    // grab the latitude
+    char *latp = strtok(NULL, ",");
+    if (! latp) return false;
 
-  // grab longitude
-  char *longp = strtok(NULL, ",");
-  if (! longp) return false;
+    // grab longitude
+    char *longp = strtok(NULL, ",");
+    if (! longp) return false;
 
-  // grab longitude direction
-  char *longdir = strtok(NULL, ",");
-  if (! longdir) return false;
+    *lat = atof(latp);
+    *lon = atof(longp);
 
-  double latitude = atof(latp);
-  double longitude = atof(longp);
+    // only grab altitude if needed
+    if (altitude != NULL) {
+      // grab altitude
+      char *altp = strtok(NULL, ",");
+      if (! altp) return false;
 
-  // convert latitude from minutes to decimal
-  float degrees = floor(latitude / 100);
-  double minutes = latitude - (100 * degrees);
-  minutes /= 60;
-  degrees += minutes;
+      *altitude = atof(altp);
+    }
 
-  // turn direction into + or -
-  if (latdir[0] == 'S') degrees *= -1;
+    // only grab speed if needed
+    if (speed_kph != NULL) {
+      // grab the speed in km/h
+      char *speedp = strtok(NULL, ",");
+      if (! speedp) return false;
 
-  *lat = degrees;
+      *speed_kph = atof(speedp);
+    }
 
-  // convert longitude from minutes to decimal
-  degrees = floor(longitude / 100);
-  minutes = longitude - (100 * degrees);
-  minutes /= 60;
-  degrees += minutes;
+    // only grab heading if needed
+    if (heading != NULL) {
 
-  // turn direction into + or -
-  if (longdir[0] == 'W') degrees *= -1;
+      // grab the speed in knots
+      char *coursep = strtok(NULL, ",");
+      if (! coursep) return false;
 
-  *lon = degrees;
-
-  // only grab speed if needed
-  if (speed_kph != NULL) {
-
-    // grab the speed in knots
-    char *speedp = strtok(NULL, ",");
-    if (! speedp) return false;
-
-    // convert to kph
-    *speed_kph = atof(speedp) * 1.852;
-
+      *heading = atof(coursep);
+    }
   }
+  else {
+    // Parse 808 V1 response.
 
-  // only grab heading if needed
-  if (heading != NULL) {
+    // skip mode
+    char *tok = strtok(gpsbuffer, ",");
+    if (! tok) return false;
 
-    // grab the speed in knots
-    char *coursep = strtok(NULL, ",");
-    if (! coursep) return false;
+    // skip date
+    tok = strtok(NULL, ",");
+    if (! tok) return false;
 
-    *heading = atof(coursep);
+    // skip fix
+    tok = strtok(NULL, ",");
+    if (! tok) return false;
 
+    // grab the latitude
+    char *latp = strtok(NULL, ",");
+    if (! latp) return false;
+
+    // grab latitude direction
+    char *latdir = strtok(NULL, ",");
+    if (! latdir) return false;
+
+    // grab longitude
+    char *longp = strtok(NULL, ",");
+    if (! longp) return false;
+
+    // grab longitude direction
+    char *longdir = strtok(NULL, ",");
+    if (! longdir) return false;
+
+    double latitude = atof(latp);
+    double longitude = atof(longp);
+
+    // convert latitude from minutes to decimal
+    float degrees = floor(latitude / 100);
+    double minutes = latitude - (100 * degrees);
+    minutes /= 60;
+    degrees += minutes;
+
+    // turn direction into + or -
+    if (latdir[0] == 'S') degrees *= -1;
+
+    *lat = degrees;
+
+    // convert longitude from minutes to decimal
+    degrees = floor(longitude / 100);
+    minutes = longitude - (100 * degrees);
+    minutes /= 60;
+    degrees += minutes;
+
+    // turn direction into + or -
+    if (longdir[0] == 'W') degrees *= -1;
+
+    *lon = degrees;
+
+    // only grab speed if needed
+    if (speed_kph != NULL) {
+
+      // grab the speed in knots
+      char *speedp = strtok(NULL, ",");
+      if (! speedp) return false;
+
+      // convert to kph
+      *speed_kph = atof(speedp) * 1.852;
+
+    }
+
+    // only grab heading if needed
+    if (heading != NULL) {
+
+      // grab the speed in knots
+      char *coursep = strtok(NULL, ",");
+      if (! coursep) return false;
+
+      *heading = atof(coursep);
+
+    }
+
+    // no need to continue
+    if (altitude == NULL)
+      return true;
+
+    // we need at least a 3D fix for altitude
+    if (GPSstatus() < 3)
+      return false;
+
+    // grab the mode 0 gps csv from the sim808
+    res_len = getGPS(0, gpsbuffer, 120);
+
+    // make sure we have a response
+    if (res_len == 0)
+      return false;
+
+    // skip mode
+    tok = strtok(gpsbuffer, ",");
+    if (! tok) return false;
+
+    // skip lat
+    tok = strtok(NULL, ",");
+    if (! tok) return false;
+
+    // skip long
+    tok = strtok(NULL, ",");
+    if (! tok) return false;
+
+    // grab altitude
+    char *altp = strtok(NULL, ",");
+    if (! altp) return false;
+
+    *altitude = atof(altp);
   }
-
-  // no need to continue
-  if (altitude == NULL)
-    return true;
-
-  // we need at least a 3D fix for altitude
-  if (GPSstatus() < 3)
-    return false;
-
-  // grab the mode 0 gps csv from the sim808
-  res_len = getGPS(0, gpsbuffer, 120);
-
-  // make sure we have a response
-  if (res_len == 0)
-    return false;
-
-  // skip mode
-  tok = strtok(gpsbuffer, ",");
-  if (! tok) return false;
-
-  // skip lat
-  tok = strtok(NULL, ",");
-  if (! tok) return false;
-
-  // skip long
-  tok = strtok(NULL, ",");
-  if (! tok) return false;
-
-  // grab altitude
-  char *altp = strtok(NULL, ",");
-  if (! altp) return false;
-
-  *altitude = atof(altp);
 
   return true;
 
@@ -945,7 +1008,7 @@ boolean Adafruit_FONA_3G::enableGPRS(boolean onoff) {
 	strp[0] = '\"';
 	strp++;
 	strp[0] = 0;
-      
+
 	if (apnpassword) {
 	  strp[0] = ','; strp++;
 	  strp[0] = '\"'; strp++;
@@ -967,7 +1030,7 @@ boolean Adafruit_FONA_3G::enableGPRS(boolean onoff) {
     // open network (?)
     if (! sendCheckReply(F("AT+NETOPEN=,,1"), F("Network opened"), 10000))
       return false;
-    
+
     readline(); // eat 'OK'
   } else {
     // close GPRS context
@@ -1111,7 +1174,7 @@ boolean Adafruit_FONA::TCPsend(char *packet, uint8_t len) {
 #ifdef ADAFRUIT_FONA_DEBUG
   Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
-    
+
   return (strcmp(replybuffer, "SEND OK") == 0);
 }
 
@@ -1123,7 +1186,7 @@ uint16_t Adafruit_FONA::TCPavailable(void) {
 #ifdef ADAFRUIT_FONA_DEBUG
   Serial.print (avail); Serial.println(F(" bytes available"));
 #endif
-    
+
   return avail;
 }
 
@@ -1143,11 +1206,11 @@ uint16_t Adafruit_FONA::TCPread(uint8_t *buff, uint8_t len) {
   for (uint8_t i=0;i<avail;i++) {
     Serial.print(" 0x"); Serial.print(replybuffer[i], HEX);
   }
-  Serial.println(); 
+  Serial.println();
 #endif
 
   memcpy(buff, replybuffer, avail);
-    
+
   return avail;
 }
 
@@ -1168,7 +1231,7 @@ void Adafruit_FONA::HTTP_para_start(const __FlashStringHelper *parameter,
   flushInput();
 
 #ifdef ADAFRUIT_FONA_DEBUG
-  Serial.print("\t---> "); 
+  Serial.print("\t---> ");
   Serial.print(F("AT+HTTPPARA=\""));
   Serial.print(parameter);
   Serial.println('"');
@@ -1191,21 +1254,21 @@ boolean Adafruit_FONA::HTTP_para_end(boolean quoted) {
   return expectReply(F("OK"));
 }
 
-boolean Adafruit_FONA::HTTP_para(const __FlashStringHelper *parameter, 
+boolean Adafruit_FONA::HTTP_para(const __FlashStringHelper *parameter,
                                  const char *value) {
   HTTP_para_start(parameter, true);
   mySerial->print(value);
   return HTTP_para_end(true);
 }
 
-boolean Adafruit_FONA::HTTP_para(const __FlashStringHelper *parameter, 
+boolean Adafruit_FONA::HTTP_para(const __FlashStringHelper *parameter,
                                  const __FlashStringHelper *value) {
   HTTP_para_start(parameter, true);
   mySerial->print(value);
   return HTTP_para_end(true);
 }
 
-boolean Adafruit_FONA::HTTP_para(const __FlashStringHelper *parameter, 
+boolean Adafruit_FONA::HTTP_para(const __FlashStringHelper *parameter,
                                  int32_t value) {
   HTTP_para_start(parameter, false);
   mySerial->print(value);
@@ -1216,7 +1279,7 @@ boolean Adafruit_FONA::HTTP_data(uint32_t size, uint32_t maxTime) {
   flushInput();
 
 #ifdef ADAFRUIT_FONA_DEBUG
-  Serial.print("\t---> "); 
+  Serial.print("\t---> ");
   Serial.print(F("AT+HTTPDATA="));
   Serial.print(size);
   Serial.print(",");
@@ -1231,7 +1294,7 @@ boolean Adafruit_FONA::HTTP_data(uint32_t size, uint32_t maxTime) {
   return expectReply(F("DOWNLOAD"));
 }
 
-boolean Adafruit_FONA::HTTP_action(uint8_t method, uint16_t *status, 
+boolean Adafruit_FONA::HTTP_action(uint8_t method, uint16_t *status,
                                    uint16_t *datalen, int32_t timeout) {
   // Send request.
   if (! sendCheckReply(F("AT+HTTPACTION="), method, F("OK")))

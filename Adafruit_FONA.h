@@ -60,7 +60,7 @@
 
 #define FONA_HTTP_GET   0
 #define FONA_HTTP_POST  1
-#define FONA_HTTP_HEAD  2 
+#define FONA_HTTP_HEAD  2
 
 class Adafruit_FONA : public Stream {
  public:
@@ -237,7 +237,7 @@ class Adafruit_FONA_3G : public Adafruit_FONA {
 
  public:
   Adafruit_FONA_3G (int8_t r) : Adafruit_FONA(r) { _type = FONA3G_A; }
-    
+
     boolean getBattVoltage(uint16_t *v);
     boolean playToolkitTone(uint8_t t, uint16_t len);
     boolean hangUp(void);
@@ -248,10 +248,10 @@ class Adafruit_FONA_3G : public Adafruit_FONA {
  protected:
     boolean parseReply(const __FlashStringHelper *toreply,
 		       float *f, char divider, uint8_t index);
-    
+
     boolean sendParseReply(const __FlashStringHelper *tosend,
 			   const __FlashStringHelper *toreply,
-			   float *f, char divider = ',', uint8_t index=0);  
+			   float *f, char divider = ',', uint8_t index=0);
 };
 
 #endif
