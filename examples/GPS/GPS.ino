@@ -5,7 +5,7 @@
  * |_| \___/|_|\_/_/ \_\ \___/\__/\___/  \___|_|  |___/
  *
  * This example is meant to work with the Adafruit
- * FONA 808 Shield or Breakout.
+ * FONA 808 or 3G Shield or Breakout
  *
  * Copyright: 2015 Adafruit
  * Author: Todd Treece
@@ -14,7 +14,7 @@
  */
 #include "Adafruit_FONA.h"
 
-// standard pins for the 808 shield
+// standard pins for the shield, adjust as necessary
 #define FONA_RX 2
 #define FONA_TX 3
 #define FONA_RST 4
@@ -31,12 +31,16 @@ SoftwareSerial *fonaSerial = &fonaSS;
 
 Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
 
+// Have a FONA 3G? use this object type instead
+//Adafruit_FONA_3G fona = Adafruit_FONA_3G(FONA_RST);
+
+
 void setup() {
 
   while (! Serial);
 
   Serial.begin(115200);
-  Serial.println(F("Adafruit FONA 808 GPS demo"));
+  Serial.println(F("Adafruit FONA 808 & 3G GPS demo"));
   Serial.println(F("Initializing FONA... (May take a few seconds)"));
 
   fonaSerial->begin(4800);
@@ -77,7 +81,7 @@ void loop() {
     Serial.println(altitude);
 
   } else {
-    Serial.println("Waiting for FONA 808 GPS 3D fix...");
+    Serial.println("Waiting for FONA GPS 3D fix...");
   }
 
   // Fona 3G doesnt have GPRSlocation :/
@@ -105,3 +109,4 @@ void loop() {
     }
   }
 }
+
