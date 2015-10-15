@@ -34,17 +34,15 @@ the commented section below at the end of the setup() function.
 // this is a large buffer for replies
 char replybuffer[255];
 
-// This is to handle the absence of software serial on platforms
-// like the Arduino Due. Modify this code if you are using different
-// hardware serial port, or if you are using a non-avr platform
-// that supports software serial.
-#ifdef __AVR__
+// We default to using software serial. If you want to use hardware serial
+// (because softserial isnt supported) comment out the following three lines 
+// and uncomment the HardwareSerial line
 #include <SoftwareSerial.h>
 SoftwareSerial fonaSS = SoftwareSerial(FONA_TX, FONA_RX);
 SoftwareSerial *fonaSerial = &fonaSS;
-#else
-HardwareSerial *fonaSerial = &Serial1;
-#endif
+
+// Hardware serial is also possible!
+//  HardwareSerial *fonaSerial = &Serial1;
 
 // Use this for FONA 800 and 808s
 Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
