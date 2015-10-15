@@ -690,6 +690,15 @@ int8_t Adafruit_FONA::GPSstatus(void) {
     if (p[0] == '1') return 3;
     else return 0;
   }
+  if (_type == FONA3G_A || _type == FONA3G_E) {
+    // FONA 3G doesn't have an explicit 2D/3D fix status.
+    // Instead just look for a fix and if found assume it's a 3D fix.
+    getReply(F("AT+CGPSINFO"));
+    char *p = strstr_P(replybuffer, (prog_char*)F("+CGPSINFO:"));
+    if (p == 0) return -1;
+    if (p[10] != ',') return 3; // if you get anything, its 3D fix
+    return 0;
+  }
   else {
     // 808 V1 looks for specific 2D or 3D fix state.
     getReply(F("AT+CGPSSTATUS?"));
@@ -749,7 +758,85 @@ boolean Adafruit_FONA::getGPS(float *lat, float *lon, float *speed_kph, float *h
   if (res_len == 0)
     return false;
 
-  if (_type == FONA808_V2) {
+  if (_type == FONA3G_A || _type == FONA3G_E) {
+    // Parse 3G respose
+    // +CGPSINFO:4043.000000,N,07400.000000,W,151015,203802.1,-12.0,0.0,0
+    // skip beginning
+    char *tok;
+
+   // grab the latitude
+    char *latp = strtok(gpsbuffer, ",");
+    if (! latp) return false;
+
+    // grab latitude direction
+    char *latdir = strtok(NULL, ",");
+    if (! latdir) return false;
+
+    // grab longitude
+    char *longp = strtok(NULL, ",");
+    if (! longp) return false;
+
+    // grab longitude direction
+    char *longdir = strtok(NULL, ",");
+    if (! longdir) return false;
+
+    // skip date & time
+    tok = strtok(NULL, ",");
+    tok = strtok(NULL, ",");
+
+   // only grab altitude if needed
+    if (altitude != NULL) {
+      // grab altitude
+      char *altp = strtok(NULL, ",");
+      if (! altp) return false;
+      *altitude = atof(altp);
+    }
+
+    // only grab speed if needed
+    if (speed_kph != NULL) {
+      // grab the speed in km/h
+      char *speedp = strtok(NULL, ",");
+      if (! speedp) return false;
+
+      *speed_kph = atof(speedp);
+    }
+
+    // only grab heading if needed
+    if (heading != NULL) {
+
+      // grab the speed in knots
+      char *coursep = strtok(NULL, ",");
+      if (! coursep) return false;
+
+      *heading = atof(coursep);
+    }
+
+    double latitude = atof(latp);
+    double longitude = atof(longp);
+
+    // convert latitude from minutes to decimal
+    float degrees = floor(latitude / 100);
+    double minutes = latitude - (100 * degrees);
+    minutes /= 60;
+    degrees += minutes;
+
+    // turn direction into + or -
+    if (latdir[0] == 'S') degrees *= -1;
+
+    *lat = degrees;
+
+    // convert longitude from minutes to decimal
+    degrees = floor(longitude / 100);
+    minutes = longitude - (100 * degrees);
+    minutes /= 60;
+    degrees += minutes;
+
+    // turn direction into + or -
+    if (longdir[0] == 'W') degrees *= -1;
+
+    *lon = degrees;
+
+  } else if (_type == FONA808_V2) {
     // Parse 808 V2 response.  See table 2-3 from here for format:
     // http://www.adafruit.com/datasheets/SIM800%20Series_GNSS_Application%20Note%20V1.00.pdf
 
