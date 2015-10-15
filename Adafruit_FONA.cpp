@@ -80,7 +80,20 @@ boolean Adafruit_FONA::begin(Stream &port) {
   sendCheckReply(F("AT+CVHU=0"), F("OK"));
 
   delay(100);
-  getReply(F("ATI"));
+  flushInput();
+
+#ifdef ADAFRUIT_FONA_DEBUG
+    Serial.print("\t---> "); Serial.println("ATI");
+#endif
+
+  mySerial->println("ATI");
+
+  readline(500, true);
+
+#ifdef ADAFRUIT_FONA_DEBUG
+    Serial.print (F("\t<--- ")); Serial.println(replybuffer);
+#endif
+
   if (strstr_P(replybuffer, (prog_char *)F("SIM808 R14")) != 0) {
     _type = FONA808_V2;
   } else if (strstr_P(replybuffer, (prog_char *)F("SIM808 R13")) != 0) {

@@ -80,6 +80,9 @@ void loop() {
     Serial.println("Waiting for FONA 808 GPS 3D fix...");
   }
 
+  // Fona 3G doesnt have GPRSlocation :/
+  if ((fona.type() == FONA3G_A) || (fona.type() == FONA3G_E))
+    return;
   // Check for network, then GPRS 
   Serial.println(F("Checking for Cell network..."));
   if (fona.getNetworkStatus() == 1) {
