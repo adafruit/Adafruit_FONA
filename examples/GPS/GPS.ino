@@ -15,9 +15,9 @@
 #include "Adafruit_FONA.h"
 
 // standard pins for the 808 shield
-#define FONA_RX 3
-#define FONA_TX 4
-#define FONA_RST 5
+#define FONA_RX 2
+#define FONA_TX 3
+#define FONA_RST 4
 
 // This is to handle the absence of software serial on platforms
 // like the Arduino Due. Modify this code if you are using different
@@ -47,14 +47,15 @@ void setup() {
     while(1);
   }
   Serial.println(F("FONA is OK"));
+  // Try to enable GPRS
+  
 
   Serial.println(F("Enabling GPS..."));
   fona.enableGPS(true);
-  delay(5000);
-
 }
 
 void loop() {
+  delay(2000);
 
   float latitude, longitude, speed_kph, heading, speed_mph, altitude;
 
@@ -64,9 +65,9 @@ void loop() {
   if (gps_success) {
 
     Serial.print("GPS lat:");
-    Serial.println(latitude);
+    Serial.println(latitude, 6);
     Serial.print("GPS long:");
-    Serial.println(longitude);
+    Serial.println(longitude, 6);
     Serial.print("GPS speed KPH:");
     Serial.println(speed_kph);
     Serial.print("GPS speed MPH:");
@@ -81,20 +82,25 @@ void loop() {
     Serial.println("Waiting for FONA 808 GPS 3D fix...");
   }
 
-  // print out the GSM location to compare
-  boolean gsmloc_success = fona.getGSMLoc(&latitude, &longitude);
+  // Check for network, then GPRS 
+  Serial.println(F("Checking for Cell network..."));
+  if (fona.getNetworkStatus() == 1) {
+    // network & GPRS? Great! Print out the GSM location to compare
+    boolean gsmloc_success = fona.getGSMLoc(&latitude, &longitude);
 
-  if (gsmloc_success) {
-
-    Serial.print("GSMLoc lat:");
-    Serial.println(latitude);
-    Serial.print("GSMLoc long:");
-    Serial.println(longitude);
-
-  } else {
-    Serial.println("GSM location failed...");
+    if (gsmloc_success) {
+      Serial.print("GSMLoc lat:");
+      Serial.println(latitude, 6);
+      Serial.print("GSMLoc long:");
+      Serial.println(longitude, 6);
+    } else {
+      Serial.println("GSM location failed...");
+      Serial.println(F("Disabling GPRS"));
+      fona.enableGPRS(false);
+      Serial.println(F("Enabling GPRS"));
+      if (!fona.enableGPRS(true)) {
+        Serial.println(F("Failed to turn GPRS on"));  
+      }
+    }
   }
-
-  delay(2000);
-
 }

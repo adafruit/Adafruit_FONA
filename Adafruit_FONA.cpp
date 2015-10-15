@@ -1088,12 +1088,13 @@ boolean Adafruit_FONA::getGSMLoc(float *lat, float *lon) {
   if (returncode != 0)
     return false;
 
+  // +CIPGSMLOC: 0,-74.007729,40.730160,2015/10/15,19:24:55
   // tokenize the gps buffer to locate the lat & long
-  char *latp = strtok(gpsbuffer, ",");
-  if (! latp) return false;
-
-  char *longp = strtok(NULL, ",");
+  char *longp = strtok(gpsbuffer, ",");
   if (! longp) return false;
+
+  char *latp = strtok(NULL, ",");
+  if (! latp) return false;
 
   *lat = atof(latp);
   *lon = atof(longp);
