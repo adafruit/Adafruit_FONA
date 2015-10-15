@@ -75,7 +75,7 @@ class Adafruit_FONA : public Stream {
   int peek(void);
   void flush();
 
-  // FONE 3G requirements
+  // FONA 3G requirements
   boolean setBaudrate(uint16_t baud);
 
   // RTC
