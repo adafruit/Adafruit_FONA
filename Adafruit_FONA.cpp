@@ -353,6 +353,16 @@ boolean Adafruit_FONA::callPhone(char *number) {
   return sendCheckReply(sendbuff, "OK");
 }
 
+
+uint8_t Adafruit_FONA::getCallStatus(void) {
+  uint16_t phoneStatus;
+
+  if (! sendParseReply(F("AT+CPAS"), F("+CPAS: "), &phoneStatus)) 
+    return FONA_CALL_FAILED; // 1, since 0 is actually a known, good reply
+
+  return phoneStatus;  // 0 ready, 2 unkown, 3 ringing, 4 call in progress
+}
+
 boolean Adafruit_FONA::hangUp(void) {
   return sendCheckReply(F("ATH0"), F("OK"));
 }

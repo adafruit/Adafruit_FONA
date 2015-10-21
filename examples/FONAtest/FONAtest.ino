@@ -132,6 +132,7 @@ void printMenu(void) {
 
   // Phone
   Serial.println(F("[c] make phone Call"));
+  Serial.println(F("[A] get call status"));
   Serial.println(F("[h] Hang up phone"));
   Serial.println(F("[p] Pick up phone"));
 
@@ -441,6 +442,19 @@ void loop() {
 
         break;
       }
+    case 'A': {
+        // get call status
+        int8_t callstat = fona.getCallStatus();
+        switch (callstat) {
+          case 0: Serial.println(F("Ready")); break;
+          case 1: Serial.println(F("Could not get status")); break;
+          case 3: Serial.println(F("Ringing (incoming)")); break;
+          case 4: Serial.println(F("Ringing/in progress (outgoing)")); break;
+          default: Serial.println(F("Unknown")); break;
+        }
+        break;
+      }
+      
     case 'h': {
         // hang up!
         if (! fona.hangUp()) {
@@ -849,3 +863,4 @@ uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout) {
   buff[buffidx] = 0;  // null term
   return buffidx;
 }
+

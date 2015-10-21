@@ -62,6 +62,12 @@
 #define FONA_HTTP_POST  1
 #define FONA_HTTP_HEAD  2
 
+#define FONA_CALL_READY 0
+#define FONA_CALL_FAILED 1
+#define FONA_CALL_UNKNOWN 2
+#define FONA_CALL_RINGING 3
+#define FONA_CALL_INPROGRESS 4
+
 class Adafruit_FONA : public Stream {
  public:
   Adafruit_FONA(int8_t r);
@@ -175,6 +181,7 @@ class Adafruit_FONA : public Stream {
 
   // Phone calls
   boolean callPhone(char *phonenum);
+  uint8_t getCallStatus(void);
   boolean hangUp(void);
   boolean pickUp(void);
   boolean callerIdNotification(boolean enable, uint8_t interrupt = 0);
