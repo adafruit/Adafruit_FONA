@@ -142,7 +142,8 @@ void printMenu(void) {
   Serial.println(F("[R] Read All SMS"));
   Serial.println(F("[d] Delete SMS #"));
   Serial.println(F("[s] Send SMS"));
-
+  Serial.println(F("[u] Send USSD"));
+  
   // Time
   Serial.println(F("[y] Enable network time sync (FONA 800 & 808)"));
   Serial.println(F("[Y] Enable NTP time sync (GPRS FONA 800 & 808)"));
@@ -584,6 +585,26 @@ void loop() {
         break;
       }
 
+    case 'u': {
+      // send a USSD!
+      char message[141];
+      flushSerial();
+      Serial.print(F("Type out one-line message (140 char): "));
+      readline(message, 140);
+      Serial.println(message);
+
+      uint16_t ussdlen;
+      if (!fona.sendUSSD(message, replybuffer, 250, &ussdlen)) { // pass in buffer and max len!
+        Serial.println(F("Failed"));
+      } else {
+        Serial.println(F("Sent!"));
+        Serial.print(F("***** USSD Reply"));
+        Serial.print(" ("); Serial.print(ussdlen); Serial.println(F(") bytes *****"));
+        Serial.println(replybuffer);
+        Serial.println(F("*****"));
+      }
+    }
+
     /*** Time ***/
 
     case 'y': {
@@ -863,4 +884,3 @@ uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout) {
   buff[buffidx] = 0;  // null term
   return buffidx;
 }
-
