@@ -87,11 +87,11 @@ void setup() {
       Serial.println(F("???")); break;
   }
   
-  // Print SIM card IMEI number.
+ // Print module IMEI number.
   char imei[15] = {0}; // MUST use a 16 character buffer for IMEI!
   uint8_t imeiLen = fona.getIMEI(imei);
   if (imeiLen > 0) {
-    Serial.print(F("SIM card IMEI: ")); Serial.println(imei);
+    Serial.print(F("Module IMEI: ")); Serial.println(imei);
   }
 
   // Optionally configure a GPRS APN, username, and password.
