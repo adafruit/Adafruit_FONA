@@ -69,10 +69,10 @@ void setup() {
   char imei[15] = {0}; // MUST use a 16 character buffer for IMEI!
   uint8_t imeiLen = fona.getIMEI(imei);
   if (imeiLen > 0) {
-    Serial.print("SIM card IMEI: "); Serial.println(imei);
+    Serial.print(F("Module IMEI: ")); Serial.println(imei);
   }
   
-  Serial.println("FONA Ready");
+  Serial.println(F("FONA Ready"));
 }
 
   
@@ -99,18 +99,18 @@ void loop() {
     //Scan the notification string for an SMS received notification.
     //  If it's an SMS message, we'll get the slot number in 'slot'
     if (1 == sscanf(fonaInBuffer, "+CMTI: \"SM\",%d", &slot)) {
-      Serial.print("slot: "); Serial.println(slot);
+      Serial.print(F("slot: ")); Serial.println(slot);
       
       char callerIDbuffer[32];  //we'll store the SMS sender number in here
       
       // Retrieve SMS sender address/phone number.
       if (! fona.getSMSSender(slot, callerIDbuffer, 31)) {
-        Serial.println("Didn't find SMS message in slot!");
+        Serial.println(F("Didn't find SMS message in slot!"));
       }
       Serial.print(F("FROM: ")); Serial.println(callerIDbuffer);
       
       //Send back an automatic response
-      Serial.println("Sending reponse...");
+      Serial.println(F("Sending reponse..."));
       if (!fona.sendSMS(callerIDbuffer, "Hey, I got your text!")) {
         Serial.println(F("Failed"));
       } else {
