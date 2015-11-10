@@ -91,7 +91,7 @@ void setup() {
   char imei[15] = {0}; // MUST use a 16 character buffer for IMEI!
   uint8_t imeiLen = fona.getIMEI(imei);
   if (imeiLen > 0) {
-    Serial.print("SIM card IMEI: "); Serial.println(imei);
+    Serial.print(F("SIM card IMEI: ")); Serial.println(imei);
   }
 
   // Optionally configure a GPRS APN, username, and password.
@@ -248,7 +248,7 @@ void loop() {
         uint8_t n = fona.getRSSI();
         int8_t r;
 
-        Serial.print(F("RSSI = ")); Serial.print(n); Serial.print(": ");
+        Serial.print(F("RSSI = ")); Serial.print(n); Serial.print(F(": "));
         if (n == 0) r = -115;
         if (n == 1) r = -111;
         if (n == 31) r = -52;
@@ -298,9 +298,9 @@ void loop() {
         uint8_t v = fona.getVolume();
         Serial.print(v);
         if ( (type == FONA3G_A) || (type == FONA3G_E) ) {
-          Serial.println(" / 8");
+          Serial.println(F(" / 8"));
         } else {
-          Serial.println("%");
+          Serial.println(F("%"));
         }
         break;
       }
@@ -485,7 +485,7 @@ void loop() {
 
         // Retrieve SMS sender address/phone number.
         if (! fona.getSMSSender(smsn, replybuffer, 250)) {
-          Serial.println("Failed!");
+          Serial.println(F("Failed!"));
           break;
         }
         Serial.print(F("FROM: ")); Serial.println(replybuffer);
@@ -493,11 +493,11 @@ void loop() {
         // Retrieve SMS value.
         uint16_t smslen;
         if (! fona.readSMS(smsn, replybuffer, 250, &smslen)) { // pass in buffer and max len!
-          Serial.println("Failed!");
+          Serial.println(F("Failed!"));
           break;
         }
         Serial.print(F("***** SMS #")); Serial.print(smsn);
-        Serial.print(" ("); Serial.print(smslen); Serial.println(F(") bytes *****"));
+        Serial.print(F(" (")); Serial.print(smslen); Serial.println(F(") bytes *****"));
         Serial.println(replybuffer);
         Serial.println(F("*****"));
 
@@ -531,7 +531,7 @@ void loop() {
           }
 
           Serial.print(F("***** SMS #")); Serial.print(smsn);
-          Serial.print(" ("); Serial.print(smslen); Serial.println(F(") bytes *****"));
+          Serial.print(F(" (")); Serial.print(smslen); Serial.println(F(") bytes *****"));
           Serial.println(replybuffer);
           Serial.println(F("*****"));
         }
@@ -695,7 +695,7 @@ void loop() {
 
         Serial.println(F("****"));
         if (!fona.HTTP_GET_start(url, &statuscode, (uint16_t *)&length)) {
-          Serial.println("Failed!");
+          Serial.println(F("Failed!"));
           break;
         }
         while (length > 0) {
@@ -736,7 +736,7 @@ void loop() {
 
         Serial.println(F("****"));
         if (!fona.HTTP_POST_start(url, F("text/plain"), (uint8_t *) data, strlen(data), &statuscode, (uint16_t *)&length)) {
-          Serial.println("Failed!");
+          Serial.println(F("Failed!"));
           break;
         }
         while (length > 0) {
@@ -827,7 +827,7 @@ uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout) {
     while (Serial.available()) {
       char c =  Serial.read();
 
-      //Serial.print(c, HEX); Serial.print("#"); Serial.println(c);
+      //Serial.print(c, HEX); Serial.print(F("#")); Serial.println(c);
 
       if (c == '\r') continue;
       if (c == 0xA) {
