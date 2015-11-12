@@ -1253,7 +1253,7 @@ boolean Adafruit_FONA::getGSMLoc(float *lat, float *lon) {
 
 }
 /********* TCP FUNCTIONS  ************************************/
-
+/********* deprecated, use only on legacy code. **************/
 
 boolean Adafruit_FONA::TCPconnect(char *server, uint16_t port) {
   flushInput();
@@ -1365,6 +1365,150 @@ uint16_t Adafruit_FONA::TCPread(uint8_t *buff, uint8_t len) {
   return avail;
 }
 
+/********* TCP/IP FUNCTIONS  ************************************/
+
+// Starts a new TCP/IP connection.
+// connType - An enum describing if this should be a TCP or UDP connection.
+// *server - The server address.
+// port - The server port number.
+boolean Adafruit_FONA::TcpipConnect(ConnectionType connType, char *server, uint16_t port) {
+  flushInput();
+
+  if(connType != TCP && connType != UDP) return false;
+  
+  // close all old connections
+  if (! sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000) ) return false;
+
+  // single connection at a time
+  if (! sendCheckReply(F("AT+CIPMUX=0"), F("OK")) ) return false;
+
+  // manually read data
+  if (! sendCheckReply(F("AT+CIPRXGET=1"), F("OK")) ) return false;
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  if(connType == TCP)
+  {
+    Serial.print(F("AT+CIPSTART=\"TCP\",\""));
+  }
+  else
+  {
+    Serial.print(F("AT+CIPSTART=\"UDP\",\""));
+  }
+  
+  Serial.print(server);
+  Serial.print(F("\",\""));
+  Serial.print(port);
+  Serial.println(F("\""));
+#endif
+	
+  if(connType == TCP)
+  {
+    mySerial->print(F("AT+CIPSTART=\"TCP\",\""));
+  }
+  else
+  {
+    mySerial->print(F("AT+CIPSTART=\"UDP\",\""));
+  }
+  
+  mySerial->print(server);
+  mySerial->print(F("\",\""));
+  mySerial->print(port);
+  mySerial->println(F("\""));
+
+  if (! expectReply(F("OK"))) return false;
+  if (! expectReply(F("CONNECT OK"))) return false;
+}
+
+// Closes the TCP/IP connection.
+// Returns - True if the connection closed successfully, false otherwise.
+boolean Adafruit_FONA::TcpipClose(void) {
+  return sendCheckReply(F("AT+CIPCLOSE"), F("OK"));
+}
+
+// Checks if the TCP/IP connectios is connected.
+boolean Adafruit_FONA::TcpipConnected(void) {
+  if (! sendCheckReply(F("AT+CIPSTATUS"), F("OK"), 100) ) return false;
+  readline(100);
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print (F("\t<--- ")); Serial.println(replybuffer);
+#endif
+  return (strcmp(replybuffer, "STATE: CONNECT OK") == 0);
+}
+
+// Send a packet of bytes in the TCP/IP connection.
+// *packet - The packet of bytes to send.
+// len - The size of the packet.
+boolean Adafruit_FONA::TcpipSend(char *packet, uint8_t len) {
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print(F("AT+CIPSEND="));
+  Serial.println(len);
+
+  for (uint16_t i=0; i<len; i++) {
+    Serial.print(" 0x");
+    Serial.print(packet[i], HEX);
+  }
+  Serial.println();
+#endif
+
+
+  mySerial->print(F("AT+CIPSEND="));
+  mySerial->println(len);
+  readline();
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print (F("\t<--- ")); Serial.println(replybuffer);
+#endif
+  if (replybuffer[0] != '>') return false;
+
+  mySerial->write(packet, len);
+  readline(3000); // wait up to 3 seconds to send the data
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print (F("\t<--- ")); Serial.println(replybuffer);
+#endif
+
+  return (strcmp(replybuffer, "SEND OK") == 0);
+}
+
+// Returns the number of bytes of data waiting to be read from the 
+// TCP/IP connection.
+uint16_t Adafruit_FONA::TcpipAvailable(void) {
+  uint16_t avail;
+
+  if (! sendParseReply(F("AT+CIPRXGET=4"), F("+CIPRXGET: 4,"), &avail, ',', 0) ) return false;
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print (avail); Serial.println(F(" bytes available"));
+#endif
+
+  return avail;
+}
+
+// Reads data from the TCP/IP connection, saving it in the buffer.
+// *buff - The buffer to receive the data.
+// len - The size of the buffer.
+// Returns - The number of bytes received.
+uint16_t Adafruit_FONA::TcpipRead(uint8_t *buff, uint8_t len) {
+  uint16_t avail;
+
+  mySerial->print(F("AT+CIPRXGET=2,"));
+  mySerial->println(len);
+  readline();
+  if (! parseReply(F("+CIPRXGET: 2,"), &avail, ',', 0)) return false;
+
+  readRaw(avail);
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print (avail); Serial.println(F(" bytes read"));
+  for (uint8_t i=0;i<avail;i++) {
+    Serial.print(" 0x"); Serial.print(replybuffer[i], HEX);
+  }
+  Serial.println();
+#endif
+
+  memcpy(buff, replybuffer, avail);
+
+  return avail;
+}
 
 
 /********* HTTP LOW LEVEL FUNCTIONS  ************************************/

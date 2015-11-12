@@ -27,7 +27,7 @@
   #include <NewSoftSerial.h>
 #endif
 
-#define ADAFRUIT_FONA_DEBUG
+//#define ADAFRUIT_FONA_DEBUG
 
 #define FONA800L 1
 #define FONA800H 6
@@ -67,6 +67,11 @@
 #define FONA_CALL_UNKNOWN 2
 #define FONA_CALL_RINGING 3
 #define FONA_CALL_INPROGRESS 4
+
+enum ConnectionType {
+	TCP,
+	UDP
+};
 
 class Adafruit_FONA : public Stream {
  public:
@@ -147,12 +152,21 @@ class Adafruit_FONA : public Stream {
   boolean enableGPSNMEA(uint8_t nmea);
 
   // TCP raw connections
+  // deprecated, use only on legacy code.
   boolean TCPconnect(char *server, uint16_t port);
   boolean TCPclose(void);
   boolean TCPconnected(void);
   boolean TCPsend(char *packet, uint8_t len);
   uint16_t TCPavailable(void);
   uint16_t TCPread(uint8_t *buff, uint8_t len);
+  
+  // TCP/IP raw connections
+  boolean TcpipConnect(ConnectionType, char *server, uint16_t port);
+  boolean TcpipClose(void);
+  boolean TcpipConnected(void);
+  boolean TcpipSend(char *packet, uint8_t len);
+  uint16_t TcpipAvailable(void);
+  uint16_t TcpipRead(uint8_t *buff, uint8_t len);
 
   // HTTP low level interface (maps directly to SIM800 commands).
   boolean HTTP_init();
