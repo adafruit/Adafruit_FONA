@@ -34,9 +34,9 @@ Adafruit_FONA::Adafruit_FONA(int8_t rst)
 {
   _rstpin = rst;
 
-  apn = F("FONAnet");
-  apnusername = 0;
-  apnpassword = 0;
+  apn_P = F("FONAnet");
+  apnUsername_P = 0;
+  apnPassword_P = 0;
   mySerial = 0;
   httpsredirect = false;
   useragent = F("FONA");
@@ -1096,20 +1096,20 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
       return false;
 
     // set bearer profile access point name
-    if (apn) {
+    if (apn_P) {
       // Send command AT+SAPBR=3,1,"APN","<apn value>" where <apn value> is the configured APN value.
-      if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"APN\","), apn, F("OK"), 10000))
+      if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"APN\","), apn_P, F("OK"), 10000))
         return false;
 
       // set username/password
-      if (apnusername) {
+      if (apnUsername_P) {
         // Send command AT+SAPBR=3,1,"USER","<user>" where <user> is the configured APN username.
-        if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"USER\","), apnusername, F("OK"), 10000))
+        if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"USER\","), apnUsername_P, F("OK"), 10000))
           return false;
       }
-      if (apnpassword) {
+      if (apnPassword_P) {
         // Send command AT+SAPBR=3,1,"PWD","<password>" where <password> is the configured APN password.
-        if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"PWD\","), apnpassword, F("OK"), 10000))
+        if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"PWD\","), apnPassword_P, F("OK"), 10000))
           return false;
       }
     }
@@ -1144,26 +1144,26 @@ boolean Adafruit_FONA_3G::enableGPRS(boolean onoff) {
 
 
     // set bearer profile access point name
-    if (apn) {
+    if (apn_P) {
       // Send command AT+CGSOCKCONT=1,"IP","<apn value>" where <apn value> is the configured APN name.
-      if (! sendCheckReplyQuoted(F("AT+CGSOCKCONT=1,\"IP\","), apn, F("OK"), 10000))
+      if (! sendCheckReplyQuoted(F("AT+CGSOCKCONT=1,\"IP\","), apn_P, F("OK"), 10000))
         return false;
 
       // set username/password
-      if (apnusername) {
+      if (apnUsername_P) {
 	char authstring[100] = "AT+CGAUTH=1,1,\"";
 	char *strp = authstring + strlen(authstring);
-	strcpy_P(strp, (prog_char *)apnusername);
-	strp+=strlen_P((prog_char *)apnusername);
+	strcpy_P(strp, (prog_char *)apnUsername_P);
+	strp+=strlen_P((prog_char *)apnUsername_P);
 	strp[0] = '\"';
 	strp++;
 	strp[0] = 0;
 
-	if (apnpassword) {
+	if (apnPassword_P) {
 	  strp[0] = ','; strp++;
 	  strp[0] = '\"'; strp++;
-	  strcpy_P(strp, (prog_char *)apnpassword);
-	  strp+=strlen_P((prog_char *)apnpassword);
+	  strcpy_P(strp, (prog_char *)apnPassword_P);
+	  strp+=strlen_P((prog_char *)apnPassword_P);
 	  strp[0] = '\"';
 	  strp++;
 	  strp[0] = 0;
@@ -1204,9 +1204,16 @@ uint8_t Adafruit_FONA::GPRSstate(void) {
 
 void Adafruit_FONA::setGPRSNetworkSettings(const __FlashStringHelper *apn,
               const __FlashStringHelper *username, const __FlashStringHelper *password) {
-  this->apn = apn;
-  this->apnusername = username;
-  this->apnpassword = password;
+  this->apn_P = apn;
+  this->apnUsername_P = username;
+  this->apnPassword_P = password;
+}
+
+void Adafruit_FONA::setGPRSNetworkSettings(const char *apn,
+			  const char *username, const char *password) {
+	this->apn = apn;
+	this->apnUsername = username;
+	this->apnPassword = password;
 }
 
 boolean Adafruit_FONA::getGSMLoc(uint16_t *errorcode, char *buff, uint16_t maxlen) {
@@ -1372,6 +1379,7 @@ uint16_t Adafruit_FONA::TCPread(uint8_t *buff, uint8_t len) {
 // *server - The server address.
 // port - The server port number.
 boolean Adafruit_FONA::TcpipConnect(ConnectionType connType, char *server, uint16_t port) {
+
   flushInput();
 
   if(connType != TCP && connType != UDP) return false;
@@ -1384,8 +1392,35 @@ boolean Adafruit_FONA::TcpipConnect(ConnectionType connType, char *server, uint1
 
   // manually read data
   if (! sendCheckReply(F("AT+CIPRXGET=1"), F("OK")) ) return false;
+  
+  if (! sendCheckReply(F("AT+CGATT=1"), F("OK"), 10000)) return false;
+
+  // GPRS Service Status.
+  if (! GPRSstate() == 1) return false;
+
+  // Setting APN, Username and Password.
+  mySerial->print(F("AT+CSTT=\""));
+  mySerial->print(apn);
+  mySerial->print(F("\",\""));
+  mySerial->print(apnUsername);
+  mySerial->print(F("\",\""));
+  mySerial->print(apnPassword);
+  mySerial->println(F("\""));
+ 
+  if (! expectReply(F("OK"))) return false;
+
+  // Bring up wireless connection (GPRS or CSD).
+  if (! sendCheckReply(F("AT+CIICR"), F("OK"), 100000) )  return false; // 85s max response time.
+  
+  // Get local IP address.
+  mySerial->println(F("AT+CIFSR"));
+  readline(); // discard the returned IP. 
 
 #ifdef ADAFRUIT_FONA_DEBUG
+  Serial.print(F("IP: "));
+  Serial.println(replybuffer);
+
+
   if(connType == TCP)
   {
     Serial.print(F("AT+CIPSTART=\"TCP\",\""));
@@ -1417,6 +1452,8 @@ boolean Adafruit_FONA::TcpipConnect(ConnectionType connType, char *server, uint1
 
   if (! expectReply(F("OK"))) return false;
   if (! expectReply(F("CONNECT OK"))) return false;
+  
+  return true;
 }
 
 // Closes the TCP/IP connection.
@@ -1426,6 +1463,7 @@ boolean Adafruit_FONA::TcpipClose(void) {
 }
 
 // Checks if the TCP/IP connectios is connected.
+// Returns - True if connected, false otherwise.
 boolean Adafruit_FONA::TcpipConnected(void) {
   if (! sendCheckReply(F("AT+CIPSTATUS"), F("OK"), 100) ) return false;
   readline(100);
@@ -1438,6 +1476,8 @@ boolean Adafruit_FONA::TcpipConnected(void) {
 // Send a packet of bytes in the TCP/IP connection.
 // *packet - The packet of bytes to send.
 // len - The size of the packet.
+// Returns - TCP: True if packet was sent and received by the server, false otherwise. 
+//           UDP: True if packet was sent, false otherwise. 
 boolean Adafruit_FONA::TcpipSend(char *packet, uint8_t len) {
 
 #ifdef ADAFRUIT_FONA_DEBUG
@@ -1471,6 +1511,7 @@ boolean Adafruit_FONA::TcpipSend(char *packet, uint8_t len) {
 
 // Returns the number of bytes of data waiting to be read from the 
 // TCP/IP connection.
+// Returns - The number of bytes available to be read.
 uint16_t Adafruit_FONA::TcpipAvailable(void) {
   uint16_t avail;
 
