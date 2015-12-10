@@ -20,7 +20,7 @@
 
 #if (ARDUINO >= 100)
   #include "Arduino.h"
-  #ifndef __SAM3X8E__  // Arduino Due doesn't support SoftwareSerial
+  #if !defined(__SAM3X8E__) && !defined(ARDUINO_ARCH_SAMD)  // Arduino Due doesn't support SoftwareSerial
     #include <SoftwareSerial.h>
   #endif
 #else
