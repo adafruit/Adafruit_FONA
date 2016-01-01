@@ -116,7 +116,15 @@ void loop() {
       } else {
         Serial.println(F("Sent!"));
       }
-
+      
+      // delete the original msg after it is processed
+      //   otherwise, we will fill up all the slots
+      //   and then we won't be able to receive SMS anymore
+      if (fona.deleteSMS(slot)) {
+        Serial.println(F("OK!"));
+      } else {
+        Serial.println(F("Couldn't delete"));
+      }
     }
   }
 }
