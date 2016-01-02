@@ -66,22 +66,22 @@ void loop() {
 
   if (gps_success) {
 
-    Serial.print("GPS lat:");
+    Serial.print(F("GPS lat:"));
     Serial.println(latitude, 6);
-    Serial.print("GPS long:");
+    Serial.print(F("GPS long:"));
     Serial.println(longitude, 6);
-    Serial.print("GPS speed KPH:");
+    Serial.print(F("GPS speed KPH:"));
     Serial.println(speed_kph);
-    Serial.print("GPS speed MPH:");
+    Serial.print(F("GPS speed MPH:"));
     speed_mph = speed_kph * 0.621371192;
     Serial.println(speed_mph);
-    Serial.print("GPS heading:");
+    Serial.print(F("GPS heading:"));
     Serial.println(heading);
-    Serial.print("GPS altitude:");
+    Serial.print(F("GPS altitude:"));
     Serial.println(altitude);
 
   } else {
-    Serial.println("Waiting for FONA GPS 3D fix...");
+    Serial.println(F("Waiting for FONA GPS 3D fix..."));
   }
 
   // Fona 3G doesnt have GPRSlocation :/
@@ -94,12 +94,12 @@ void loop() {
     boolean gsmloc_success = fona.getGSMLoc(&latitude, &longitude);
 
     if (gsmloc_success) {
-      Serial.print("GSMLoc lat:");
+      Serial.print(F("GSMLoc lat:"));
       Serial.println(latitude, 6);
-      Serial.print("GSMLoc long:");
+      Serial.print(F("GSMLoc long:"));
       Serial.println(longitude, 6);
     } else {
-      Serial.println("GSM location failed...");
+      Serial.println(F("GSM location failed..."));
       Serial.println(F("Disabling GPRS"));
       fona.enableGPRS(false);
       Serial.println(F("Enabling GPRS"));
