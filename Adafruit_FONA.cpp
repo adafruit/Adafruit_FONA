@@ -94,14 +94,12 @@ boolean Adafruit_FONA::begin(Stream &port) {
 #ifdef ADAFRUIT_FONA_DEBUG
     Serial.print("\t---> "); Serial.println("ATI");
 #endif
-
   mySerial->println("ATI");
-
   readline(500, true);
-
 #ifdef ADAFRUIT_FONA_DEBUG
-    Serial.print (F("\t<--- ")); Serial.println(replybuffer);
+  Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
+
 
   if (strstr_P(replybuffer, (prog_char *)F("SIM808 R14")) != 0) {
     _type = FONA808_V2;
@@ -113,6 +111,22 @@ boolean Adafruit_FONA::begin(Stream &port) {
     _type = FONA3G_A;
   } else if (strstr_P(replybuffer, (prog_char *)F("SIMCOM_SIM5320E")) != 0) {
     _type = FONA3G_E;
+  }
+
+  if (_type == FONA800L) {
+    // determine if L or H
+#ifdef ADAFRUIT_FONA_DEBUG
+    Serial.print("\t---> "); Serial.println("AT+GMM");
+#endif
+    mySerial->println("AT+GMM");
+    readline(500, true);
+#ifdef ADAFRUIT_FONA_DEBUG
+    Serial.print (F("\t<--- ")); Serial.println(replybuffer);
+#endif
+
+    if (strstr_P(replybuffer, (prog_char *)F("SIM800H")) != 0) {
+      _type = FONA800H;
+    }
   }
 
   return true;
@@ -457,6 +471,8 @@ int8_t Adafruit_FONA::getNumSMS(void) {
   // ask how many sms are stored
   if ( (_type == FONA3G_A) || (_type == FONA3G_E) ) {
     if (! sendParseReply(F("AT+CPMS?"), F("+CPMS: \"ME\","), &numsms) ) return -1;
+  } else if (_type == FONA800H) {
+    if (! sendParseReply(F("AT+CPMS?"), F("+CPMS: \"SM\","), &numsms) ) return -1;
   } else {
     if (! sendParseReply(F("AT+CPMS?"), F("+CPMS: \"SM_P\","), &numsms) ) return -1;
   }
