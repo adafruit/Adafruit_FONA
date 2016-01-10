@@ -63,6 +63,9 @@ boolean Adafruit_FONA::begin(Stream &port) {
     while (mySerial->available()) mySerial->read();
     if (sendCheckReply(F("AT"), F("OK"))) 
       break;
+    while (mySerial->available()) mySerial->read();
+    if (sendCheckReply(F("AT"), F("AT"))) 
+      break;
     delay(500);
     timeout-=500;
   }
@@ -1091,7 +1094,7 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
 
   if (onoff) {
     // disconnect all sockets
-    sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000);
+    sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 20000);
 
     if (! sendCheckReply(F("AT+CGATT=1"), F("OK"), 10000))
       return false;
@@ -1121,11 +1124,11 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
     }
 
     // open GPRS context
-    if (! sendCheckReply(F("AT+SAPBR=1,1"), F("OK"), 10000))
+    if (! sendCheckReply(F("AT+SAPBR=1,1"), F("OK"), 30000))
       return false;
   } else {
     // disconnect all sockets
-    if (! sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000))
+    if (! sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 20000))
       return false;
 
     // close GPRS context
@@ -1265,7 +1268,7 @@ boolean Adafruit_FONA::TCPconnect(char *server, uint16_t port) {
   flushInput();
 
   // close all old connections
-  if (! sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000) ) return false;
+  if (! sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 20000) ) return false;
 
   // single connection at a time
   if (! sendCheckReply(F("AT+CIPMUX=0"), F("OK")) ) return false;
@@ -1487,7 +1490,7 @@ boolean Adafruit_FONA::HTTP_GET_start(char *url,
     return false;
 
   // HTTP GET
-  if (! HTTP_action(FONA_HTTP_GET, status, datalen))
+  if (! HTTP_action(FONA_HTTP_GET, status, datalen, 30000))
     return false;
 
   Serial.print("Status: "); Serial.println(*status);
