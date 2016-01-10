@@ -57,9 +57,15 @@ boolean Adafruit_FONA::begin(Stream &port) {
   digitalWrite(_rstpin, HIGH);
 
   // give 7 seconds to reboot
-  delay(7000);
+  int16_t timeout = 7000;
 
-  while (mySerial->available()) mySerial->read();
+  while (timeout > 0) {
+    while (mySerial->available()) mySerial->read();
+    if (sendCheckReply(F("AT"), F("OK"))) 
+      break;
+    delay(500);
+    timeout-=500;
+  }
 
   sendCheckReply(F("AT"), F("OK"));
   delay(100);
