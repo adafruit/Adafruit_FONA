@@ -129,6 +129,10 @@ boolean Adafruit_FONA::begin(Stream &port) {
     }
   }
 
+#if defined(FONA_PREF_SMS_STORAGE)
+  sendCheckReply(F("AT+CPMS=\"" FONA_PREF_SMS_STORAGE "\""), F("OK"));
+#endif
+
   return true;
 }
 
@@ -470,9 +474,11 @@ int8_t Adafruit_FONA::getNumSMS(void) {
 
   // ask how many sms are stored
   if ( (_type == FONA3G_A) || (_type == FONA3G_E) ) {
-    if (! sendParseReply(F("AT+CPMS?"), F("+CPMS: \"ME\","), &numsms) ) return -1;
+    if (! sendParseReply(F("AT+CPMS?"),  F("\"SM\","), &numsms) ) {
+	return -1;
+    }
   } else if (_type == FONA800H) {
-    if (! sendParseReply(F("AT+CPMS?"), F("+CPMS: \"SM\","), &numsms) ) return -1;
+    if (! sendParseReply(F("AT+CPMS?"), F("\"SM\","), &numsms) ) return -1;
   } else {
     if (! sendParseReply(F("AT+CPMS?"), F("+CPMS: \"SM_P\","), &numsms) ) return -1;
   }
@@ -492,6 +498,11 @@ boolean Adafruit_FONA::readSMS(uint8_t i, char *smsbuff,
   // parse out the SMS len
   uint16_t thesmslen = 0;
 
+  #ifdef ADAFRUIT_FONA_DEBUG
+    Serial.print(F("AT+CMGR="));
+    Serial.println(i);
+  #endif
+
   //getReply(F("AT+CMGR="), i, 1000);  //  do not print debug!
   mySerial->print(F("AT+CMGR="));
   mySerial->println(i);
@@ -499,6 +510,11 @@ boolean Adafruit_FONA::readSMS(uint8_t i, char *smsbuff,
 
   //Serial.print(F("Reply: ")); Serial.println(replybuffer);
   // parse it out...
+
+#ifdef ADAFRUIT_FONA_DEBUG
+  Serial.println(replybuffer);
+#endif
+  
   if (! parseReply(F("+CMGR:"), &thesmslen, ',', 11)) {
     *readlen = 0;
     return false;
@@ -528,10 +544,21 @@ boolean Adafruit_FONA::getSMSSender(uint8_t i, char *sender, int senderlen) {
   // Ensure text mode and all text mode parameters are sent.
   if (! sendCheckReply(F("AT+CMGF=1"), F("OK"))) return false;
   if (! sendCheckReply(F("AT+CSDH=1"), F("OK"))) return false;
+
+ #ifdef ADAFRUIT_FONA_DEBUG
+    Serial.print(F("AT+CMGR="));
+    Serial.println(i);
+  #endif
+
   // Send command to retrieve SMS message and parse a line of response.
   mySerial->print(F("AT+CMGR="));
   mySerial->println(i);
   readline(1000);
+
+ #ifdef ADAFRUIT_FONA_DEBUG
+  Serial.println(replybuffer);
+ #endif
+
   // Parse the second field in the response.
   boolean result = parseReplyQuoted(F("+CMGR:"), sender, senderlen, ',', 1);
   // Drop any remaining data from the response.

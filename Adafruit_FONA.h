@@ -37,6 +37,8 @@
 #define FONA3G_A 4
 #define FONA3G_E 5
 
+// Uncomment to changed the preferred SMS storage
+//#define FONA_PREF_SMS_STORAGE "SM"
 
 #define FONA_HEADSETAUDIO 0
 #define FONA_EXTAUDIO 1
