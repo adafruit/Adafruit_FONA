@@ -64,7 +64,8 @@ boolean Adafruit_FONA::begin(Stream &port) {
   }
 
 #ifdef ADAFRUIT_FONA_DEBUG
-  DEBUG_PRINTLN(F("Timeout: No response to AT... last ditch attempt."));
+  if (timeout <= 0) 
+    DEBUG_PRINTLN(F("Timeout: No response to AT... last ditch attempt."));
 #endif
 
   sendCheckReply(F("AT"), ok_reply);
@@ -470,16 +471,11 @@ int8_t Adafruit_FONA::getNumSMS(void) {
   if (! sendCheckReply(F("AT+CMGF=1"), ok_reply)) return -1;
 
   // ask how many sms are stored
-  if ( (_type == FONA3G_A) || (_type == FONA3G_E) ) {
-    if (! sendParseReply(F("AT+CPMS?"),  F("\"SM\","), &numsms) ) {
-	return -1;
-    }
-  } else if (_type == FONA800H) {
-    if (! sendParseReply(F("AT+CPMS?"), F("\"SM\","), &numsms) ) return -1;
-  } else {
-    if (! sendParseReply(F("AT+CPMS?"), F("+CPMS: \"SM_P\","), &numsms) ) return -1;
-  }
-  return numsms;
+  if (sendParseReply(F("AT+CPMS?"), F("\"SM\","), &numsms)) 
+    return numsms;
+  if (sendParseReply(F("AT+CPMS?"), F("\"SM_P\","), &numsms)) 
+    return numsms;
+  return -1;
 }
 
 // Reading SMS's is a bit involved so we don't use helpers that may cause delays or debug
