@@ -1146,6 +1146,38 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
       if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"APN\","), apn_P, ok_reply, 10000))
         return false;
 
+      // send AT+CSTT,"apn","user","pass"
+      flushInput();
+
+      mySerial->print(F("AT+CSTT=\""));
+      mySerial->print(apn);
+      if (apnusername) {
+	mySerial->println("\",\"");
+	mySerial->print(apnusername);
+      }
+      if (apnpassword) {
+	mySerial->println("\",\"");
+	mySerial->print(apnpassword);
+      }
+      mySerial->println("\"");
+
+      DEBUG_PRINT(F("\t---> ")); DEBUG_PRINT(F("AT+CSTT=\""));
+      DEBUG_PRINT(apn); 
+      
+      if (apnusername) {
+	DEBUG_PRINT("\",\"");
+	DEBUG_PRINT(apnusername); 
+      }
+      if (apnpassword) {
+	DEBUG_PRINT("\",\"");
+	DEBUG_PRINT(apnpassword); 
+      }
+      DEBUG_PRINTLN("\"");
+      
+      uint8_t l = readline(2000);
+      DEBUG_PRINT("\t<---"); DEBUG_PRINTLN(replybuffer);
+      return (prog_char_strcmp(replybuffer, (prog_char*)ok_reply) == 0);
+
       if (! sendCheckReplyQuoted(F("AT+CSTT="), apn, ok_reply, 10000))
         return false;
 
