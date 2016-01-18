@@ -1146,6 +1146,9 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
       if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"APN\","), apn_P, ok_reply, 10000))
         return false;
 
+      if (! sendCheckReplyQuoted(F("AT+CSTT="), apn, ok_reply, 10000))
+        return false;
+
       // set username/password
       if (apnUsername_P) {
         // Send command AT+SAPBR=3,1,"USER","<user>" where <user> is the configured APN username.
@@ -1162,6 +1165,11 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
     // open GPRS context
     if (! sendCheckReply(F("AT+SAPBR=1,1"), ok_reply, 30000))
       return false;
+
+    // bring up wireless connection
+    if (! sendCheckReply(F("AT+CIICR"), ok_reply, 10000))
+      return false;
+
   } else {
     // disconnect all sockets
     if (! sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 20000))
