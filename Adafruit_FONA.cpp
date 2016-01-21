@@ -1080,7 +1080,7 @@ boolean Adafruit_FONA::enableGPSNMEA(uint8_t i) {
 
 /********* GPRS **********************************************************/
 
-
+// deprecated, use only on legacy code.
 boolean Adafruit_FONA::enableGPRS(boolean onoff) {
 
   if (onoff) {
@@ -1191,6 +1191,68 @@ boolean Adafruit_FONA_3G::enableGPRS(boolean onoff) {
   }
 
   return true;
+}
+
+// Enables the GPRS connection
+boolean Adafruit_FONA::enableGPRS(void)
+{
+	if (!sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000)) return false;
+
+	// single connection at a time
+	if (!sendCheckReply(F("AT+CIPMUX=0"), F("OK"))) return false;
+
+	// manually read data
+	if (!sendCheckReply(F("AT+CIPRXGET=1"), F("OK"))) return false;
+
+	if (!sendCheckReply(F("AT+CGATT=1"), F("OK"), 10000)) return false;
+
+	// GPRS Service Status.
+	if (!GPRSstate() == 1) return false;
+
+	// Setting APN, Username and Password.
+	mySerial->print(F("AT+CSTT=\""));
+	mySerial->print(apn);
+	mySerial->print(F("\",\""));
+	mySerial->print(apnUsername);
+	mySerial->print(F("\",\""));
+	mySerial->print(apnPassword);
+	mySerial->println(F("\""));
+
+#ifdef ADAFRUIT_FONA_DEBUG
+	Serial.print(F("AT+CSTT=\""));
+	Serial.print(apn);
+	Serial.print(F("\",\""));
+	Serial.print(apnUsername);
+	Serial.print(F("\",\""));
+	Serial.print(apnPassword);
+	Serial.println(F("\""));
+#endif
+
+	if (!expectReply(F("OK"), 10000)) return false;
+
+	// Bring up wireless connection (GPRS or CSD).
+	if (!sendCheckReply(F("AT+CIICR"), F("OK"), 100000))  return false; // 85s max response time.
+
+	// Get local IP address.	
+	mySerial->println(F("AT+CIFSR"));
+	readline(); // discard the returned IP.
+	if (strstr_P(replybuffer, PSTR("ERROR")) != NULL) return false; // error returned instead of IP
+
+#ifdef ADAFRUIT_FONA_DEBUG
+	Serial.print(F("IP: "));
+	Serial.println(replybuffer);
+#endif
+	return true;
+}
+
+boolean Adafruit_FONA::disableGPRS(void)
+{
+	// disconnect all sockets
+	if (!sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000)) return false;
+
+	if (!sendCheckReply(F("AT+CGATT=0"), F("OK"), 10000)) return false;
+
+	return true;
 }
 
 uint8_t Adafruit_FONA::GPRSstate(void) {
@@ -1312,7 +1374,7 @@ boolean Adafruit_FONA::TCPsend(char *packet, uint8_t len) {
   Serial.println(len);
 
   for (uint16_t i=0; i<len; i++) {
-    Serial.print(" 0x");
+    Serial.print(F(" 0x"));
     Serial.print(packet[i], HEX);
   }
   Serial.println();
@@ -1362,7 +1424,7 @@ uint16_t Adafruit_FONA::TCPread(uint8_t *buff, uint8_t len) {
 #ifdef ADAFRUIT_FONA_DEBUG
   Serial.print (avail); Serial.println(F(" bytes read"));
   for (uint8_t i=0;i<avail;i++) {
-    Serial.print(" 0x"); Serial.print(replybuffer[i], HEX);
+    Serial.print(F(" 0x")); Serial.print(replybuffer[i], HEX);
   }
   Serial.println();
 #endif
@@ -1374,7 +1436,8 @@ uint16_t Adafruit_FONA::TCPread(uint8_t *buff, uint8_t len) {
 
 /********* TCP/IP FUNCTIONS  ************************************/
 
-// Starts a new TCP/IP connection.
+// Starts a new TCP/IP connection. 
+// Be sure to have called enableGPRS() before.
 // connType - An enum describing if this should be a TCP or UDP connection.
 // *server - The server address.
 // port - The server port number.
@@ -1384,50 +1447,14 @@ boolean Adafruit_FONA::TcpipConnect(ConnectionType connType, char *server, uint1
 
   if(connType != TCP && connType != UDP) return false;
   
-  // close all old connections
-  if (! sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000) ) return false;
-
-  // single connection at a time
-  if (! sendCheckReply(F("AT+CIPMUX=0"), F("OK")) ) return false;
-
-  // manually read data
-  if (! sendCheckReply(F("AT+CIPRXGET=1"), F("OK")) ) return false;
-  
-  if (! sendCheckReply(F("AT+CGATT=1"), F("OK"), 10000)) return false;
-
-  // GPRS Service Status.
-  if (! GPRSstate() == 1) return false;
-
-  // Setting APN, Username and Password.
-  mySerial->print(F("AT+CSTT=\""));
-  mySerial->print(apn);
-  mySerial->print(F("\",\""));
-  mySerial->print(apnUsername);
-  mySerial->print(F("\",\""));
-  mySerial->print(apnPassword);
-  mySerial->println(F("\""));
- 
-  if (! expectReply(F("OK"))) return false;
-
-  // Bring up wireless connection (GPRS or CSD).
-  if (! sendCheckReply(F("AT+CIICR"), F("OK"), 100000) )  return false; // 85s max response time.
-  
-  // Get local IP address.
-  mySerial->println(F("AT+CIFSR"));
-  readline(); // discard the returned IP. 
-
-#ifdef ADAFRUIT_FONA_DEBUG
-  Serial.print(F("IP: "));
-  Serial.println(replybuffer);
-
-
-  if(connType == TCP)
+#ifdef ADAFRUIT_FONA_DEBUG  
+  if(connType == UDP)
   {
-    Serial.print(F("AT+CIPSTART=\"TCP\",\""));
+    Serial.print(F("AT+CIPSTART=\"UDP\",\""));
   }
   else
   {
-    Serial.print(F("AT+CIPSTART=\"UDP\",\""));
+    Serial.print(F("AT+CIPSTART=\"TCP\",\""));
   }
   
   Serial.print(server);
@@ -1436,13 +1463,13 @@ boolean Adafruit_FONA::TcpipConnect(ConnectionType connType, char *server, uint1
   Serial.println(F("\""));
 #endif
 	
-  if(connType == TCP)
+  if(connType == UDP)
   {
-    mySerial->print(F("AT+CIPSTART=\"TCP\",\""));
+    mySerial->print(F("AT+CIPSTART=\"UDP\",\""));
   }
   else
   {
-    mySerial->print(F("AT+CIPSTART=\"UDP\",\""));
+    mySerial->print(F("AT+CIPSTART=\"TCP\",\""));
   }
   
   mySerial->print(server);
@@ -1470,7 +1497,7 @@ boolean Adafruit_FONA::TcpipConnected(void) {
 #ifdef ADAFRUIT_FONA_DEBUG
   Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
-  return (strcmp(replybuffer, "STATE: CONNECT OK") == 0);
+  return (strcmp_P(replybuffer, PSTR("STATE: CONNECT OK")) == 0);
 }
 
 // Send a packet of bytes in the TCP/IP connection.
@@ -1485,12 +1512,13 @@ boolean Adafruit_FONA::TcpipSend(char *packet, uint8_t len) {
   Serial.println(len);
 
   for (uint16_t i=0; i<len; i++) {
-    Serial.print(" 0x");
+    Serial.print(F(" 0x"));
     Serial.print(packet[i], HEX);
   }
   Serial.println();
 #endif
 
+  flush();
 
   mySerial->print(F("AT+CIPSEND="));
   mySerial->println(len);
@@ -1506,7 +1534,7 @@ boolean Adafruit_FONA::TcpipSend(char *packet, uint8_t len) {
   Serial.print (F("\t<--- ")); Serial.println(replybuffer);
 #endif
 
-  return (strcmp(replybuffer, "SEND OK") == 0);
+  return (strcmp_P(replybuffer, PSTR("SEND OK")) == 0);
 }
 
 // Returns the number of bytes of data waiting to be read from the 
@@ -1541,7 +1569,7 @@ uint16_t Adafruit_FONA::TcpipRead(uint8_t *buff, uint8_t len) {
 #ifdef ADAFRUIT_FONA_DEBUG
   Serial.print (avail); Serial.println(F(" bytes read"));
   for (uint8_t i=0;i<avail;i++) {
-    Serial.print(" 0x"); Serial.print(replybuffer[i], HEX);
+    Serial.print(F(" 0x")); Serial.print(replybuffer[i], HEX);
   }
   Serial.println();
 #endif
@@ -1551,6 +1579,47 @@ uint16_t Adafruit_FONA::TcpipRead(uint8_t *buff, uint8_t len) {
   return avail;
 }
 
+// Set the module to use a fixed port when connecting with the server in single 
+// connection mode and when the module is a client.
+boolean Adafruit_FONA::TcpipSetFixedPort(ConnectionType connType, uint16_t port)
+{
+	if (connType != TCP && connType != UDP) return false;
+
+	if (connType == UDP)
+	{
+		mySerial->print("AT+CLPORT=\"UDP\",");
+	}
+	else
+	{
+		mySerial->print("AT+CLPORT=\"TCP\",");
+	}
+
+	mySerial->print(port);
+	mySerial->println();
+
+	return expectReply(F("OK"));
+}
+
+// Set the module to use a dinamically allocated port when connecting with the server in single 
+// connection mode and when the module is a client.
+boolean Adafruit_FONA::TcpipSetDynamicPort(ConnectionType connType)
+{
+	if (connType != TCP && connType != UDP) return false;
+
+	if (connType == UDP)
+	{
+		mySerial->print("AT+CLPORT=\"UDP\",");
+	}
+	else
+	{
+		mySerial->print("AT+CLPORT=\"TCP\",");
+	}
+
+	mySerial->print("0");
+	mySerial->println();
+
+	return expectReply(F("OK"));
+}
 
 /********* HTTP LOW LEVEL FUNCTIONS  ************************************/
 

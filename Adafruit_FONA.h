@@ -138,7 +138,10 @@ class Adafruit_FONA : public Stream {
   boolean getTime(char *buff, uint16_t maxlen);
 
   // GPRS handling
+  // deprecated, use only on legacy code.
   boolean enableGPRS(boolean onoff);
+  boolean enableGPRS(void);
+  boolean disableGPRS(void);
   uint8_t GPRSstate(void);
   boolean getGSMLoc(uint16_t *replycode, char *buff, uint16_t maxlen);
   boolean getGSMLoc(float *lat, float *lon);
@@ -168,6 +171,8 @@ class Adafruit_FONA : public Stream {
   boolean TcpipSend(char *packet, uint8_t len);
   uint16_t TcpipAvailable(void);
   uint16_t TcpipRead(uint8_t *buff, uint8_t len);
+  boolean TcpipSetFixedPort(ConnectionType connType, uint16_t port);
+  boolean TcpipSetDynamicPort(ConnectionType connType);
 
   // HTTP low level interface (maps directly to SIM800 commands).
   boolean HTTP_init();
