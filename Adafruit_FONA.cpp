@@ -93,9 +93,9 @@ boolean Adafruit_FONA::begin(FONAStreamType &port) {
   flushInput();
 
 
-  DEBUG_PRINT(F("\t---> ")); DEBUG_PRINTLN("ATI");
+  DEBUG_PRINT(F("\t---> ")); DEBUG_PRINTLN(F("ATI"));
 
-  mySerial->println("ATI");
+  mySerial->println(F("ATI"));
   readline(500, true);
 
   DEBUG_PRINT (F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
@@ -117,9 +117,9 @@ boolean Adafruit_FONA::begin(FONAStreamType &port) {
   if (_type == FONA800L) {
     // determine if L or H
 
-  DEBUG_PRINT(F("\t---> ")); DEBUG_PRINTLN("AT+GMM");
+  DEBUG_PRINT(F("\t---> ")); DEBUG_PRINTLN(F("AT+GMM"));
 
-    mySerial->println("AT+GMM");
+    mySerial->println(F("AT+GMM"));
     readline(500, true);
 
   DEBUG_PRINT (F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
@@ -577,22 +577,22 @@ boolean Adafruit_FONA::sendSMS(char *smsaddr, char *smsmsg) {
   mySerial->println();
   mySerial->write(0x1A);
 
-  DEBUG_PRINTLN("^Z");
+  DEBUG_PRINTLN(F("^Z"));
 
   if ( (_type == FONA3G_A) || (_type == FONA3G_E) ) {
     // Eat two sets of CRLF
     readline(200);
-    //DEBUG_PRINT("Line 1: "); DEBUG_PRINTLN(strlen(replybuffer));
+    //DEBUG_PRINT(F("Line 1: ")); DEBUG_PRINTLN(strlen(replybuffer));
     readline(200);
-    //DEBUG_PRINT("Line 2: "); DEBUG_PRINTLN(strlen(replybuffer));
+    //DEBUG_PRINT(F("Line 2: ")); DEBUG_PRINTLN(strlen(replybuffer));
   }
   readline(10000); // read the +CMGS reply, wait up to 10 seconds!!!
-  //DEBUG_PRINT("Line 3: "); DEBUG_PRINTLN(strlen(replybuffer));
+  //DEBUG_PRINT(F("Line 3: ")); DEBUG_PRINTLN(strlen(replybuffer));
   if (prog_char_strcmp(replybuffer, (prog_char*)F("+CMGS")) == 0) {
     return false;
   }
   readline(1000); // read OK
-  //DEBUG_PRINT("* "); DEBUG_PRINTLN(replybuffer);
+  //DEBUG_PRINT(F("* ")); DEBUG_PRINTLN(replybuffer);
 
   if (prog_char_strcmp(replybuffer, (prog_char*)F("OK")) != 0) {
     return false;
@@ -629,7 +629,7 @@ boolean Adafruit_FONA::sendUSSD(char *ussdmsg, char *ussdbuff, uint16_t maxlen, 
     return false;
   } else {
       readline(10000); // read the +CUSD reply, wait up to 10 seconds!!!
-      //DEBUG_PRINT("* "); DEBUG_PRINTLN(replybuffer);
+      //DEBUG_PRINT(F("* ")); DEBUG_PRINTLN(replybuffer);
 	  char *p = prog_char_strstr(replybuffer, (prog_char*)F("+CUSD: "));
       if (p == 0) {
         *readlen = 0;
@@ -1155,27 +1155,27 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
       mySerial->print(F("AT+CSTT=\""));
       mySerial->print(apn_P);
 	  if (apnUsername_P) {
-	mySerial->print("\",\"");
+	mySerial->print(F("\",\""));
 	mySerial->print(apnUsername_P);
       }
 	  if (apnPassword_P) {
-	mySerial->print("\",\"");
+	mySerial->print(F("\",\""));
 	mySerial->print(apnPassword_P);
       }
-      mySerial->println("\"");
+      mySerial->println(F("\""));
 
       DEBUG_PRINT(F("\t---> ")); DEBUG_PRINT(F("AT+CSTT=\""));
 	  DEBUG_PRINT(apn_P);
       
 	  if (apnUsername_P) {
-	DEBUG_PRINT("\",\"");
+	DEBUG_PRINT(F("\",\""));
 	DEBUG_PRINT(apnUsername_P);
       }
 	  if (apnPassword_P) {
-	DEBUG_PRINT("\",\"");
+	DEBUG_PRINT(F("\",\""));
 	DEBUG_PRINT(apnPassword_P);
       }
-      DEBUG_PRINTLN("\"");
+      DEBUG_PRINTLN(F("\""));
       
       if (! expectReply(ok_reply)) return false;
     
@@ -1297,27 +1297,27 @@ boolean Adafruit_FONA::enableGPRS(void)
 	mySerial->print(F("AT+CSTT=\""));
 	mySerial->print(apn);
 	if (apnUsername) {
-		mySerial->print("\",\"");
+		mySerial->print(F("\",\""));
 		mySerial->print(apnUsername);
 	}
 	if (apnPassword) {
-		mySerial->print("\",\"");
+		mySerial->print(F("\",\""));
 		mySerial->print(apnPassword);
 	}
-	mySerial->println("\"");
+	mySerial->println(F("\""));
 
 	DEBUG_PRINT(F("\t---> ")); DEBUG_PRINT(F("AT+CSTT=\""));
 	DEBUG_PRINT(apn);
 
 	if (apnUsername) {
-		DEBUG_PRINT("\",\"");
+		DEBUG_PRINT(F("\",\""));
 		DEBUG_PRINT(apnUsername);
 	}
 	if (apnPassword) {
-		DEBUG_PRINT("\",\"");
+		DEBUG_PRINT(F("\",\""));
 		DEBUG_PRINT(apnPassword);
 	}
-	DEBUG_PRINTLN("\"");
+	DEBUG_PRINTLN(F("\""));
 
 	if (!expectReply(ok_reply, 10000)) return false;
 
@@ -1765,11 +1765,11 @@ boolean Adafruit_FONA::TcpipSetFixedPort(ConnectionType connType, uint16_t port)
 
 	if (connType == UDP)
 	{
-		mySerial->print("AT+CLPORT=\"UDP\",");
+		mySerial->print(F("AT+CLPORT=\"UDP\","));
 	}
 	else
 	{
-		mySerial->print("AT+CLPORT=\"TCP\",");
+		mySerial->print(F("AT+CLPORT=\"TCP\","));
 	}
 
 	mySerial->print(port);
@@ -1786,14 +1786,14 @@ boolean Adafruit_FONA::TcpipSetDynamicPort(ConnectionType connType)
 
 	if (connType == UDP)
 	{
-		mySerial->print("AT+CLPORT=\"UDP\",");
+		mySerial->print(F("AT+CLPORT=\"UDP\","));
 	}
 	else
 	{
-		mySerial->print("AT+CLPORT=\"TCP\",");
+		mySerial->print(F("AT+CLPORT=\"TCP\","));
 	}
 
-	mySerial->print("0");
+	mySerial->print('0');
 	mySerial->println();
 
 	return expectReply(ok_reply);
@@ -1871,7 +1871,7 @@ boolean Adafruit_FONA::HTTP_data(uint32_t size, uint32_t maxTime) {
 
   mySerial->print(F("AT+HTTPDATA="));
   mySerial->print(size);
-  mySerial->print(",");
+  mySerial->print(',');
   mySerial->println(maxTime);
 
   return expectReply(F("DOWNLOAD"));
@@ -1951,8 +1951,8 @@ boolean Adafruit_FONA_3G::HTTP_GET_start(char *ipaddr, char *path, uint16_t port
   if (! HTTP_action(FONA_HTTP_GET, status, datalen))
     return false;
 
-  DEBUG_PRINT("Status: "); DEBUG_PRINTLN(*status);
-  DEBUG_PRINT("Len: "); DEBUG_PRINTLN(*datalen);
+  DEBUG_PRINT(F("Status: ")); DEBUG_PRINTLN(*status);
+  DEBUG_PRINT(F("Len: ")); DEBUG_PRINTLN(*datalen);
 
   // HTTP response data
   if (! HTTP_readall(datalen))
@@ -2120,7 +2120,7 @@ uint8_t Adafruit_FONA::readline(uint16_t timeout, boolean multiline) {
         }
       }
       replybuffer[replyidx] = c;
-      //DEBUG_PRINT(c, HEX); DEBUG_PRINT("#"); DEBUG_PRINTLN(c);
+      //DEBUG_PRINT(c, HEX); DEBUG_PRINT(F("#")); DEBUG_PRINTLN(c);
       replyidx++;
     }
 
@@ -2249,11 +2249,11 @@ boolean Adafruit_FONA::sendCheckReply(char *send, char *reply, uint16_t timeout)
 	  return false;
 /*
   for (uint8_t i=0; i<strlen(replybuffer); i++) {
-  DEBUG_PRINT(replybuffer[i], HEX); DEBUG_PRINT(" ");
+  DEBUG_PRINT(replybuffer[i], HEX); DEBUG_PRINT(F(" "));
   }
   DEBUG_PRINTLN();
   for (uint8_t i=0; i<strlen(reply); i++) {
-    DEBUG_PRINT(reply[i], HEX); DEBUG_PRINT(" ");
+    DEBUG_PRINT(reply[i], HEX); DEBUG_PRINT(F(" "));
   }
   DEBUG_PRINTLN();
   */
