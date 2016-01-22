@@ -26,9 +26,12 @@ Adafruit_FONA::Adafruit_FONA(int8_t rst)
   _rstpin = rst;
 
   apn_P = F("FONAnet");
-  apnUsername_P = 0;
-  apnPassword_P = 0;
-  mySerial = 0;
+  apnUsername_P = NULL;
+  apnPassword_P = NULL;
+  apn = NULL;
+  apnUsername = NULL;
+  apnPassword = NULL;
+  mySerial = NULL;
   httpsredirect = false;
   useragent = F("FONA");
   ok_reply = F("OK");
@@ -38,7 +41,7 @@ uint8_t Adafruit_FONA::type(void) {
   return _type;
 }
 
-boolean Adafruit_FONA::begin(Stream &port) {
+boolean Adafruit_FONA::begin(FONAStreamType &port) {
   mySerial = &port;
 
   pinMode(_rstpin, OUTPUT);
@@ -344,7 +347,7 @@ int8_t Adafruit_FONA::getFMSignalLevel(uint16_t station) {
   // Note, need to explicitly send timeout so right overload is chosen.
   getReply(F("AT+FMSIGNAL="), station, FONA_DEFAULT_TIMEOUT_MS);
   // Check response starts with expected value.
-  char *p = prog_char_strstr(replybuffer, PSTR("+FMSIGNAL: "));
+  char *p = prog_char_strstr(replybuffer, (prog_char*)F("+FMSIGNAL: "));
   if (p == 0) return -1;
   p+=11;
   // Find second colon to get start of signal quality.
@@ -585,13 +588,13 @@ boolean Adafruit_FONA::sendSMS(char *smsaddr, char *smsmsg) {
   }
   readline(10000); // read the +CMGS reply, wait up to 10 seconds!!!
   //DEBUG_PRINT("Line 3: "); DEBUG_PRINTLN(strlen(replybuffer));
-  if (strstr(replybuffer, "+CMGS") == 0) {
+  if (prog_char_strcmp(replybuffer, (prog_char*)F("+CMGS")) == 0) {
     return false;
   }
   readline(1000); // read OK
   //DEBUG_PRINT("* "); DEBUG_PRINTLN(replybuffer);
 
-  if (strcmp(replybuffer, "OK") != 0) {
+  if (prog_char_strcmp(replybuffer, (prog_char*)F("OK")) != 0) {
     return false;
   }
 
@@ -627,7 +630,7 @@ boolean Adafruit_FONA::sendUSSD(char *ussdmsg, char *ussdbuff, uint16_t maxlen, 
   } else {
       readline(10000); // read the +CUSD reply, wait up to 10 seconds!!!
       //DEBUG_PRINT("* "); DEBUG_PRINTLN(replybuffer);
-      char *p = prog_char_strstr(replybuffer, PSTR("+CUSD: "));
+	  char *p = prog_char_strstr(replybuffer, (prog_char*)F("+CUSD: "));
       if (p == 0) {
         *readlen = 0;
         return false;
@@ -681,7 +684,7 @@ boolean Adafruit_FONA::enableNTPTimeSync(boolean onoff, FONAFlashStringPtr ntpse
     }
     mySerial->println(F("\",0"));
     readline(FONA_DEFAULT_TIMEOUT_MS);
-    if (strcmp(replybuffer, "OK") != 0)
+	if (prog_char_strcmp(replybuffer, (prog_char*)F("OK")) != 0)
       return false;
 
     if (! sendCheckReply(F("AT+CNTP"), ok_reply, 10000))
@@ -1130,47 +1133,47 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
 
   if (onoff) {
     // disconnect all sockets
-    sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 20000);
+    sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 70000);
 
     if (! sendCheckReply(F("AT+CGATT=1"), ok_reply, 10000))
       return false;
 
     // set bearer profile! connection type GPRS
     if (! sendCheckReply(F("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\""),
-			   ok_reply, 10000))
+			   ok_reply, 90000))
       return false;
 
     // set bearer profile access point name
     if (apn_P) {
       // Send command AT+SAPBR=3,1,"APN","<apn value>" where <apn value> is the configured APN value.
-      if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"APN\","), apn_P, ok_reply, 10000))
+      if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"APN\","), apn_P, ok_reply, 90000))
         return false;
 
       // send AT+CSTT,"apn","user","pass"
       flushInput();
 
       mySerial->print(F("AT+CSTT=\""));
-      mySerial->print(apn);
-      if (apnusername) {
+      mySerial->print(apn_P);
+	  if (apnUsername_P) {
 	mySerial->print("\",\"");
-	mySerial->print(apnusername);
+	mySerial->print(apnUsername_P);
       }
-      if (apnpassword) {
+	  if (apnPassword_P) {
 	mySerial->print("\",\"");
-	mySerial->print(apnpassword);
+	mySerial->print(apnPassword_P);
       }
       mySerial->println("\"");
 
       DEBUG_PRINT(F("\t---> ")); DEBUG_PRINT(F("AT+CSTT=\""));
-      DEBUG_PRINT(apn); 
+	  DEBUG_PRINT(apn_P);
       
-      if (apnusername) {
+	  if (apnUsername_P) {
 	DEBUG_PRINT("\",\"");
-	DEBUG_PRINT(apnusername); 
+	DEBUG_PRINT(apnUsername_P);
       }
-      if (apnpassword) {
+	  if (apnPassword_P) {
 	DEBUG_PRINT("\",\"");
-	DEBUG_PRINT(apnpassword); 
+	DEBUG_PRINT(apnPassword_P);
       }
       DEBUG_PRINTLN("\"");
       
@@ -1179,31 +1182,31 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
       // set username/password
       if (apnUsername_P) {
         // Send command AT+SAPBR=3,1,"USER","<user>" where <user> is the configured APN username.
-        if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"USER\","), apnUsername_P, ok_reply, 10000))
+        if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"USER\","), apnUsername_P, ok_reply, 90000))
           return false;
       }
       if (apnPassword_P) {
         // Send command AT+SAPBR=3,1,"PWD","<password>" where <password> is the configured APN password.
-        if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"PWD\","), apnPassword_P, ok_reply, 10000))
+        if (! sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"PWD\","), apnPassword_P, ok_reply, 90000))
           return false;
       }
     }
 
     // open GPRS context
-    if (! sendCheckReply(F("AT+SAPBR=1,1"), ok_reply, 30000))
+    if (! sendCheckReply(F("AT+SAPBR=1,1"), ok_reply, 90000))
       return false;
 
     // bring up wireless connection
-    if (! sendCheckReply(F("AT+CIICR"), ok_reply, 10000))
+    if (! sendCheckReply(F("AT+CIICR"), ok_reply, 90000))
       return false;
 
   } else {
     // disconnect all sockets
-    if (! sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 20000))
+    if (! sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 70000))
       return false;
 
     // close GPRS context
-    if (! sendCheckReply(F("AT+SAPBR=0,1"), ok_reply, 10000))
+    if (! sendCheckReply(F("AT+SAPBR=0,1"), ok_reply, 90000))
       return false;
 
     if (! sendCheckReply(F("AT+CGATT=0"), ok_reply, 10000))
@@ -1217,7 +1220,7 @@ boolean Adafruit_FONA_3G::enableGPRS(boolean onoff) {
 
   if (onoff) {
     // disconnect all sockets
-    //sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000);
+    //sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 70000);
 
     if (! sendCheckReply(F("AT+CGATT=1"), ok_reply, 10000))
       return false;
@@ -1276,61 +1279,68 @@ boolean Adafruit_FONA_3G::enableGPRS(boolean onoff) {
 // Enables the GPRS connection
 boolean Adafruit_FONA::enableGPRS(void)
 {
-	if (!sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000)) return false;
+	if (!sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 70000)) return false;
 
 	// single connection at a time
-	if (!sendCheckReply(F("AT+CIPMUX=0"), F("OK"))) return false;
+	if (!sendCheckReply(F("AT+CIPMUX=0"), ok_reply)) return false;
 
 	// manually read data
-	if (!sendCheckReply(F("AT+CIPRXGET=1"), F("OK"))) return false;
+	if (!sendCheckReply(F("AT+CIPRXGET=1"), ok_reply)) return false;
 
-	if (!sendCheckReply(F("AT+CGATT=1"), F("OK"), 10000)) return false;
+	if (!sendCheckReply(F("AT+CGATT=1"), ok_reply, 10000)) return false;
 
 	// GPRS Service Status.
 	if (!GPRSstate() == 1) return false;
 
 	// Setting APN, Username and Password.
+
 	mySerial->print(F("AT+CSTT=\""));
 	mySerial->print(apn);
-	mySerial->print(F("\",\""));
-	mySerial->print(apnUsername);
-	mySerial->print(F("\",\""));
-	mySerial->print(apnPassword);
-	mySerial->println(F("\""));
+	if (apnUsername) {
+		mySerial->print("\",\"");
+		mySerial->print(apnUsername);
+	}
+	if (apnPassword) {
+		mySerial->print("\",\"");
+		mySerial->print(apnPassword);
+	}
+	mySerial->println("\"");
 
-#ifdef ADAFRUIT_FONA_DEBUG
-	Serial.print(F("AT+CSTT=\""));
-	Serial.print(apn);
-	Serial.print(F("\",\""));
-	Serial.print(apnUsername);
-	Serial.print(F("\",\""));
-	Serial.print(apnPassword);
-	Serial.println(F("\""));
-#endif
+	DEBUG_PRINT(F("\t---> ")); DEBUG_PRINT(F("AT+CSTT=\""));
+	DEBUG_PRINT(apn);
 
-	if (!expectReply(F("OK"), 10000)) return false;
+	if (apnUsername) {
+		DEBUG_PRINT("\",\"");
+		DEBUG_PRINT(apnUsername);
+	}
+	if (apnPassword) {
+		DEBUG_PRINT("\",\"");
+		DEBUG_PRINT(apnPassword);
+	}
+	DEBUG_PRINTLN("\"");
+
+	if (!expectReply(ok_reply, 10000)) return false;
 
 	// Bring up wireless connection (GPRS or CSD).
-	if (!sendCheckReply(F("AT+CIICR"), F("OK"), 100000))  return false; // 85s max response time.
+	if (!sendCheckReply(F("AT+CIICR"), ok_reply, 90000))  return false; // 85s max response time.
 
 	// Get local IP address.	
 	mySerial->println(F("AT+CIFSR"));
 	readline(); // discard the returned IP.
-	if (strstr_P(replybuffer, PSTR("ERROR")) != NULL) return false; // error returned instead of IP
+	if (prog_char_strstr(replybuffer, (prog_char*)F("ERROR")) != NULL) return false; // error returned instead of IP
 
-#ifdef ADAFRUIT_FONA_DEBUG
-	Serial.print(F("IP: "));
-	Serial.println(replybuffer);
-#endif
+	DEBUG_PRINT(F("IP: "));
+	DEBUG_PRINTLN(replybuffer);
+
 	return true;
 }
 
 boolean Adafruit_FONA::disableGPRS(void)
 {
 	// disconnect all sockets
-	if (!sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 5000)) return false;
+	if (!sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 70000)) return false;
 
-	if (!sendCheckReply(F("AT+CGATT=0"), F("OK"), 10000)) return false;
+	if (!sendCheckReply(F("AT+CGATT=0"), ok_reply, 10000)) return false;
 
 	return true;
 }
@@ -1344,18 +1354,105 @@ uint8_t Adafruit_FONA::GPRSstate(void) {
   return state;
 }
 
-void Adafruit_FONA::setGPRSNetworkSettings(FONAFlashStringPtr apn,
+boolean Adafruit_FONA::setGPRSNetworkSettings(FONAFlashStringPtr apn,
               FONAFlashStringPtr username, FONAFlashStringPtr password) {
-  this->apn_P = apn;
-  this->apnUsername_P = username;
-  this->apnPassword_P = password;
+	
+	char *newApn = copyString(apn);
+	char *newUsername = copyString(username);
+	char *newPassword = copyString(password);
+	
+	if (newApn == NULL)
+	{
+		free(newApn);
+		free(newUsername);
+		free(newPassword);
+		
+		return false;
+	}
+
+	this->apn_P = apn;	
+	this->apnUsername_P = username;
+	this->apnPassword_P = password;
+
+	free(this->apn);
+	free(this->apnUsername);
+	free(this->apnPassword);
+
+	this->apn = newApn;
+	this->apnUsername = newUsername;
+	this->apnPassword = newPassword;
+	
+	return true;
 }
 
-void Adafruit_FONA::setGPRSNetworkSettings(const char *apn,
+boolean Adafruit_FONA::setGPRSNetworkSettings(const char *apn,
 			  const char *username, const char *password) {
-	this->apn = apn;
-	this->apnUsername = username;
-	this->apnPassword = password;
+	char *newApn = copyString(apn);
+	char *newUsername = copyString(username);
+	char *newPassword = copyString(password);
+
+	if (newApn == NULL)
+	{
+		free(newApn);
+		free(newUsername);
+		free(newPassword);
+
+		return false;
+	}
+
+	free(this->apn);
+	free(this->apnUsername);
+	free(this->apnPassword);
+
+	this->apn = newApn;
+	this->apnUsername = newUsername;
+	this->apnPassword = newPassword;
+
+	return true;
+}
+
+// copies a string, allocating all the memory needed for it.
+// Returns NULL in case of failure.
+char* Adafruit_FONA::copyString(const char *string) {
+
+	size_t length = 0;
+	char *newString = NULL;
+
+	if (string == NULL) { return NULL; }
+
+	length = strnlen(string, MAX_STRING_SIZE);
+	if (length >= MAX_STRING_SIZE || length == 0) { return NULL; }
+
+	newString = (char*)malloc(length + 1);
+		
+	if (newString == NULL) { return NULL; }
+
+	strncpy(newString, string, length + 1);
+	newString[length + 1] = '\0'; // just in case to be safe.
+	
+	return newString;
+}
+
+// copies a string from flash memory, allocating all the memory needed for it.
+// Returns NULL in case of failure.
+char* Adafruit_FONA::copyString(FONAFlashStringPtr string) {
+
+	size_t length = 0;
+	char *newString = NULL;
+
+	if (string == NULL) { return NULL; }
+
+	length = prog_char_strnlen((prog_char *)string, MAX_STRING_SIZE);
+	if (length >= MAX_STRING_SIZE || length == 0) { return false; }
+
+	newString = (char*)malloc(length + 1);
+
+	if (newString == NULL) { return NULL; }
+
+	prog_char_strncpy(newString, (prog_char *)string, length + 1);
+	newString[length + 1] = '\0'; // just in case to be safe.
+
+	return newString;
 }
 
 boolean Adafruit_FONA::getGSMLoc(uint16_t *errorcode, char *buff, uint16_t maxlen) {
@@ -1408,7 +1505,7 @@ boolean Adafruit_FONA::TCPconnect(char *server, uint16_t port) {
   flushInput();
 
   // close all old connections
-  if (! sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 20000) ) return false;
+  if (! sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 70000) ) return false;
 
   // single connection at a time
   if (! sendCheckReply(F("AT+CIPMUX=0"), ok_reply) ) return false;
@@ -1447,7 +1544,7 @@ boolean Adafruit_FONA::TCPconnected(void) {
 
   DEBUG_PRINT (F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
 
-  return (strcmp(replybuffer, "STATE: CONNECT OK") == 0);
+  return (prog_char_strcmp(replybuffer, (prog_char*)F("STATE: CONNECT OK")) == 0);
 }
 
 boolean Adafruit_FONA::TCPsend(char *packet, uint8_t len) {
@@ -1477,7 +1574,7 @@ boolean Adafruit_FONA::TCPsend(char *packet, uint8_t len) {
   DEBUG_PRINT (F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
 
 
-  return (strcmp(replybuffer, "SEND OK") == 0);
+  return (prog_char_strcmp(replybuffer, (prog_char*)F("SEND OK")) == 0);
 }
 
 uint16_t Adafruit_FONA::TCPavailable(void) {
@@ -1532,17 +1629,17 @@ boolean Adafruit_FONA::TcpipConnect(ConnectionType connType, char *server, uint1
 #ifdef ADAFRUIT_FONA_DEBUG  
   if(connType == UDP)
   {
-    Serial.print(F("AT+CIPSTART=\"UDP\",\""));
+    DEBUG_PRINT(F("AT+CIPSTART=\"UDP\",\""));
   }
   else
   {
-    Serial.print(F("AT+CIPSTART=\"TCP\",\""));
+    DEBUG_PRINT(F("AT+CIPSTART=\"TCP\",\""));
   }
   
-  Serial.print(server);
-  Serial.print(F("\",\""));
-  Serial.print(port);
-  Serial.println(F("\""));
+  DEBUG_PRINT(server);
+  DEBUG_PRINT(F("\",\""));
+  DEBUG_PRINT(port);
+  DEBUG_PRINTLN(F("\""));
 #endif
 	
   if(connType == UDP)
@@ -1559,7 +1656,7 @@ boolean Adafruit_FONA::TcpipConnect(ConnectionType connType, char *server, uint1
   mySerial->print(port);
   mySerial->println(F("\""));
 
-  if (! expectReply(F("OK"))) return false;
+  if (! expectReply(ok_reply)) return false;
   if (! expectReply(F("CONNECT OK"))) return false;
   
   return true;
@@ -1568,18 +1665,18 @@ boolean Adafruit_FONA::TcpipConnect(ConnectionType connType, char *server, uint1
 // Closes the TCP/IP connection.
 // Returns - True if the connection closed successfully, false otherwise.
 boolean Adafruit_FONA::TcpipClose(void) {
-  return sendCheckReply(F("AT+CIPCLOSE"), F("OK"));
+  return sendCheckReply(F("AT+CIPCLOSE"), ok_reply);
 }
 
 // Checks if the TCP/IP connectios is connected.
 // Returns - True if connected, false otherwise.
 boolean Adafruit_FONA::TcpipConnected(void) {
-  if (! sendCheckReply(F("AT+CIPSTATUS"), F("OK"), 100) ) return false;
+  if (! sendCheckReply(F("AT+CIPSTATUS"), ok_reply, 100) ) return false;
   readline(100);
-#ifdef ADAFRUIT_FONA_DEBUG
-  Serial.print (F("\t<--- ")); Serial.println(replybuffer);
-#endif
-  return (strcmp_P(replybuffer, PSTR("STATE: CONNECT OK")) == 0);
+
+  DEBUG_PRINT(F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
+
+  return (prog_char_strcmp(replybuffer, (prog_char*)F("STATE: CONNECT OK")) == 0);
 }
 
 // Send a packet of bytes in the TCP/IP connection.
@@ -1590,14 +1687,14 @@ boolean Adafruit_FONA::TcpipConnected(void) {
 boolean Adafruit_FONA::TcpipSend(char *packet, uint8_t len) {
 
 #ifdef ADAFRUIT_FONA_DEBUG
-  Serial.print(F("AT+CIPSEND="));
-  Serial.println(len);
+  DEBUG_PRINT(F("AT+CIPSEND="));
+  DEBUG_PRINTLN(len);
 
   for (uint16_t i=0; i<len; i++) {
-    Serial.print(F(" 0x"));
-    Serial.print(packet[i], HEX);
+    DEBUG_PRINT(F(" 0x"));
+    DEBUG_PRINT(packet[i], HEX);
   }
-  Serial.println();
+  DEBUG_PRINTLN();
 #endif
 
   flush();
@@ -1605,18 +1702,17 @@ boolean Adafruit_FONA::TcpipSend(char *packet, uint8_t len) {
   mySerial->print(F("AT+CIPSEND="));
   mySerial->println(len);
   readline();
-#ifdef ADAFRUIT_FONA_DEBUG
-  Serial.print (F("\t<--- ")); Serial.println(replybuffer);
-#endif
+
+  DEBUG_PRINT(F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
+
   if (replybuffer[0] != '>') return false;
 
   mySerial->write(packet, len);
   readline(3000); // wait up to 3 seconds to send the data
-#ifdef ADAFRUIT_FONA_DEBUG
-  Serial.print (F("\t<--- ")); Serial.println(replybuffer);
-#endif
 
-  return (strcmp_P(replybuffer, PSTR("SEND OK")) == 0);
+  DEBUG_PRINT(F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
+
+  return (prog_char_strcmp(replybuffer, (prog_char*)F("SEND OK")) == 0);
 }
 
 // Returns the number of bytes of data waiting to be read from the 
@@ -1628,7 +1724,7 @@ uint16_t Adafruit_FONA::TcpipAvailable(void) {
   if (! sendParseReply(F("AT+CIPRXGET=4"), F("+CIPRXGET: 4,"), &avail, ',', 0) ) return false;
 
 #ifdef ADAFRUIT_FONA_DEBUG
-  Serial.print (avail); Serial.println(F(" bytes available"));
+  DEBUG_PRINT(avail); DEBUG_PRINTLN(F(" bytes available"));
 #endif
 
   return avail;
@@ -1649,11 +1745,11 @@ uint16_t Adafruit_FONA::TcpipRead(uint8_t *buff, uint8_t len) {
   readRaw(avail);
 
 #ifdef ADAFRUIT_FONA_DEBUG
-  Serial.print (avail); Serial.println(F(" bytes read"));
-  for (uint8_t i=0;i<avail;i++) {
-    Serial.print(F(" 0x")); Serial.print(replybuffer[i], HEX);
+  DEBUG_PRINT(avail); DEBUG_PRINTLN(F(" bytes read"));
+  for (uint8_t i = 0; i < avail; i++) {
+    DEBUG_PRINT(F(" 0x")); DEBUG_PRINT(replybuffer[i], HEX);
   }
-  Serial.println();
+  DEBUG_PRINTLN();
 #endif
 
   memcpy(buff, replybuffer, avail);
@@ -1679,7 +1775,7 @@ boolean Adafruit_FONA::TcpipSetFixedPort(ConnectionType connType, uint16_t port)
 	mySerial->print(port);
 	mySerial->println();
 
-	return expectReply(F("OK"));
+	return expectReply(ok_reply);
 }
 
 // Set the module to use a dinamically allocated port when connecting with the server in single 
@@ -1700,7 +1796,7 @@ boolean Adafruit_FONA::TcpipSetDynamicPort(ConnectionType connType)
 	mySerial->print("0");
 	mySerial->println();
 
-	return expectReply(F("OK"));
+	return expectReply(ok_reply);
 }
 
 /********* HTTP LOW LEVEL FUNCTIONS  ************************************/

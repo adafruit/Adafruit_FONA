@@ -141,8 +141,8 @@ class Adafruit_FONA : public FONAStreamType {
   uint8_t GPRSstate(void);
   boolean getGSMLoc(uint16_t *replycode, char *buff, uint16_t maxlen);
   boolean getGSMLoc(float *lat, float *lon);
-  void setGPRSNetworkSettings(FONAFlashStringPtr apn, FONAFlashStringPtr username=0, FONAFlashStringPtr password=0);
-  void setGPRSNetworkSettings(const char *apn, const char *username = NULL, const char *password = NULL);
+  boolean setGPRSNetworkSettings(FONAFlashStringPtr apn, FONAFlashStringPtr username = NULL, FONAFlashStringPtr password = NULL);
+  boolean setGPRSNetworkSettings(const char *apn, const char *username = NULL, const char *password = NULL);
 
   // GPS handling
   boolean enableGPS(boolean onoff);
@@ -217,12 +217,12 @@ class Adafruit_FONA : public FONAStreamType {
 
   char replybuffer[255];
   FONAFlashStringPtr apn_P;
-  FONAFlashStringPtr apnusername_P;
-  FONAFlashStringPtr apnpassword_P;
+  FONAFlashStringPtr apnUsername_P;
+  FONAFlashStringPtr apnPassword_P;
   
-  const char *apn;
-  const char *apnUsername;
-  const char *apnPassword;
+  char *apn;
+  char *apnUsername;
+  char *apnPassword;
   
   boolean httpsredirect;
   FONAFlashStringPtr useragent;
@@ -257,6 +257,10 @@ class Adafruit_FONA : public FONAStreamType {
   boolean sendParseReply(FONAFlashStringPtr tosend,
        FONAFlashStringPtr toreply,
        uint16_t *v, char divider = ',', uint8_t index=0);
+
+  char* copyString(const char *string);
+  char* copyString(FONAFlashStringPtr string);
+
 
   static boolean _incomingCall;
   static void onIncomingCall();
