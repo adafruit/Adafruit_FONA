@@ -220,9 +220,9 @@ class Adafruit_FONA : public FONAStreamType {
   FONAFlashStringPtr apnUsername_P;
   FONAFlashStringPtr apnPassword_P;
   
-  char *apn;
-  char *apnUsername;
-  char *apnPassword;
+  char apn[MAX_STRING_SIZE];
+  char apnUsername[MAX_STRING_SIZE];
+  char apnPassword[MAX_STRING_SIZE];
   
   boolean httpsredirect;
   FONAFlashStringPtr useragent;
@@ -258,9 +258,8 @@ class Adafruit_FONA : public FONAStreamType {
        FONAFlashStringPtr toreply,
        uint16_t *v, char divider = ',', uint8_t index=0);
 
-  char* copyString(const char *string);
-  char* copyString(FONAFlashStringPtr string);
-
+  boolean isStringValid(const char string[], size_t size);
+  boolean isStringValid(FONAFlashStringPtr string, size_t size);
 
   static boolean _incomingCall;
   static void onIncomingCall();

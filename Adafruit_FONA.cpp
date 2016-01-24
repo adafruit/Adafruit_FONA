@@ -19,22 +19,23 @@
 #include "Adafruit_FONA.h"
 
 
-
-
 Adafruit_FONA::Adafruit_FONA(int8_t rst)
 {
   _rstpin = rst;
 
   apn_P = F("FONAnet");
   apnUsername_P = NULL;
-  apnPassword_P = NULL;
-  apn = NULL;
-  apnUsername = NULL;
-  apnPassword = NULL;
+  apnPassword_P = NULL;  
   mySerial = NULL;
   httpsredirect = false;
   useragent = F("FONA");
   ok_reply = F("OK");
+
+  // compiler should optimize on a single loop, so there won't be performances impact. 
+  // This way we keep things decoupled should we change the sizes of the strings in the future.
+  for (size_t i = 0; i < sizeof(apn); i++) { apn[i] = '\0'; }
+  for (size_t i = 0; i < sizeof(apnUsername); i++) { apnUsername[i] = '\0'; }
+  for (size_t i = 0; i < sizeof(apnPassword); i++) { apnPassword[i] = '\0'; }
 }
 
 uint8_t Adafruit_FONA::type(void) {
@@ -1279,6 +1280,8 @@ boolean Adafruit_FONA_3G::enableGPRS(boolean onoff) {
 // Enables the GPRS connection
 boolean Adafruit_FONA::enableGPRS(void)
 {
+	if (!isStringValid(apn, sizeof(apn))) { return false; }
+
 	if (!sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 70000)) return false;
 
 	// single connection at a time
@@ -1357,102 +1360,63 @@ uint8_t Adafruit_FONA::GPRSstate(void) {
 boolean Adafruit_FONA::setGPRSNetworkSettings(FONAFlashStringPtr apn,
               FONAFlashStringPtr username, FONAFlashStringPtr password) {
 	
-	char *newApn = copyString(apn);
-	char *newUsername = copyString(username);
-	char *newPassword = copyString(password);
+	if (!isStringValid(apn, sizeof(this->apn))) { return false; }
 	
-	if (newApn == NULL)
+	prog_char_strncpy(this->apn, (prog_char *)apn, sizeof(this->apn));
+
+	if (isStringValid(username, sizeof(this->apnUsername)))
 	{
-		free(newApn);
-		free(newUsername);
-		free(newPassword);
-		
-		return false;
+		prog_char_strncpy(this->apnUsername, (prog_char *)username, sizeof(this->apnUsername));
 	}
 
-	this->apn_P = apn;	
-	this->apnUsername_P = username;
-	this->apnPassword_P = password;
+	if (isStringValid(password, sizeof(this->apnPassword)))
+	{
+		prog_char_strncpy(this->apnPassword, (prog_char *)password, sizeof(this->apnPassword));
+	}
 
-	free(this->apn);
-	free(this->apnUsername);
-	free(this->apnPassword);
-
-	this->apn = newApn;
-	this->apnUsername = newUsername;
-	this->apnPassword = newPassword;
-	
 	return true;
 }
 
 boolean Adafruit_FONA::setGPRSNetworkSettings(const char *apn,
 			  const char *username, const char *password) {
-	char *newApn = copyString(apn);
-	char *newUsername = copyString(username);
-	char *newPassword = copyString(password);
 
-	if (newApn == NULL)
+	if (!isStringValid(apn, sizeof(this->apn))) { return false; }
+
+	strncpy(this->apn, apn, sizeof(this->apn));
+
+	if (isStringValid(username, sizeof(this->apnUsername)))
 	{
-		free(newApn);
-		free(newUsername);
-		free(newPassword);
-
-		return false;
+		strncpy(this->apnUsername, username, sizeof(this->apnUsername));
 	}
 
-	free(this->apn);
-	free(this->apnUsername);
-	free(this->apnPassword);
-
-	this->apn = newApn;
-	this->apnUsername = newUsername;
-	this->apnPassword = newPassword;
+	if (isStringValid(password, sizeof(this->apnPassword)))
+	{
+		strncpy(this->apnPassword, password, sizeof(this->apnPassword));
+	}
 
 	return true;
 }
 
-// copies a string, allocating all the memory needed for it.
-// Returns NULL in case of failure.
-char* Adafruit_FONA::copyString(const char *string) {
-
+// Returns true if the string is not NULL, not empty and smaller than the size parameter.
+boolean Adafruit_FONA::isStringValid(const char string[], size_t size) {
 	size_t length = 0;
-	char *newString = NULL;
 
-	if (string == NULL) { return NULL; }
+	if (string == NULL)	{ return false; }
 
-	length = strnlen(string, MAX_STRING_SIZE);
-	if (length >= MAX_STRING_SIZE || length == 0) { return NULL; }
+	length = strnlen(string, size);
 
-	newString = (char*)malloc(length + 1);
-		
-	if (newString == NULL) { return NULL; }
-
-	strncpy(newString, string, length + 1);
-	newString[length + 1] = '\0'; // just in case to be safe.
-	
-	return newString;
+	return length > 0 && length < size;
 }
 
-// copies a string from flash memory, allocating all the memory needed for it.
-// Returns NULL in case of failure.
-char* Adafruit_FONA::copyString(FONAFlashStringPtr string) {
-
+// Returns true is the flash string is not NULL, not empty and smaller than the size parameter.
+boolean Adafruit_FONA::isStringValid(FONAFlashStringPtr string, size_t size) {
 	size_t length = 0;
-	char *newString = NULL;
 
-	if (string == NULL) { return NULL; }
+	if (string == NULL)	{ return false; }
 
-	length = prog_char_strnlen((prog_char *)string, MAX_STRING_SIZE);
-	if (length >= MAX_STRING_SIZE || length == 0) { return false; }
+	length = prog_char_strnlen((prog_char *)string, size);
 
-	newString = (char*)malloc(length + 1);
-
-	if (newString == NULL) { return NULL; }
-
-	prog_char_strncpy(newString, (prog_char *)string, length + 1);
-	newString[length + 1] = '\0'; // just in case to be safe.
-
-	return newString;
+	return length > 0 && length < size;
 }
 
 boolean Adafruit_FONA::getGSMLoc(uint16_t *errorcode, char *buff, uint16_t maxlen) {
