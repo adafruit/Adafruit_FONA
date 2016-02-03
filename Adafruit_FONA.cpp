@@ -1293,36 +1293,68 @@ boolean Adafruit_FONA::enableGPRS(void)
 	if (!sendCheckReply(F("AT+CGATT=1"), ok_reply, 10000)) return false;
 
 	// GPRS Service Status.
-	if (!GPRSstate() == 1) return false;
+	if (GPRSstate() != 1) return false;
 
-	// Setting APN, Username and Password.
+	// set bearer profile! connection type GPRS
+	if (!sendCheckReply(F("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\""),
+		ok_reply, 90000))
+		return false;
 
-	mySerial->print(F("AT+CSTT=\""));
-	mySerial->print(apn);
-	if (apnUsername) {
-		mySerial->print(F("\",\""));
-		mySerial->print(apnUsername);
+	// set bearer profile access point name
+	if (apn) 
+	{
+		// Send command AT+SAPBR=3,1,"APN","<apn value>" where <apn value> is the configured APN value.
+		if (!sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"APN\","), apn, ok_reply, 90000))
+			return false;
+
+		// send AT+CSTT,"apn","user","pass"
+		flushInput();
+
+		// Setting APN, Username and Password.
+
+		mySerial->print(F("AT+CSTT=\""));
+		mySerial->print(apn);
+		if (apnUsername) {
+			mySerial->print(F("\",\""));
+			mySerial->print(apnUsername);
+		}
+		if (apnPassword) {
+			mySerial->print(F("\",\""));
+			mySerial->print(apnPassword);
+		}
+		mySerial->println(F("\""));
+
+		DEBUG_PRINT(F("\t---> ")); DEBUG_PRINT(F("AT+CSTT=\""));
+		DEBUG_PRINT(apn);
+
+		if (apnUsername) {
+			DEBUG_PRINT(F("\",\""));
+			DEBUG_PRINT(apnUsername);
+		}
+		if (apnPassword) {
+			DEBUG_PRINT(F("\",\""));
+			DEBUG_PRINT(apnPassword);
+		}
+		DEBUG_PRINTLN(F("\""));
+
+		if (!expectReply(ok_reply, 10000)) return false;
+
+		// set username/password
+		if (apnUsername) {
+			// Send command AT+SAPBR=3,1,"USER","<user>" where <user> is the configured APN username.
+			if (!sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"USER\","), apnUsername, ok_reply, 90000))
+				return false;
+		}
+		if (apnPassword) {
+			// Send command AT+SAPBR=3,1,"PWD","<password>" where <password> is the configured APN password.
+			if (!sendCheckReplyQuoted(F("AT+SAPBR=3,1,\"PWD\","), apnPassword, ok_reply, 90000))
+				return false;
+		}
 	}
-	if (apnPassword) {
-		mySerial->print(F("\",\""));
-		mySerial->print(apnPassword);
-	}
-	mySerial->println(F("\""));
 
-	DEBUG_PRINT(F("\t---> ")); DEBUG_PRINT(F("AT+CSTT=\""));
-	DEBUG_PRINT(apn);
-
-	if (apnUsername) {
-		DEBUG_PRINT(F("\",\""));
-		DEBUG_PRINT(apnUsername);
-	}
-	if (apnPassword) {
-		DEBUG_PRINT(F("\",\""));
-		DEBUG_PRINT(apnPassword);
-	}
-	DEBUG_PRINTLN(F("\""));
-
-	if (!expectReply(ok_reply, 10000)) return false;
+	// open GPRS context
+	if (!sendCheckReply(F("AT+SAPBR=1,1"), ok_reply, 90000))
+		return false;
 
 	// Bring up wireless connection (GPRS or CSD).
 	if (!sendCheckReply(F("AT+CIICR"), ok_reply, 90000))  return false; // 85s max response time.
@@ -1342,6 +1374,10 @@ boolean Adafruit_FONA::disableGPRS(void)
 {
 	// disconnect all sockets
 	if (!sendCheckReply(F("AT+CIPSHUT"), F("SHUT OK"), 70000)) return false;
+
+	// close GPRS context
+	if (!sendCheckReply(F("AT+SAPBR=0,1"), ok_reply, 90000))
+		return false;
 
 	if (!sendCheckReply(F("AT+CGATT=0"), ok_reply, 10000)) return false;
 
@@ -2208,6 +2244,27 @@ uint8_t Adafruit_FONA::getReplyQuoted(FONAFlashStringPtr prefix, FONAFlashString
   return l;
 }
 
+// Send prefix, ", suffix, ", and newline. Return response (and also set replybuffer with response).
+uint8_t Adafruit_FONA::getReplyQuoted(FONAFlashStringPtr prefix, const char *suffix, uint16_t timeout) {
+	flushInput();
+
+
+	DEBUG_PRINT(F("\t---> ")); DEBUG_PRINT(prefix);
+	DEBUG_PRINT('"'); DEBUG_PRINT(suffix); DEBUG_PRINTLN('"');
+
+
+	mySerial->print(prefix);
+	mySerial->print('"');
+	mySerial->print(suffix);
+	mySerial->println('"');
+
+	uint8_t l = readline(timeout);
+
+	DEBUG_PRINT(F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
+
+	return l;
+}
+
 boolean Adafruit_FONA::sendCheckReply(char *send, char *reply, uint16_t timeout) {
   if (! getReply(send, timeout) )
 	  return false;
@@ -2262,6 +2319,11 @@ boolean Adafruit_FONA::sendCheckReplyQuoted(FONAFlashStringPtr prefix, FONAFlash
   return (prog_char_strcmp(replybuffer, (prog_char*)reply) == 0);
 }
 
+// Send prefix, ", suffix, ", and newline.  Verify FONA response matches reply parameter.
+boolean Adafruit_FONA::sendCheckReplyQuoted(FONAFlashStringPtr prefix, const char *suffix, FONAFlashStringPtr reply, uint16_t timeout) {
+	getReplyQuoted(prefix, suffix, timeout);
+	return (prog_char_strcmp(replybuffer, (prog_char*)reply) == 0);
+}
 
 boolean Adafruit_FONA::parseReply(FONAFlashStringPtr toreply,
           uint16_t *v, char divider, uint8_t index) {
