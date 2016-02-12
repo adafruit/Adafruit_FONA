@@ -63,17 +63,17 @@ boolean Adafruit_FONA::begin(Stream &port) {
     timeout-=500;
   }
 
+  if (timeout <= 0) {
 #ifdef ADAFRUIT_FONA_DEBUG
-  if (timeout <= 0) 
     DEBUG_PRINTLN(F("Timeout: No response to AT... last ditch attempt."));
 #endif
-
-  sendCheckReply(F("AT"), ok_reply);
-  delay(100);
-  sendCheckReply(F("AT"), ok_reply);
-  delay(100);
-  sendCheckReply(F("AT"), ok_reply);
-  delay(100);
+    sendCheckReply(F("AT"), ok_reply);
+    delay(100);
+    sendCheckReply(F("AT"), ok_reply);
+    delay(100);
+    sendCheckReply(F("AT"), ok_reply);
+    delay(100);
+  }
 
   // turn off Echo!
   sendCheckReply(F("ATE0"), ok_reply);
