@@ -778,12 +778,15 @@ int8_t Adafruit_FONA::GPSstatus(void) {
     getReply(F("AT+CGNSINF"));
     char *p = prog_char_strstr(replybuffer, (prog_char*)F("+CGNSINF: "));
     if (p == 0) return -1;
-    p+=12; // Skip to second value, fix status.
+    p+=10;
     readline(); // eat 'OK'
+    if (p[0] == '0') return 0; // GPS is not even on!
+
+    p+=2; // Skip to second value, fix status.
     //DEBUG_PRINTLN(p);
     // Assume if the fix status is '1' then we have a 3D fix, otherwise no fix.
     if (p[0] == '1') return 3;
-    else return 0;
+    else return 1;
   }
   if (_type == FONA3G_A || _type == FONA3G_E) {
     // FONA 3G doesn't have an explicit 2D/3D fix status.
