@@ -591,7 +591,7 @@ boolean Adafruit_FONA::sendSMS(char *smsaddr, char *smsmsg) {
   readline(1000); // read OK
   //DEBUG_PRINT("* "); DEBUG_PRINTLN(replybuffer);
 
-  if (strcmp(replybuffer, "OK") != 0) {
+  if (strcmp_P(replybuffer, PSTR("OK")) != 0) {
     return false;
   }
 
@@ -1381,7 +1381,7 @@ boolean Adafruit_FONA::TCPconnected(void) {
 
   DEBUG_PRINT (F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
 
-  return (strcmp(replybuffer, "STATE: CONNECT OK") == 0);
+  return (strcmp_P(replybuffer, PSTR("STATE: CONNECT OK")) == 0);
 }
 
 boolean Adafruit_FONA::TCPsend(char *packet, uint8_t len) {
