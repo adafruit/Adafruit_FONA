@@ -420,7 +420,7 @@ boolean Adafruit_FONA::_incomingCall = false;
  * Tell FONA to trigger an interrupt on an incoming call
  * But don't set the handler, assumes caller will handle
  */
-boolean DM_Adafruit_FONA::callerIdNotification(boolean enable) {
+boolean Adafruit_FONA::callerIdNotification(boolean enable) {
   if(enable){
     return sendCheckReply(F("AT+CLIP=1"), ok_reply);
   }
