@@ -452,8 +452,10 @@ boolean Adafruit_FONA::incomingCallNumber(char* phonenum) {
 
 /*
  * Get the identification of an incoming call
- * The base class version would block if there was no call ringing.
- * Uses AT+CLCC, much more straightforward
+ * The base class version would block
+ *   if there was no call ringing, and _incomingCall was set
+ *   (Could happen if SMS was set to trigger RI)
+ * Uses AT+CLCC, much more straightforward, and more data
  * The defines FONA_CALLSTAT_* show that various
  *  statuses that can be requested
  *  0=active,1=hold,2=dialing,3=alerting,4=incoming,5=waiting,6=disconnect
@@ -461,7 +463,7 @@ boolean Adafruit_FONA::incomingCallNumber(char* phonenum) {
  *  6 is a transient state, you could never get it here
  *    unless it happened while you were requesting it.
  * Note if there is more than one call of the same status,
- *   only the first will be returned. Possible?
+ *   only the first will be returned. Possible to have more than one?
  * Returns true if a matching entry is found, otherwise false
  */
 boolean Adafruit_FONA::incomingCallNumber(char* phonenum, uint8_t callstatus, uint8_t incoming) {
@@ -506,7 +508,10 @@ boolean Adafruit_FONA::incomingCallNumber(char* phonenum, uint8_t callstatus, ui
   // clear any remaining data in the response buffer
   flushInput();
 
-  // clear the incoming call flag if incoming call was requested
+  /* Clear the incoming call flag if incoming call data was requested
+   *   There either was one, and we're returning the info,
+   *   or there wasn't one. Either way, clear the flag.
+   */
   if(incoming && callstatus == FONA_CALLSTAT_INCOMING)
     Adafruit_FONA::_incomingCall = false;
 
@@ -518,12 +523,13 @@ boolean Adafruit_FONA::incomingCallNumber(char* phonenum, uint8_t callstatus, ui
  * Used for responses to AT+CLCC
  * Also if AT+CLCC=1 is issued, these will arrive unsolicited
  * Note: strtok modifies the replybuffer
- *   However, it only gets executed if the buffer IS +CLCC
+ *   However, strtok only gets executed if the buffer IS +CLCC
  *   So if the call fails, it was a corrupt entry
  *   If it does not fail, then the data is in the callInfo struct
- *   If it really bothers you, then make a local copy and parse that
+ *     and you shouldn't need the buffer anymore
  */
 boolean Adafruit_FONA::parseCLCCReply(struct callInfo *phoneinfo){
+  char *p=NULL;
   char *tokpos=NULL;
   uint8_t i=0;
   uint8_t j;
@@ -534,7 +540,7 @@ boolean Adafruit_FONA::parseCLCCReply(struct callInfo *phoneinfo){
   memset(&phoneinfo, 0, sizeof(phoneinfo));
 
   // Verify response starts with +CLCC.
-  char *p = prog_char_strstr(replybuffer, (prog_char *)F("+CLCC:"));
+  p = prog_char_strstr(replybuffer, (prog_char *)F("+CLCC:"));
   if (p == 0) return false;
 
   // advance pointer to end of prefix
