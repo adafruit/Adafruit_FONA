@@ -488,8 +488,8 @@ boolean Adafruit_FONA::incomingCallNumber(char* phonenum, uint8_t callstatus, ui
         continue;
       /* match requested? */
       if(phoneinfo.inout == 1 && phoneinfo.state == callstatus){
-        DEBUG_PRINT(F("Phone Number: "));
-        DEBUG_PRINTLN(phoneinfo.phonenum);
+        //DEBUG_PRINT(F("Phone Number: "));
+        //DEBUG_PRINTLN(phoneinfo.phonenum);
         strncpy(phonenum, phoneinfo.phonenum, 31);
         returnval = true;
         break;
@@ -499,10 +499,7 @@ boolean Adafruit_FONA::incomingCallNumber(char* phonenum, uint8_t callstatus, ui
          * but there is an incoming call, flip the flag
          */
         Adafruit_FONA::_incomingCall = true;
-        DEBUG_PRINTLN(F("INCOMING!!!"));
-      }
-      else{
-    	  DEBUG_PRINTLN(F("No Match"));
+        //DEBUG_PRINTLN(F("INCOMING!!!"));
       }
     }
     maxloop --;
