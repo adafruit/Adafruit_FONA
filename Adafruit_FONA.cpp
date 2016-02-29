@@ -473,6 +473,7 @@ boolean Adafruit_FONA::incomingCallNumber(char* phonenum, uint8_t callstatus, ui
 
   // set text mode
   mySerial->println(F("AT+CMGF=1"));
+  //sendCheckReply(F("AT+CMGF=1"), F("OK"));
   // clear anything already in the response buffer
   flushInput();
   // Request a list of all active calls
@@ -481,15 +482,14 @@ boolean Adafruit_FONA::incomingCallNumber(char* phonenum, uint8_t callstatus, ui
   readline();
   maxloop=15; // Honestly, I can't see more than fifteen entries returned, prevent infinite loop if OK missing
   while(maxloop && !prog_char_strcmp(replybuffer, (prog_char*)F("OK")) == 0){
-    if(parseCLCCReply(&phoneinfo)){
-      if(phoneinfo.inout == 1 && phoneinfo.mode == callstatus){
+      if(phoneinfo.inout == 1 && phoneinfo.state == callstatus){
         DEBUG_PRINT(F("Phone Number: "));
         DEBUG_PRINTLN(phoneinfo.phonenum);
         strncpy(phonenum, phoneinfo.phonenum, 31);
         returnval = true;
         break;
       }
-      else if(phoneinfo.inout == 1 && phoneinfo.mode == FONA_CALLSTAT_INCOMING){
+      else if(phoneinfo.inout == 1 && phoneinfo.state == FONA_CALLSTAT_INCOMING){
         /* caller was asking for a different status,
          * but there is an incoming call, flip the flag
          */
@@ -537,7 +537,7 @@ boolean Adafruit_FONA::parseCLCCReply(struct callInfo *phoneinfo){
   if(!phoneinfo)
 	return false;
 
-  memset(&phoneinfo, 0, sizeof(phoneinfo));
+  memset(phoneinfo, 0, sizeof(struct callInfo));
 
   // Verify response starts with +CLCC.
   p = prog_char_strstr(replybuffer, (prog_char *)F("+CLCC:"));
@@ -555,7 +555,7 @@ boolean Adafruit_FONA::parseCLCCReply(struct callInfo *phoneinfo){
   tokpos = strtok(NULL, ",");
   if(!tokpos)
     return false;
-  phoneinfo->inout - (uint8_t)atoi(tokpos);
+  phoneinfo->inout = (uint8_t)atoi(tokpos);
   // third field is state
   tokpos = strtok(NULL, ",");
   if(!tokpos)
