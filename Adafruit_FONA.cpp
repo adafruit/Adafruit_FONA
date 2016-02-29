@@ -482,6 +482,11 @@ boolean Adafruit_FONA::incomingCallNumber(char* phonenum, uint8_t callstatus, ui
   readline();
   maxloop=15; // Honestly, I can't see more than fifteen entries returned, prevent infinite loop if OK missing
   while(maxloop && !prog_char_strcmp(replybuffer, (prog_char*)F("OK")) == 0){
+    if(parseCLCCReply(&phoneinfo)){
+      /* only concerned with voice */
+      if(phoneinfo.mode)
+        continue;
+      /* match requested? */
       if(phoneinfo.inout == 1 && phoneinfo.state == callstatus){
         DEBUG_PRINT(F("Phone Number: "));
         DEBUG_PRINTLN(phoneinfo.phonenum);
@@ -494,11 +499,11 @@ boolean Adafruit_FONA::incomingCallNumber(char* phonenum, uint8_t callstatus, ui
          * but there is an incoming call, flip the flag
          */
         Adafruit_FONA::_incomingCall = true;
+        DEBUG_PRINTLN(F("INCOMING!!!"));
       }
-    }
-    else{
-      // some other response, possibly need to process?
-      DEBUG_PRINTLN(replybuffer);
+      else{
+    	  DEBUG_PRINTLN(F("No Match"));
+      }
     }
     maxloop --;
 
