@@ -574,7 +574,7 @@ boolean Adafruit_FONA::getSMSSender(uint8_t i, char *sender, int senderlen) {
 }
 
 boolean Adafruit_FONA::sendSMS(char *smsaddr, char *smsmsg) {
-  if (! sendCheckReply(F("AT+CMGF=1"), ok_reply)) return -1;
+  if (! sendCheckReply(F("AT+CMGF=1"), ok_reply)) return false;
 
   char sendcmd[30] = "AT+CMGS=\"";
   strncpy(sendcmd+9, smsaddr, 30-9-2);  // 9 bytes beginning, 2 bytes for close quote + null
@@ -614,7 +614,7 @@ boolean Adafruit_FONA::sendSMS(char *smsaddr, char *smsmsg) {
 
 
 boolean Adafruit_FONA::deleteSMS(uint8_t i) {
-    if (! sendCheckReply(F("AT+CMGF=1"), ok_reply)) return -1;
+    if (! sendCheckReply(F("AT+CMGF=1"), ok_reply)) return false;
   // read an sms
   char sendbuff[12] = "AT+CMGD=000";
   sendbuff[8] = (i / 100) + '0';
@@ -629,7 +629,7 @@ boolean Adafruit_FONA::deleteSMS(uint8_t i) {
 /********* USSD *********************************************************/
 
 boolean Adafruit_FONA::sendUSSD(char *ussdmsg, char *ussdbuff, uint16_t maxlen, uint16_t *readlen) {
-  if (! sendCheckReply(F("AT+CUSD=1"), ok_reply)) return -1;
+  if (! sendCheckReply(F("AT+CUSD=1"), ok_reply)) return false;
 
   char sendcmd[30] = "AT+CUSD=1,\"";
   strncpy(sendcmd+11, ussdmsg, 30-11-2);  // 11 bytes beginning, 2 bytes for close quote + null
