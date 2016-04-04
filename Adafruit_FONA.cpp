@@ -67,17 +67,17 @@ boolean Adafruit_FONA::begin(FONAStreamType &port) {
     timeout-=500;
   }
 
+  if (timeout <= 0) {
 #ifdef ADAFRUIT_FONA_DEBUG
-  if (timeout <= 0) 
     DEBUG_PRINTLN(F("Timeout: No response to AT... last ditch attempt."));
 #endif
-
-  sendCheckReply(F("AT"), ok_reply);
-  delay(100);
-  sendCheckReply(F("AT"), ok_reply);
-  delay(100);
-  sendCheckReply(F("AT"), ok_reply);
-  delay(100);
+    sendCheckReply(F("AT"), ok_reply);
+    delay(100);
+    sendCheckReply(F("AT"), ok_reply);
+    delay(100);
+    sendCheckReply(F("AT"), ok_reply);
+    delay(100);
+  }
 
   // turn off Echo!
   sendCheckReply(F("ATE0"), ok_reply);
@@ -564,7 +564,7 @@ boolean Adafruit_FONA::getSMSSender(uint8_t i, char *sender, int senderlen) {
 }
 
 boolean Adafruit_FONA::sendSMS(char *smsaddr, char *smsmsg) {
-  if (! sendCheckReply(F("AT+CMGF=1"), ok_reply)) return -1;
+  if (! sendCheckReply(F("AT+CMGF=1"), ok_reply)) return false;
 
   char sendcmd[30] = "AT+CMGS=\"";
   strncpy(sendcmd+9, smsaddr, 30-9-2);  // 9 bytes beginning, 2 bytes for close quote + null
@@ -604,7 +604,7 @@ boolean Adafruit_FONA::sendSMS(char *smsaddr, char *smsmsg) {
 
 
 boolean Adafruit_FONA::deleteSMS(uint8_t i) {
-    if (! sendCheckReply(F("AT+CMGF=1"), ok_reply)) return -1;
+    if (! sendCheckReply(F("AT+CMGF=1"), ok_reply)) return false;
   // read an sms
   char sendbuff[12] = "AT+CMGD=000";
   sendbuff[8] = (i / 100) + '0';
@@ -619,7 +619,7 @@ boolean Adafruit_FONA::deleteSMS(uint8_t i) {
 /********* USSD *********************************************************/
 
 boolean Adafruit_FONA::sendUSSD(char *ussdmsg, char *ussdbuff, uint16_t maxlen, uint16_t *readlen) {
-  if (! sendCheckReply(F("AT+CUSD=1"), ok_reply)) return -1;
+  if (! sendCheckReply(F("AT+CUSD=1"), ok_reply)) return false;
 
   char sendcmd[30] = "AT+CUSD=1,\"";
   strncpy(sendcmd+11, ussdmsg, 30-11-2);  // 11 bytes beginning, 2 bytes for close quote + null
@@ -782,12 +782,15 @@ int8_t Adafruit_FONA::GPSstatus(void) {
     getReply(F("AT+CGNSINF"));
     char *p = prog_char_strstr(replybuffer, (prog_char*)F("+CGNSINF: "));
     if (p == 0) return -1;
-    p+=12; // Skip to second value, fix status.
+    p+=10;
     readline(); // eat 'OK'
+    if (p[0] == '0') return 0; // GPS is not even on!
+
+    p+=2; // Skip to second value, fix status.
     //DEBUG_PRINTLN(p);
     // Assume if the fix status is '1' then we have a 3D fix, otherwise no fix.
     if (p[0] == '1') return 3;
-    else return 0;
+    else return 1;
   }
   if (_type == FONA3G_A || _type == FONA3G_E) {
     // FONA 3G doesn't have an explicit 2D/3D fix status.
