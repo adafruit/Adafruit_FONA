@@ -227,6 +227,21 @@ uint8_t Adafruit_FONA::getIMEI(char *imei) {
   return strlen(imei);
 }
 
+/********* CFUN  *******************************************************/
+boolean Adafruit_FONA::setCFUN(uint8_t i) {
+  if (! sendCheckReply(F("AT+CFUN="), i, ok_reply))
+    return false;
+}
+
+uint8_t Adafruit_FONA::getCFUN(void) {
+  uint16_t status;
+
+  if (! sendParseReply(F("AT+CFUN?"), F("+CFUN: "), &status)) return 255;
+
+  return status;
+}
+
+
 /********* NETWORK *******************************************************/
 
 uint8_t Adafruit_FONA::getNetworkStatus(void) {

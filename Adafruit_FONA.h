@@ -64,6 +64,11 @@
 #define FONA_CALL_RINGING 3
 #define FONA_CALL_INPROGRESS 4
 
+#define FONA_CFUN_MINIMUM 0
+#define FONA_CFUN_FULL 1
+#define FONA_CFUN_FLIGHT 4
+#define FONA_CFUN_UNKNOWN 255
+
 class Adafruit_FONA : public FONAStreamType {
  public:
   Adafruit_FONA(int8_t r);
@@ -97,6 +102,10 @@ class Adafruit_FONA : public FONAStreamType {
 
   // IMEI
   uint8_t getIMEI(char *imei);
+
+  // set Functionaly Mode
+  boolean setCFUN(uint8_t mode);
+  uint8_t getCFUN(void);
 
   // set Audio output
   boolean setAudio(uint8_t a);
