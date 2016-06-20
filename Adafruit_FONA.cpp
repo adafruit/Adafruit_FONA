@@ -475,6 +475,9 @@ int8_t Adafruit_FONA::getNumSMS(void) {
     return numsms;
   if (sendParseReply(F("AT+CPMS?"), F("\"SM_P\","), &numsms)) 
     return numsms;
+  // handling for the FONA 3G
+  if (sendParseReply(F("AT+CPMS?"), F("\"ME\","), &numsms)) 
+    return numsms;
   return -1;
 }
 
