@@ -1,13 +1,12 @@
-/**
- *  ___ ___  _  _   _     ___  __  ___    ___ ___  ___
- * | __/ _ \| \| | /_\   ( _ )/  \( _ )  / __| _ \/ __|
- * | _| (_) | .` |/ _ \  / _ \ () / _ \ | (_ |  _/\__ \
- * |_| \___/|_|\_/_/ \_\ \___/\__/\___/  \___|_|  |___/
- *
+ /**
+ *  ____  _____  _  _    __      ___   ___     _     ___   ___   ___     ___  ____  ___ 
+ * ( ___)(  _  )( \( )  /__\    (__ ) / __)   ( )   ( _ ) / _ \ ( _ )   / __)(  _ \/ __)
+ *  )__)  )(_)(  )  (  /(__)\    (_ \( (_-.   /_\/  / _ \( (_) )/ _ \  ( (_-. )___/\__ \ 
+ * (__)  (_____)(_)\_)(__)(__)  (___/ \___/  (__/\  \___/ \___/ \___/   \___/(__)  (___/
  * This example is meant to work with the Adafruit
  * FONA 808 or 3G Shield or Breakout
  *
- * Copyright: 2015 Adafruit
+ * Copyright: 2016 Adafruit
  * Author: Todd Treece
  * Licence: MIT
  *
@@ -15,9 +14,9 @@
 #include "Adafruit_FONA.h"
 
 // standard pins for the shield, adjust as necessary
-#define FONA_RX 2
-#define FONA_TX 3
-#define FONA_RST 4
+#define FONA_RX 2   // Pin 2 goes to RX on the FONA
+#define FONA_TX 3   // Pin 3 goes to TX on the FONA
+#define FONA_RST 4  // Pin 4 goes to RST on the FONA
 
 // We default to using software serial. If you want to use hardware serial
 // (because softserial isnt supported) comment out the following three lines 
@@ -29,11 +28,11 @@ SoftwareSerial *fonaSerial = &fonaSS;
 // Hardware serial is also possible!
 //  HardwareSerial *fonaSerial = &Serial1;
 
-Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
+// Have a FONA 3G? use this object type
+Adafruit_FONA_3G fona = Adafruit_FONA_3G(FONA_RST);
 
-// Have a FONA 3G? use this object type instead
-//Adafruit_FONA_3G fona = Adafruit_FONA_3G(FONA_RST);
-
+// We default to using the newer FONA 3g module, got the older 808 module? use this object instead.
+// Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
 
 void setup() {
 
@@ -57,7 +56,7 @@ void setup() {
 }
 
 void loop() {
-  delay(2000);
+  delay(5000);
 
   float latitude, longitude, speed_kph, heading, speed_mph, altitude;
 
