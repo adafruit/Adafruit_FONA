@@ -29,10 +29,13 @@ SoftwareSerial *fonaSerial = &fonaSS;
 // Hardware serial is also possible!
 //  HardwareSerial *fonaSerial = &Serial1;
 
-Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
+// this is a large buffer for FONA's internal use.
+char fonabuffer[255];
+
+Adafruit_FONA fona = Adafruit_FONA(FONA_RST, fonabuffer, sizeof(fonabuffer));
 
 // Have a FONA 3G? use this object type instead
-//Adafruit_FONA_3G fona = Adafruit_FONA_3G(FONA_RST);
+//Adafruit_FONA_3G fona = Adafruit_FONA_3G(FONA_RST, fonabuffer, sizeof(fonabuffer));
 
 
 void setup() {

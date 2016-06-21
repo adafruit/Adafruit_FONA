@@ -71,7 +71,7 @@ enum ConnectionType {
 
 class Adafruit_FONA : public FONAStreamType {
  public:
-  Adafruit_FONA(int8_t r);
+  Adafruit_FONA(int8_t rst, char externalBuffer[], size_t externalBufferSize);  
   boolean begin(FONAStreamType &port);
   uint8_t type();
 
@@ -166,7 +166,7 @@ class Adafruit_FONA : public FONAStreamType {
   boolean TcpipConnected(void);
   boolean TcpipSend(char *packet, uint8_t len);
   uint16_t TcpipAvailable(void);
-  uint16_t TcpipRead(uint8_t *buff, uint8_t len);
+  uint16_t TcpipRead(char *buff, uint8_t len);
   boolean TcpipSetFixedPort(ConnectionType connType, uint16_t port);
   boolean TcpipSetDynamicPort(ConnectionType connType);
 
@@ -215,7 +215,9 @@ class Adafruit_FONA : public FONAStreamType {
   int8_t _rstpin;
   uint8_t _type;
 
-  char replybuffer[255];
+  char *replybuffer;
+  size_t replyBufferSize = 0;
+
   FONAFlashStringPtr apn_P;
   FONAFlashStringPtr apnUsername_P;
   FONAFlashStringPtr apnPassword_P;
@@ -272,7 +274,8 @@ class Adafruit_FONA : public FONAStreamType {
 class Adafruit_FONA_3G : public Adafruit_FONA {
 
  public:
-  Adafruit_FONA_3G (int8_t r) : Adafruit_FONA(r) { _type = FONA3G_A; }
+	 Adafruit_FONA_3G(int8_t rst, char externalBuffer[], size_t externalBufferSize) :
+		 Adafruit_FONA(rst, externalBuffer, externalBufferSize) { _type = FONA3G_A; }
 
     boolean getBattVoltage(uint16_t *v);
     boolean playToolkitTone(uint8_t t, uint16_t len);

@@ -36,7 +36,7 @@ SoftwareSerial *fonaSerial = &fonaSS;
 // Hardware serial is also possible!
 //  HardwareSerial *fonaSerial = &Serial1;
 
-Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
+Adafruit_FONA fona = Adafruit_FONA(FONA_RST, replybuffer, sizeof(replybuffer));
 
 uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout = 0);
 

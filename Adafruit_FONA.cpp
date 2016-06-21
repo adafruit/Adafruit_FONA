@@ -19,7 +19,7 @@
 #include "Adafruit_FONA.h"
 
 
-Adafruit_FONA::Adafruit_FONA(int8_t rst)
+Adafruit_FONA::Adafruit_FONA(int8_t rst, char externalBuffer[], size_t externalBufferSize)
 {
   _rstpin = rst;
 
@@ -30,6 +30,9 @@ Adafruit_FONA::Adafruit_FONA(int8_t rst)
   httpsredirect = false;
   useragent = F("FONA");
   ok_reply = F("OK");
+
+  replybuffer = externalBuffer;
+  replyBufferSize = externalBufferSize;
 
   // compiler should optimize on a single loop, so there won't be performances impact. 
   // This way we keep things decoupled should we change the sizes of the strings in the future.
@@ -1611,7 +1614,12 @@ uint16_t Adafruit_FONA::TCPread(uint8_t *buff, uint8_t len) {
   DEBUG_PRINTLN();
 #endif
 
-  memcpy(buff, replybuffer, avail);
+  if (avail > replyBufferSize) {
+	memcpy(buff, replybuffer, replyBufferSize);
+  }
+  else {
+	memcpy(buff, replybuffer, avail);
+  }
 
   return avail;
 }
@@ -1737,7 +1745,7 @@ uint16_t Adafruit_FONA::TcpipAvailable(void) {
 // *buff - The buffer to receive the data.
 // len - The size of the buffer.
 // Returns - The number of bytes received.
-uint16_t Adafruit_FONA::TcpipRead(uint8_t *buff, uint8_t len) {
+uint16_t Adafruit_FONA::TcpipRead(char *buff, uint8_t len) {
   uint16_t avail;
 
   mySerial->print(F("AT+CIPRXGET=2,"));
@@ -1755,7 +1763,12 @@ uint16_t Adafruit_FONA::TcpipRead(uint8_t *buff, uint8_t len) {
   DEBUG_PRINTLN();
 #endif
 
-  memcpy(buff, replybuffer, avail);
+  if(avail > replyBufferSize) {
+	  memcpy(buff, replybuffer, replyBufferSize);
+  }
+  else {
+	  memcpy(buff, replybuffer, avail);
+  }
 
   return avail;
 }
@@ -2089,7 +2102,7 @@ void Adafruit_FONA::flushInput() {
 uint16_t Adafruit_FONA::readRaw(uint16_t b) {
   uint16_t idx = 0;
 
-  while (b && (idx < sizeof(replybuffer)-1)) {
+  while (b && (idx < replyBufferSize - 1)) {
     if (mySerial->available()) {
       replybuffer[idx] = mySerial->read();
       idx++;
@@ -2105,7 +2118,7 @@ uint8_t Adafruit_FONA::readline(uint16_t timeout, boolean multiline) {
   uint16_t replyidx = 0;
 
   while (timeout--) {
-    if (replyidx >= 254) {
+	if (replyidx >= replyBufferSize - 1) {
       //DEBUG_PRINTLN(F("SPACE"));
       break;
     }
