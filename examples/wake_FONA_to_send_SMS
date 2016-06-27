@@ -93,3 +93,15 @@ void FonaSleep() {
       Serial.println("FONA OFF");
    }
 }
+
+bool sendSms(char *phoneNumber, char *message) {
+   // send an SMS!
+   flushSerial();
+
+   if (!fona.sendSMS(phoneNumber, message)) {
+      failBlink(500);
+      return false;
+   }
+
+   return true;
+}
