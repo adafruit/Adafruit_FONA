@@ -97,6 +97,7 @@ class Adafruit_FONA : public FONAStreamType {
 
   // IMEI
   uint8_t getIMEI(char *imei);
+  bool getOperator(char *op, uint8_t oplen);
 
   // set Audio output
   boolean setAudio(uint8_t a);
