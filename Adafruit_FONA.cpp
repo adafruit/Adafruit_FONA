@@ -1914,8 +1914,8 @@ boolean Adafruit_FONA::sendCheckReply(char *send, char *reply, uint16_t timeout)
 }
 
 boolean Adafruit_FONA::sendCheckReply(FONAFlashStringPtr send, FONAFlashStringPtr reply, uint16_t timeout) {
-	if (! getReply(send, timeout) )
-		return false;
+  if (! getReply(send, timeout) )		
+	  return false;
 
   return (prog_char_strcmp(replybuffer, (prog_char*)reply) == 0);
 }
@@ -1929,25 +1929,29 @@ boolean Adafruit_FONA::sendCheckReply(char* send, FONAFlashStringPtr reply, uint
 
 // Send prefix, suffix, and newline.  Verify FONA response matches reply parameter.
 boolean Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, char *suffix, FONAFlashStringPtr reply, uint16_t timeout) {
-  getReply(prefix, suffix, timeout);
+  if (! getReply(prefix, suffix, timeout) )
+	  return false;
   return (prog_char_strcmp(replybuffer, (prog_char*)reply) == 0);
 }
 
 // Send prefix, suffix, and newline.  Verify FONA response matches reply parameter.
 boolean Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix, FONAFlashStringPtr reply, uint16_t timeout) {
-  getReply(prefix, suffix, timeout);
+  if (! getReply(prefix, suffix, timeout) )
+	  return false;
   return (prog_char_strcmp(replybuffer, (prog_char*)reply) == 0);
 }
 
 // Send prefix, suffix, suffix2, and newline.  Verify FONA response matches reply parameter.
 boolean Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix1, int32_t suffix2, FONAFlashStringPtr reply, uint16_t timeout) {
-  getReply(prefix, suffix1, suffix2, timeout);
+  if (! getReply(prefix, suffix1, suffix2, timeout) )
+	  return false;
   return (prog_char_strcmp(replybuffer, (prog_char*)reply) == 0);
 }
 
 // Send prefix, ", suffix, ", and newline.  Verify FONA response matches reply parameter.
 boolean Adafruit_FONA::sendCheckReplyQuoted(FONAFlashStringPtr prefix, FONAFlashStringPtr suffix, FONAFlashStringPtr reply, uint16_t timeout) {
-  getReplyQuoted(prefix, suffix, timeout);
+  if (! getReplyQuoted(prefix, suffix, timeout) )
+	  return false;
   return (prog_char_strcmp(replybuffer, (prog_char*)reply) == 0);
 }
 
