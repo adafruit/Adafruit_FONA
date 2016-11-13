@@ -1405,7 +1405,7 @@ boolean Adafruit_FONA::TCPsend(char *packet, uint8_t len) {
 
   if (replybuffer[0] != '>') return false;
 
-  mySerial->write(packet, len);
+  mySerial->write((unsigned char*) packet, len);
   readline(3000); // wait up to 3 seconds to send the data
 
   DEBUG_PRINT (F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
@@ -1450,7 +1450,102 @@ uint16_t Adafruit_FONA::TCPread(uint8_t *buff, uint8_t len) {
   return avail;
 }
 
+/********* 3G TCP functions *********************************************/
 
+
+// network must be expilctly opened
+boolean Adafruit_FONA_3G::netOpen() {
+  DEBUG_PRINTLN(F("AT+NETOPEN"));
+  sendCheckReply(F("AT+NETOPEN"), ok_reply);
+  readline(60000); // network can take a long while to start
+  DEBUG_PRINT (F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
+}
+
+
+// and closed, I think this is a power issue.
+boolean Adafruit_FONA_3G::netClose() {
+  DEBUG_PRINTLN(F("AT+NETCLOSE"));
+  sendCheckReply(F("AT+NETCLOSE"), ok_reply);
+  readline(10000); // network can take a while
+  DEBUG_PRINT (F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
+}
+
+// takes extra param the connection number. 0..9 so up to ten concurrent connections
+boolean Adafruit_FONA_3G::TCPconnect(uint8_t conn, char *server, uint16_t port) {
+  flushInput();
+  
+  DEBUG_PRINT(F("AT+CIPOPEN="));
+  DEBUG_PRINT(conn);
+  DEBUG_PRINT(F(",\"TCP\",\""));
+  DEBUG_PRINT(server);
+  DEBUG_PRINT(F("\","));
+  DEBUG_PRINT(port);
+  DEBUG_PRINTLN();
+
+  mySerial->print(F("AT+CIPOPEN="));
+  mySerial->print(conn);
+  mySerial->print(F(",\"TCP\",\""));
+  mySerial->print(server);
+  mySerial->print(F("\","));
+  mySerial->print(port);
+  mySerial->println();
+
+  if (! expectReply(ok_reply)) return false;
+  readline(60000); // wait to send. 
+  DEBUG_PRINT (F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
+  // looks like it was a success (?)
+  return true;
+}
+
+boolean Adafruit_FONA_3G::TCPsend(uint8_t conn, char *packet, uint8_t len) {
+
+  DEBUG_PRINT(F("AT+CIPSEND="));
+  DEBUG_PRINT(conn);
+  DEBUG_PRINT(F(","));
+  DEBUG_PRINTLN(len);
+#ifdef ADAFRUIT_FONA_DEBUG
+  for (uint16_t i=0; i<len; i++) {
+  DEBUG_PRINT(F(" 0x"));
+  DEBUG_PRINT(packet[i], HEX);
+  }
+#endif
+  DEBUG_PRINTLN();
+
+
+  mySerial->print(F("AT+CIPSEND="));
+  mySerial->print(conn);
+  mySerial->print(F(","));
+  mySerial->println(len);
+  readline();
+
+  DEBUG_PRINT (F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
+
+  if (replybuffer[0] != '>') return false;
+
+  mySerial->write((unsigned char *) packet, len);
+  if (! expectReply(ok_reply)) return false;
+  readline(1000);
+  DEBUG_PRINT (F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
+
+  return true;
+}
+
+// closed an opened connection
+boolean Adafruit_FONA_3G::TCPclose(uint8_t conn) {
+  DEBUG_PRINT(F("AT+CIPCLOSE="));
+  DEBUG_PRINT(conn);
+  DEBUG_PRINTLN();
+
+  mySerial->print(F("AT+CIPCLOSE="));
+  mySerial->println(conn);
+  if (! expectReply(ok_reply)) return false;
+  readline(1000);
+  DEBUG_PRINT (F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
+
+  return true;
+}
+
+// FIXME: receive TCP data
 
 /********* HTTP LOW LEVEL FUNCTIONS  ************************************/
 
