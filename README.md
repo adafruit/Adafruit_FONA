@@ -9,6 +9,9 @@ Designed specifically to work with the Adafruit FONA Breakout
   * https://www.adafruit.com/products/1963
   * http://www.adafruit.com/products/2468
   * http://www.adafruit.com/products/2542
+  * http://www.adafruit.com/products/2696
+  * http://www.adafruit.com/products/2691
+  * http://www.adafruit.com/products/2687
 
 These modules use TTL Serial to communicate, 2 pins are required to interface
 
