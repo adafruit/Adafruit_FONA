@@ -1651,8 +1651,27 @@ boolean Adafruit_FONA_3G::HTTPS_POST(std::string host){
   return true;
 }
 
-boolean Adafruit_FONA_3G::HTTPS_PUT(std::string host, std::string put_uri, std::string put_payload, std::string auth_line){
+boolean Adafruit_FONA_3G::HTTPS_PUT(std::string host, std::string put_uri, std::string filename, std::string auth_line){
 
+  FILE *fp = fopen(filename.c_str(),"r");
+  if(fp == nullptr){
+    std::cout << "Couldn't read " << filename << "." << '\n';
+    return false;
+  }
+
+  size_t SIZE = FdGetFileSize(fp);
+  if(SIZE == 0){
+    std::cout << "Either " << filename << " is empty or couldn't read size." << '\n';
+    fclose(fp); return false;
+  }
+  char *filebuffer = new char[SIZE];
+  DEBUG_PRINT("file size of "); DEBUG_PRINT(filename); DEBUG_PRINT(" is ");DEBUG_PRINT(SIZE);DEBUG_PRINTLN(" bytes.");
+  size_t ret_size = fread(filebuffer, sizeof(filebuffer[0]), SIZE, fp);
+  fclose(fp);
+  if(ret_size != SIZE){
+    std::cout << "Read " << ret_size << " instead of " << SIZE << " bytes from " << filename << "." << '\n';
+    delete filebuffer; return false;
+  }
 
 
   std::string putRequest =
@@ -1660,34 +1679,45 @@ boolean Adafruit_FONA_3G::HTTPS_PUT(std::string host, std::string put_uri, std::
   "Host: " + host + "\r\n" +
   auth_line +
   "Content-Type: text/plain\r\n" +
-  "Content-Length: " + std::to_string(put_payload.size()) + "\r\n" +
-  "\r\n" +
-  put_payload +
-  "\r\r";
+  "Content-Length: " + std::to_string(SIZE) + "\r\n" +
+  "\r\n";
 
-  static_cast<std::string>("PUT /BT-Feuchte/test24.txt HTTP/1.1\r\n")  +
-  "HOST: agw4.bam.de\r\n" +
-  "authorization: Basic YnQtZmV1Y2h0ZS1tZXNzLXc6aVc1cmllUDg=\r\n" +
-  "content-type: text/plain\r\n" +
-  "content-length: 31\r\n\r\n" +
-
-  "Hello wedav! von Edison.\r\r";
+  // static_cast<std::string>("PUT /BT-Feuchte/test24.txt HTTP/1.1\r\n")  +
+  // "HOST: agw4.bam.de\r\n" +
+  // "authorization: Basic YnQtZmV1Y2h0ZS1tZXNzLXc6aVc1cmllUDg=\r\n" +
+  // "content-type: text/plain\r\n" +
+  // "content-length: 31\r\n\r\n" +
+  //
+  // "Hello wedav! von Edison.\r\r";
 
 
-  if(! HTTPS_request(putRequest)){
+  if(! HTTPS_request(putRequest, filebuffer, SIZE)){
     DEBUG_PRINTLN("PUT Request not sucessful.");
+    delete filebuffer;
     return false;
   }
+
+  delete filebuffer;
+
   return true;
 }
 
 
-boolean Adafruit_FONA_3G::HTTPS_request(std::string request){
+boolean Adafruit_FONA_3G::HTTPS_request(std::string request, char *filebuffer, size_t const file_size){
 
-  if(sendCheckReply("AT+CHTTPSSEND=", request.size(), ">")){
+  int32_t request_size = (filebuffer == nullptr) ? request.size() : (request.size() + file_size);
+  DEBUG_PRINT("request_size: "); DEBUG_PRINTLN(request_size);
+  DEBUG_PRINT("sizeof(filebuffer): "); DEBUG_PRINTLN(sizeof(filebuffer));
+
+  if(sendCheckReply("AT+CHTTPSSEND=", request_size, ">")){
     mySerial->writeStr(request);
+    if(filebuffer != nullptr){
+      mySerial->write(filebuffer, file_size);
+      mySerial->writeStr("\r\r");
+    }
     DEBUG_PRINT(F("\t---> ")); DEBUG_PRINTLN(request);
   }
+  else {return false;}
 
   while (available()) {
     // Serial.write(read());
@@ -2378,4 +2408,12 @@ void delay(int ms){
   sleepTime.tv_sec = ms/1000L;
   sleepTime.tv_nsec = (ms % 1000L)*1000000L;
   nanosleep(&sleepTime, NULL);
+}
+
+size_t FdGetFileSize(FILE* fd)
+{
+    int fd_int = fileno(fd);
+    struct stat stat_buf;
+    int rc = fstat(fd_int, &stat_buf);
+    return rc == 0 ? stat_buf.st_size : 0;
 }
