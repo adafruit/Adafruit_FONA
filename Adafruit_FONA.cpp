@@ -1281,16 +1281,31 @@ boolean Adafruit_FONA_3G::enableGPRS(boolean onoff) {
     // connect in transparent
     if (! sendCheckReply(F("AT+CIPMODE=1"), ok_reply, 10000))
       return false;
-    // open network (?)
-    // if (! sendCheckReply(F("AT+NETOPEN=,,1"), F("Network opened"), 10000))
-    if (! sendCheckReply(F("AT+NETOPEN"), ok_reply, 10000))
-      return false;
+    // open network
 
-    // readline(10000); // status
-    readOut(5000, false);
-    if(static_cast<std::string>(replybuffer) != "+NETOPEN: 0"){
-      return false;
+    getReply("AT+NETOPEN", static_cast<uint16_t>(5000));
+    if(replybuffer == ok_reply){
+      if(!expectReply("+NETOPEN: 0", 10000))
+        return false;
     }
+    else if (static_cast<std::string>(replybuffer) != "+NETOPEN: 0"){
+        return false;
+    }
+    else {
+      readOut(); // read OK
+    }
+
+    //
+    // if (! sendCheckReply(F("AT+NETOPEN"), ok_reply, 10000))
+    //   DEBUG_PRINTLN("OK expected but not get!");
+    //   return false;
+    //
+    // // readline(10000); // status
+    // readOut(5000, false);
+    // if(static_cast<std::string>(replybuffer) != "+NETOPEN: 0"){
+    //   DEBUG_PRINT("+NETOPEN:0 expected but not get! Got: "); DEBUG_PRINTLN(replybuffer);
+    //   return false;
+    // }
   } else {
     // close GPRS context
     if (! sendCheckReply(F("AT+NETCLOSE"), ok_reply, 10000))
@@ -1651,33 +1666,7 @@ boolean Adafruit_FONA_3G::HTTPS_POST(std::string host){
   return true;
 }
 
-boolean Adafruit_FONA_3G::HTTPS_PUT(std::string host, std::string put_uri, std::string filename, std::string auth_line){
-
-  // Open file and get it ready for sending
-  FILE *fp = fopen(filename.c_str(),"r");
-  if(fp == nullptr){
-    std::cout << "Couldn't read " << filename << "." << '\n';
-    return false;
-  }
-
-  size_t SIZE = FdGetFileSize(fp);
-
-  if(SIZE == 0){
-    std::cout << "Either " << filename << " is empty or couldn't read size." << '\n';
-    fclose(fp); return false;
-  }
-
-  char *filebuffer = new char[SIZE];
-
-  DEBUG_PRINT("file size of "); DEBUG_PRINT(filename); DEBUG_PRINT(" is ");DEBUG_PRINT(SIZE);DEBUG_PRINTLN(" bytes.");
-
-  size_t ret_size = fread(filebuffer, sizeof(filebuffer[0]), SIZE, fp);
-  fclose(fp);
-  if(ret_size != SIZE){
-    std::cout << "Read " << ret_size << " instead of " << SIZE << " bytes from " << filename << "." << '\n';
-    delete filebuffer; return false;
-  }
-
+boolean Adafruit_FONA_3G::HTTPS_PUT(std::string host, std::string put_uri, const char *payload, const size_t payload_size, std::string auth_line){
 
   // Fill out request header
   std::string putRequest =
@@ -1685,31 +1674,20 @@ boolean Adafruit_FONA_3G::HTTPS_PUT(std::string host, std::string put_uri, std::
   "Host: " + host + "\r\n" +
   auth_line +
   "Content-Type: text/plain\r\n" +
-  "Content-Length: " + std::to_string(SIZE) + "\r\n" +
+  "Content-Length: " + std::to_string(payload_size) + "\r\n" +
   "\r\n";
 
-  // static_cast<std::string>("PUT /BT-Feuchte/test24.txt HTTP/1.1\r\n")  +
-  // "HOST: agw4.bam.de\r\n" +
-  // "authorization: Basic YnQtZmV1Y2h0ZS1tZXNzLXc6aVc1cmllUDg=\r\n" +
-  // "content-type: text/plain\r\n" +
-  // "content-length: 31\r\n\r\n" +
-  //
-  // "Hello wedav! von Edison.\r\r";
 
-
-  if(! HTTPS_request(putRequest, filebuffer, SIZE)){
+  if(! HTTPS_request(putRequest, payload, payload_size)){
     DEBUG_PRINTLN("PUT Request not sucessful.");
-    delete filebuffer;
     return false;
   }
-
-  delete filebuffer;
 
   return true;
 }
 
 
-boolean Adafruit_FONA_3G::HTTPS_request(std::string request, char *filebuffer, size_t const file_size){
+boolean Adafruit_FONA_3G::HTTPS_request(std::string request, const char *filebuffer, const size_t file_size){
 
   int32_t request_size = (filebuffer == nullptr) ? request.size() : (request.size() + file_size);
   DEBUG_PRINT("request_size: "); DEBUG_PRINTLN(request_size);
@@ -1726,91 +1704,105 @@ boolean Adafruit_FONA_3G::HTTPS_request(std::string request, char *filebuffer, s
   }
   else {return false;}
 
-  while (available()) {
-    // Serial.write(read());
-    std::cout << static_cast<char>(read());
-  }
+
+  // while (available()) {
+  //   // Serial.write(read());
+  //   std::cout << static_cast<char>(read());
+  // }
   // delay(5000);
-  // receive answer for the get request
-  if(expectReply("+CHTTPS: RECV EVENT")){
+  // receive answer for the request
+
+  // read the answer from after request
+
+  readOut(5000,false);
+
+  boolean RECV_EVENT = false;
+  if (replybuffer == ok_reply){
+    RECV_EVENT = expectReply("+CHTTPS: RECV EVENT", 5000);
+  }
+  else if (static_cast<std::string>(replybuffer) == "+CHTTPS: RECV EVENT"){
+    RECV_EVENT = true;
+  }
+
+
+  if(RECV_EVENT){
     uint16_t waitForReply = 5000;
-    if(getReply("AT+CHTTPSRECV?",waitForReply)){
-      uint16_t answerLen = 0;
-      parseReply("+CHTTPSRECV: ", &answerLen, ',', 1);
-      std::cout << "answerLen: " << answerLen << '\n';
+    uint16_t answerLen = 0;
+    if(sendParseReply("AT+CHTTPSRECV?", "+CHTTPSRECV: ", &answerLen, ',', 1)){
+      DEBUG_PRINT("answerLen: "); DEBUG_PRINTLN(answerLen);
       waitForReply = 1500;
-      readOut(waitForReply);
+      // readOut(waitForReply); // TODO: not sure why this is necessary
 
-      if(answerLen){
-        getReply("AT+CHTTPSRECV=", static_cast<int32_t>(answerLen), waitForReply);
+      if(answerLen && sendCheckReply("AT+CHTTPSRECV=", static_cast<int32_t>(answerLen), ok_reply, waitForReply)){
+        readline();
+        DEBUG_PRINT(F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
 
-        if(replybuffer == ok_reply){
-          readline();
-          DEBUG_PRINT(F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
+        uint16_t lenLine = 0;
+        uint16_t bytesRead = 0;
+        uint16_t status_code = 0;
+        std::string content_type;
+        uint16_t header_length = answerLen;
+        uint16_t content_length = 0;
+        std::string const CONTENT_TYPE = "Content-Type: ";
+        std::string const CONTENT_LENGTH = "Content-Length: ";
+        size_t pos;
 
-          uint16_t lenLine = 0;
-          uint16_t bytesRead = 0;
-          uint16_t status_code = 0;
-          std::string content_type;
-          uint16_t header_length = answerLen;
-          uint16_t content_length = 0;
-          std::string const CONTENT_TYPE = "Content-Type: ";
-          std::string const CONTENT_LENGTH = "Content-Length: ";
-          size_t pos;
+        DEBUG_PRINTLN("Header\n------");
 
-          DEBUG_PRINTLN()"Header\n------");
+        while(available()){
 
-          while(available()){
-
-            // we add 2 for the \n\n that doesn't get returned by readline
-            // Header Part
-            if(bytesRead == header_length-2){
-              bytesRead += 2;
-              readRaw(2); //read the empty line
-              DEBUG_PRINTLN()"\nContent\n-------");
-              replybuffer[0] = 0;
-              DEBUG_PRINT("bytesRead: "); DEBUG_PRINT(bytesRead); DEBUG_PRINT(", lenLine: "); DEBUG_PRINTLN(lenLine);
-            }
-            else if(bytesRead < header_length){
-              lenLine = readline();
-              if(bytesRead == 0){
-                parseReply("HTTP/1.1 ", &status_code, ' ', 0);
-              }
-              bytesRead += lenLine+2;
-              if((pos = static_cast<std::string>(replybuffer).find(CONTENT_TYPE)) != std::string::npos){
-                pos += CONTENT_TYPE.size();
-                content_type = static_cast<std::string>(&(replybuffer[pos]));
-              }
-              else if((pos = static_cast<std::string>(replybuffer).find(CONTENT_LENGTH)) != std::string::npos){
-                pos += CONTENT_LENGTH.size();
-                content_length = atoi(&(replybuffer[pos]));
-                header_length = answerLen - content_length;
-              }
-            }
-            // after the header there is one empty line which is ignored by readline
-            // Content parameter
-            else if(bytesRead == header_length){
-              //TODO: process content
-              // readRaw(content_length);
-              uint16_t idx = 0;
-              // mySerial->read(replybuffer, content_length);
-              idx = readRaw(content_length);
-              replybuffer[idx+1] = 0;
-              // bytesRead += content_length;
-              bytesRead += idx+1;
-            }
-            else{
-              DEBUG_PRINT("bytesRead: ");DEBUG_PRINT(bytesRead); DEBUG_PRINT(", lenLine: "); DEBUG_PRINTLN(lenLine);
-              break;
-            }
-            std::cout << replybuffer << "\n";
+          // we add 2 for the \n\n that doesn't get returned by readline
+          // Header Part
+          if(bytesRead == header_length-2){
+            bytesRead += 2;
+            readRaw(2); //read the empty line
+            DEBUG_PRINTLN("\nContent\n-------");
+            replybuffer[0] = 0;
+            DEBUG_PRINT("bytesRead: "); DEBUG_PRINT(bytesRead); DEBUG_PRINT(", lenLine: "); DEBUG_PRINTLN(lenLine);
           }
-          DEBUG_PRINT("status_code: "); DEBUG_PRINTLN(status_code);
-          DEBUG_PRINT("content_type: "); DEBUG_PRINTLN(content_type);
-          DEBUG_PRINT("content_length: "); DEBUG_PRINT(content_length);
+          else if(bytesRead < header_length){
+            lenLine = readline();
+            if(bytesRead == 0){
+              parseReply("HTTP/1.1 ", &status_code, ' ', 0);
+            }
+            bytesRead += lenLine+2;
+            if((pos = static_cast<std::string>(replybuffer).find(CONTENT_TYPE)) != std::string::npos){
+              pos += CONTENT_TYPE.size();
+              content_type = static_cast<std::string>(&(replybuffer[pos]));
+            }
+            else if((pos = static_cast<std::string>(replybuffer).find(CONTENT_LENGTH)) != std::string::npos){
+              pos += CONTENT_LENGTH.size();
+              content_length = atoi(&(replybuffer[pos]));
+              header_length = answerLen - content_length;
+            }
+          }
+          // after the header there is one empty line which is ignored by readline
+          // Content parameter
+          else if(bytesRead == header_length){
+            //TODO: process content
+            // readRaw(content_length);
+            uint16_t idx = 0;
+            // mySerial->read(replybuffer, content_length);
+            idx = readRaw(content_length);
+            replybuffer[idx+1] = 0;
+            // bytesRead += content_length;
+            bytesRead += idx+1;
+          }
+          else{
+            DEBUG_PRINT("bytesRead: ");DEBUG_PRINT(bytesRead); DEBUG_PRINT(", lenLine: "); DEBUG_PRINTLN(lenLine);
+            break;
+          }
+          std::cout << replybuffer << "\n";
         }
+        DEBUG_PRINT("status_code: "); DEBUG_PRINTLN(status_code);
+        DEBUG_PRINT("content_type: "); DEBUG_PRINTLN(content_type);
+        DEBUG_PRINT("content_length: "); DEBUG_PRINT(content_length);
       }
     }
+  }
+  else {
+    DEBUG_PRINTLN("NO +CHTTPS: RECV EVENT was received.");
+    DEBUG_PRINT("replybuffer: "); DEBUG_PRINTLN(replybuffer);
   }
   // // getReply("AT+CHTTPSRECV=", static_cast<int32_t>(answerLen));
   // for (size_t i = 0; i < 2; i++) {
@@ -1964,6 +1956,14 @@ boolean Adafruit_FONA::expectReply(std::string reply, uint16_t timeout) {
   DEBUG_PRINT(F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
 
   return (replybuffer == reply);
+}
+
+boolean Adafruit_FONA::expectReplies(std::string reply1, std::string reply2, uint16_t timeout) {
+  readline(timeout);
+
+  DEBUG_PRINT(F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
+
+  return (replybuffer == reply1 || replybuffer == reply2);
 }
 
 /********* LOW LEVEL *******************************************/
@@ -2415,12 +2415,4 @@ void delay(int ms){
   sleepTime.tv_sec = ms/1000L;
   sleepTime.tv_nsec = (ms % 1000L)*1000000L;
   nanosleep(&sleepTime, NULL);
-}
-
-size_t FdGetFileSize(FILE* fd)
-{
-    int fd_int = fileno(fd);
-    struct stat stat_buf;
-    int rc = fstat(fd_int, &stat_buf);
-    return rc == 0 ? stat_buf.st_size : 0;
 }

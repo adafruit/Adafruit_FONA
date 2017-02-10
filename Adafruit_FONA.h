@@ -19,7 +19,6 @@
 
 #include <iostream>
 #include <string>
-#include <sys/stat.h>
 #include "./includes/helper.h"
 #include "mraa.hpp"
 
@@ -191,6 +190,7 @@ class Adafruit_FONA {
 
   // // Helper functions to verify responses.
   boolean expectReply(std::string reply, uint16_t timeout = 10000);
+  boolean expectReplies(std::string reply1, std::string reply2, uint16_t timeout = 10000);
   // boolean sendCheckReply(char *send, char *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReply(std::string send, std::string reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   // boolean sendCheckReply(char* send, std::string reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
@@ -261,14 +261,15 @@ class Adafruit_FONA_3G : public Adafruit_FONA {
     boolean HTTPS_GET(std::string host, std::string get_uri, std::string extra_line = "");
     boolean HTTPS_POST(std::string host);
     // boolean HTTPS_PUT(std::string host, std::string put_uri, std::string put_payload, std::string auth_line = "");
-    boolean HTTPS_PUT(std::string host, std::string put_uri, std::string filename, std::string auth_line = "");
+    boolean HTTPS_PUT(std::string host, std::string put_uri, const char *payload, const size_t payload_size, std::string auth_line = "");
+    // boolean HTTPS_PUT(std::string host, std::string put_uri, std::string filename, std::string auth_line = "");
     boolean HTTPS_end();
 
     boolean execCommand(std::string tosend);
 
  protected:
    uint16_t readOut(uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS, boolean multiline = true);
-   boolean HTTPS_request(std::string request, char *filebuffer = nullptr, size_t const file_size = 0);
+   boolean HTTPS_request(std::string request, const char *filebuffer = nullptr, const size_t file_size = 0);
 
 };
 
