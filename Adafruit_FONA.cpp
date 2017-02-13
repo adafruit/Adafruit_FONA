@@ -1694,12 +1694,17 @@ boolean Adafruit_FONA_3G::HTTPS_request(std::string request, const char *filebuf
   DEBUG_PRINT("sizeof(filebuffer): "); DEBUG_PRINTLN(sizeof(filebuffer));
 
   // Sennd request with payload (if existing)
+  std::chrono::steady_clock::time_point time_before_sending = std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point time_after_sending;
+  std::chrono::steady_clock::time_point time_after_RECV;
+
   if(sendCheckReply("AT+CHTTPSSEND=", request_size, ">")){
     mySerial->writeStr(request);
     if(filebuffer != nullptr){
       mySerial->write(filebuffer, file_size);
       mySerial->writeStr("\r\r");
     }
+    time_after_sending = std::chrono::steady_clock::now();
     DEBUG_PRINT(F("\t---> ")); DEBUG_PRINTLN(request);
   }
   else {return false;}
@@ -1714,6 +1719,7 @@ boolean Adafruit_FONA_3G::HTTPS_request(std::string request, const char *filebuf
 
   // read the answer from after request
 
+  // the previous command shall return an "OK" but might issue "+CHTTPS: RECV EVENT" before or after that 
   readOut(5000,false);
 
   boolean RECV_EVENT = false;
@@ -1723,13 +1729,16 @@ boolean Adafruit_FONA_3G::HTTPS_request(std::string request, const char *filebuf
   else if (static_cast<std::string>(replybuffer) == "+CHTTPS: RECV EVENT"){
     RECV_EVENT = true;
   }
+  time_after_RECV = std::chrono::steady_clock::now();
+  std::cout << "Time to send request = " << std::chrono::duration_cast<std::chrono::microseconds>(time_after_RECV - time_before_sending).count()/1000.0 << "ms." <<std::endl;
+  std::cout << "Time to wait for RECV_EVENT = " << std::chrono::duration_cast<std::chrono::microseconds>(time_after_RECV - time_after_sending).count()/1000.0 << "ms." <<std::endl;
+
 
 
   if(RECV_EVENT){
     uint16_t waitForReply = 5000;
     uint16_t answerLen = 0;
     if(sendParseReply("AT+CHTTPSRECV?", "+CHTTPSRECV: ", &answerLen, ',', 1)){
-      DEBUG_PRINT("answerLen: "); DEBUG_PRINTLN(answerLen);
       waitForReply = 1500;
       // readOut(waitForReply); // TODO: not sure why this is necessary
 
@@ -1747,7 +1756,7 @@ boolean Adafruit_FONA_3G::HTTPS_request(std::string request, const char *filebuf
         std::string const CONTENT_LENGTH = "Content-Length: ";
         size_t pos;
 
-        DEBUG_PRINTLN("Header\n------");
+        if (filebuffer == nullptr) DEBUG_PRINTLN("Header\n------");
 
         while(available()){
 
@@ -1756,9 +1765,9 @@ boolean Adafruit_FONA_3G::HTTPS_request(std::string request, const char *filebuf
           if(bytesRead == header_length-2){
             bytesRead += 2;
             readRaw(2); //read the empty line
-            DEBUG_PRINTLN("\nContent\n-------");
+            if (filebuffer == nullptr) DEBUG_PRINTLN("\nContent\n-------");
             replybuffer[0] = 0;
-            DEBUG_PRINT("bytesRead: "); DEBUG_PRINT(bytesRead); DEBUG_PRINT(", lenLine: "); DEBUG_PRINTLN(lenLine);
+            // DEBUG_PRINT("bytesRead: "); DEBUG_PRINT(bytesRead); DEBUG_PRINT(", lenLine: "); DEBUG_PRINTLN(lenLine);
           }
           else if(bytesRead < header_length){
             lenLine = readline();
@@ -1780,23 +1789,20 @@ boolean Adafruit_FONA_3G::HTTPS_request(std::string request, const char *filebuf
           // Content parameter
           else if(bytesRead == header_length){
             //TODO: process content
-            // readRaw(content_length);
             uint16_t idx = 0;
-            // mySerial->read(replybuffer, content_length);
             idx = readRaw(content_length);
             replybuffer[idx+1] = 0;
-            // bytesRead += content_length;
             bytesRead += idx+1;
           }
           else{
-            DEBUG_PRINT("bytesRead: ");DEBUG_PRINT(bytesRead); DEBUG_PRINT(", lenLine: "); DEBUG_PRINTLN(lenLine);
+            // DEBUG_PRINT("bytesRead: ");DEBUG_PRINT(bytesRead); DEBUG_PRINT(", lenLine: "); DEBUG_PRINTLN(lenLine);
             break;
           }
-          std::cout << replybuffer << "\n";
+          if (filebuffer == nullptr) DEBUG_PRINTLN(replybuffer);
         }
         DEBUG_PRINT("status_code: "); DEBUG_PRINTLN(status_code);
         DEBUG_PRINT("content_type: "); DEBUG_PRINTLN(content_type);
-        DEBUG_PRINT("content_length: "); DEBUG_PRINT(content_length);
+        DEBUG_PRINT("content_length: "); DEBUG_PRINTLN(content_length);
       }
     }
   }
@@ -1804,19 +1810,6 @@ boolean Adafruit_FONA_3G::HTTPS_request(std::string request, const char *filebuf
     DEBUG_PRINTLN("NO +CHTTPS: RECV EVENT was received.");
     DEBUG_PRINT("replybuffer: "); DEBUG_PRINTLN(replybuffer);
   }
-  // // getReply("AT+CHTTPSRECV=", static_cast<int32_t>(answerLen));
-  // for (size_t i = 0; i < 2; i++) {
-  //   getReply("AT+CHTTPSRECV=", 200, waitForReply);
-  //   if(replybuffer == ok_reply){
-  //     readline();
-  //     DEBUG_PRINT(F("\t---> ")); DEBUG_PRINTLN(replybuffer);
-  //     readline(waitForReply, true);
-  //     std::cout << replybuffer;
-  //   }
-  // }
-
-
-
 
   return true;
 }

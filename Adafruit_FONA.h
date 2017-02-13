@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <string>
+#include <chrono>
 #include "./includes/helper.h"
 #include "mraa.hpp"
 
