@@ -1631,10 +1631,10 @@ boolean Adafruit_FONA_3G::HTTPS_start(std::string host, boolean https){
   return sendCheckReply(HTTPSOpenCmd, ok_reply , waitForReply);
 }
 
-boolean Adafruit_FONA_3G::HTTPS_GET(std::string host, std::string get_uri, std::string extra_line){
+boolean Adafruit_FONA_3G::HTTPS_GET(std::string host, std::string get_path, std::string extra_line){
   // send get request
   std::string getRequest =
-  static_cast<std::string>("GET ") + get_uri + " HTTP/1.1\r\n" +
+  static_cast<std::string>("GET ") + get_path + " HTTP/1.1\r\n" +
   "Host: " + host + "\r\n" +
   extra_line +
   // "User-Agent: Sensor Hub\r\n" +
@@ -1647,16 +1647,14 @@ boolean Adafruit_FONA_3G::HTTPS_GET(std::string host, std::string get_uri, std::
   return true;
 }
 
-boolean Adafruit_FONA_3G::HTTPS_POST(std::string host){
-
-  std::string stringToPost = "I want this string to be posted";
+boolean Adafruit_FONA_3G::HTTPS_POST(std::string host, std::string post_path, std::string post_data){
 
   std::string postRequest =
-  static_cast<std::string>("POST /post HTTP/1.1\r\n") +
+  static_cast<std::string>("POST") + post_path + " HTTP/1.1\r\n" +
   "Host: " + host + "\r\n" +
-  "Content-Length: " + std::to_string(stringToPost.size()) + "\r\n" +
+  "Content-Length: " + std::to_string(post_data.size()) + "\r\n" +
   "\r\n" +
-  stringToPost +
+  post_data +
   "\r\r";
 
   if(! HTTPS_request(postRequest)){
@@ -1666,11 +1664,11 @@ boolean Adafruit_FONA_3G::HTTPS_POST(std::string host){
   return true;
 }
 
-boolean Adafruit_FONA_3G::HTTPS_PUT(std::string host, std::string put_uri, const char *payload, const size_t payload_size, std::string auth_line){
+boolean Adafruit_FONA_3G::HTTPS_PUT(std::string host, std::string put_path, const char *payload, const size_t payload_size, std::string auth_line){
 
   // Fill out request header
   std::string putRequest =
-  static_cast<std::string>("PUT ") + put_uri + " HTTP/1.1\r\n" +
+  static_cast<std::string>("PUT ") + put_path + " HTTP/1.1\r\n" +
   "Host: " + host + "\r\n" +
   auth_line +
   "Content-Type: text/plain\r\n" +
@@ -1719,7 +1717,7 @@ boolean Adafruit_FONA_3G::HTTPS_request(std::string request, const char *filebuf
 
   // read the answer from after request
 
-  // the previous command shall return an "OK" but might issue "+CHTTPS: RECV EVENT" before or after that 
+  // the previous command shall return an "OK" but might issue "+CHTTPS: RECV EVENT" before or after that
   readOut(5000,false);
 
   boolean RECV_EVENT = false;

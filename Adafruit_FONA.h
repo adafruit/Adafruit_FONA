@@ -259,11 +259,11 @@ class Adafruit_FONA_3G : public Adafruit_FONA {
     boolean enableGPRS(boolean onoff);
     // boolean enableGPS(boolean onoff);
     boolean HTTPS_start(std::string host, boolean https = false);
-    boolean HTTPS_GET(std::string host, std::string get_uri, std::string extra_line = "");
-    boolean HTTPS_POST(std::string host);
-    // boolean HTTPS_PUT(std::string host, std::string put_uri, std::string put_payload, std::string auth_line = "");
-    boolean HTTPS_PUT(std::string host, std::string put_uri, const char *payload, const size_t payload_size, std::string auth_line = "");
-    // boolean HTTPS_PUT(std::string host, std::string put_uri, std::string filename, std::string auth_line = "");
+    boolean HTTPS_GET(std::string host, std::string get_path, std::string extra_line = "");
+    boolean HTTPS_POST(std::string host, std::string post_path, std::string post_data);
+    // boolean HTTPS_PUT(std::string host, std::string put_path, std::string put_payload, std::string auth_line = "");
+    boolean HTTPS_PUT(std::string host, std::string put_path, const char *payload, const size_t payload_size, std::string auth_line = "");
+    // boolean HTTPS_PUT(std::string host, std::string put_path, std::string filename, std::string auth_line = "");
     boolean HTTPS_end();
 
     boolean execCommand(std::string tosend);
