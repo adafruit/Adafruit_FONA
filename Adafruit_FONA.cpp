@@ -1650,7 +1650,7 @@ boolean Adafruit_FONA_3G::HTTPS_GET(std::string host, std::string get_path, std:
 boolean Adafruit_FONA_3G::HTTPS_POST(std::string host, std::string post_path, std::string post_data){
 
   std::string postRequest =
-  static_cast<std::string>("POST") + post_path + " HTTP/1.1\r\n" +
+  static_cast<std::string>("POST ") + post_path + " HTTP/1.1\r\n" +
   "Host: " + host + "\r\n" +
   "Content-Length: " + std::to_string(post_data.size()) + "\r\n" +
   "\r\n" +
