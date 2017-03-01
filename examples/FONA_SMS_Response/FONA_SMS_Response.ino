@@ -67,7 +67,7 @@ void setup() {
   Serial.println(F("FONA is OK"));
 
   // Print SIM card IMEI number.
-  char imei[15] = {0}; // MUST use a 16 character buffer for IMEI!
+  char imei[16] = {0}; // MUST use a 16 character buffer for IMEI!
   uint8_t imeiLen = fona.getIMEI(imei);
   if (imeiLen > 0) {
     Serial.print("SIM card IMEI: "); Serial.println(imei);
