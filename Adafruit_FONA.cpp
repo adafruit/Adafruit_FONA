@@ -1755,12 +1755,7 @@ uint8_t Adafruit_FONA::readline(uint16_t timeout, boolean multiline) {
   uint16_t replyidx = 0;
 
   while (timeout--) {
-    if (replyidx >= 254) {
-      //DEBUG_PRINTLN(F("SPACE"));
-      break;
-    }
-
-    while(mySerial->available()) {
+    while(replyidx < sizeof(replybuffer)-1 && mySerial->available()) {
       char c =  mySerial->read();
       if (c == '\r') continue;
       if (c == 0xA) {
