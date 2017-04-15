@@ -117,9 +117,9 @@ boolean Adafruit_FONA::begin(Stream &port) {
   flushInput();
 
 
-  DEBUG_PRINT(F("\t---> ")); DEBUG_PRINTLN("ATI");
+  DEBUG_PRINT(F("\t---> ")); DEBUG_PRINTLN(F("ATI"));
 
-  mySerial->println("ATI");
+  mySerial->println(F("ATI"));
 
   {
     ALLOCATE_REPLYBUFFER
@@ -143,9 +143,9 @@ boolean Adafruit_FONA::begin(Stream &port) {
     if (_type == FONA800L) {
       // determine if L or H
 
-      DEBUG_PRINT(F("\t---> ")); DEBUG_PRINTLN("AT+GMM");
+      DEBUG_PRINT(F("\t---> ")); DEBUG_PRINTLN(F("AT+GMM"));
 
-      mySerial->println("AT+GMM");
+      mySerial->println(F("AT+GMM"));
       readline(500, true);
 
       DEBUG_PRINT (F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
@@ -216,7 +216,8 @@ boolean Adafruit_FONA::getADCVoltage(uint16_t *v) {
 
 uint8_t Adafruit_FONA::unlockSIM(char *pin)
 {
-  char sendbuff[14] = "AT+CPIN=";
+  char sendbuff[14];
+  prog_char_strcpy(sendbuff, (prog_char *)F("AT+CPIN="));
   sendbuff[8] = pin[0];
   sendbuff[9] = pin[1];
   sendbuff[10] = pin[2];
@@ -402,7 +403,8 @@ boolean Adafruit_FONA::setPWM(uint16_t period, uint8_t duty) {
 
 /********* CALL PHONES **************************************************/
 boolean Adafruit_FONA::callPhone(char *number) {
-  char sendbuff[35] = "ATD";
+  char sendbuff[35];
+  prog_char_strcpy(sendbuff, (prog_char *)F("ATD"));
   strncpy(sendbuff+3, number, min(30, strlen(number)));
   uint8_t x = strlen(sendbuff);
   sendbuff[x] = ';';
