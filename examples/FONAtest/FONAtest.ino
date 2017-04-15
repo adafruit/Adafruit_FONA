@@ -86,7 +86,7 @@ void setup() {
   }
   
   // Print module IMEI number.
-  char imei[15] = {0}; // MUST use a 16 character buffer for IMEI!
+  char imei[16] = {0}; // MUST use a 16 character buffer for IMEI!
   uint8_t imeiLen = fona.getIMEI(imei);
   if (imeiLen > 0) {
     Serial.print("Module IMEI: "); Serial.println(imei);
