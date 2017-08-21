@@ -44,11 +44,11 @@ SoftwareSerial *fonaSerial = &fonaSS;
 // Hardware serial is also possible!
 //  HardwareSerial *fonaSerial = &Serial1;
 
-// Default constructor goes to the FONA 3G
+
 // Use this for FONA 800 and 808s
-//Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
+Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
 // Use this one for FONA 3G
-Adafruit_FONA_3G fona = Adafruit_FONA_3G(FONA_RST);
+//Adafruit_FONA_3G fona = Adafruit_FONA_3G(FONA_RST);
 
 uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout = 0);
 
