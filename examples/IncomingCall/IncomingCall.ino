@@ -2,6 +2,7 @@
 // Listens for a call and displays the phone number of the caller (if available).
 // Use this example to add phone call detection to your own FONA sketch.
 #include "Adafruit_FONA.h"
+#include "SoftwareSerial.h"
 
 // Pins which are connected to the FONA.
 // Note that this is different from FONAtest!
@@ -13,22 +14,22 @@
 // for your board.  On an Uno & Mega interrupt 0 is
 // digital pin 2, and on a Leonardo interrupt 0 is
 // digital pin 3.  See this page for a complete table:
-//   http://arduino.cc/en/Reference/attachInterrupt
+// http://arduino.cc/en/Reference/attachInterrupt
 // Make sure this interrupt pin is connected to FONA RI!
 #define FONA_RI_INTERRUPT  0
 
-/// We default to using software serial. If you want to use hardware serial
-// (because softserial isnt supported) comment out the following three lines 
-// and uncomment the HardwareSerial line
-#include "SoftwareSerial.h"
+// We default to using software serial. If you want to use hardware serial
+// (because softserial isnt supported) comment out the following 2 lines 
+// and the include "SoftwareSerial.h" line on line 4 of this file
+// and uncomment the HardwareSerial line.
 SoftwareSerial fonaSS = SoftwareSerial(FONA_TX, FONA_RX);
 SoftwareSerial *fonaSerial = &fonaSS;
 
 // Hardware serial is also possible!
-//  HardwareSerial *fonaSerial = &Serial1;
+// HardwareSerial *fonaSerial = &Serial1;
 
 // Use this for FONA 800 and 808s
-//Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
+// Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
 // Use this one for FONA 3G
 Adafruit_FONA_3G fona = Adafruit_FONA_3G(FONA_RST);
 
@@ -81,7 +82,7 @@ void setup() {
   }
   else {
     Serial.println(F("Caller id notification disabled"));
-  } //end of else for if fona.callerIdNotification
+  } // end of else for if fona.callerIdNotification
 } // end of void setup
 
 void loop(){
