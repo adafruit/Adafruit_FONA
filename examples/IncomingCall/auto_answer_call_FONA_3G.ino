@@ -9,7 +9,7 @@
 # But 0 and 1 are already used for the serial monitor). I've moved the other pins as necessary
 
 #include "Adafruit_FONA.h"
-#include <SoftwareSerial.h>
+#include "SoftwareSerial.h"
 
 #define RING_PIN 2
 #define FONA_TX 3
