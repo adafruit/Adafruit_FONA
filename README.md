@@ -1,14 +1,17 @@
-# Adafruit FONA Library [![Build Status](https://secure.travis-ci.org/adafruit/Adafruit_FONA_Library.svg?branch=master)](https://travis-ci.org/adafruit/Adafruit_FONA_Library)
+# Adafruit FONA Library
 
 **This library requires Arduino v1.0.6 or higher**
 
-This is a library for the Adafruit FONA Cellular GSM Breakouts etc
+This is a library for the Adafruit FONA Cellular GSM Breakouts etc, including the 3G module.
 
 Designed specifically to work with the Adafruit FONA Breakout
   * https://www.adafruit.com/products/1946
   * https://www.adafruit.com/products/1963
   * http://www.adafruit.com/products/2468
   * http://www.adafruit.com/products/2542
+  * http://www.adafruit.com/products/2696
+  * http://www.adafruit.com/products/2691
+  * http://www.adafruit.com/products/2687
 
 These modules use TTL Serial to communicate, 2 pins are required to interface
 
@@ -27,3 +30,6 @@ Check that the Adafruit_FONA folder contains Adafruit_FONA.cpp and Adafruit_FONA
 
 Place the Adafruit_FONA library folder your *arduinosketchfolder*/libraries/ folder. 
 You may need to create the libraries subfolder if its your first library. Restart the IDE.
+
+To Contribute, please fork our ADAfruit_FONA repository and then submit a pull request to merge it back in with the master. To learn more about forking/pull requests etc. Follow the github help:
+https://guides.github.com/activities/contributing-to-open-source/
