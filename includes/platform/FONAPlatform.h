@@ -45,6 +45,10 @@
 #define prog_char_strcmp(a, b)					strcmp((a), (b))
 #endif
 
+#ifndef prog_char_strncmp
+#define prog_char_strncmp(a, b, c)			strncmp((a), (b), (c))
+#endif
+
 #ifndef prog_char_strstr
 #define prog_char_strstr(a, b)					strstr((a), (b))
 #endif
