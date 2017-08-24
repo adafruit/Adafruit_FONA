@@ -53,9 +53,16 @@
 #define prog_char_strlen(a)						strlen((a))
 #endif
 
+#ifndef prog_char_strnlen
+#define prog_char_strnlen(a, len)				strnlen((a), (len))
+#endif
 
 #ifndef prog_char_strcpy
 #define prog_char_strcpy(to, fromprogmem)		strcpy((to), (fromprogmem))
+#endif
+
+#ifndef prog_char_strncpy
+#define prog_char_strncpy(to, fromprogmem, len)	strncpy_P((to), (fromprogmem), (len))
 #endif
 
 

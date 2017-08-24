@@ -28,7 +28,7 @@
  * DebugStream set in the appropriate platform/ header.
  */
 
-#define ADAFRUIT_FONA_DEBUG
-
+//#define ADAFRUIT_FONA_DEBUG
+#define MAX_STRING_SIZE 100
 
 #endif /* ADAFRUIT_FONA_LIBRARY_SRC_INCLUDES_FONACONFIG_H_ */

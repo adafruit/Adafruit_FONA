@@ -34,6 +34,9 @@ the commented section below at the end of the setup() function.
 // this is a large buffer for replies
 char replybuffer[255];
 
+// this is a large buffer for FONA's internal use.
+char fonabuffer[255];
+
 // We default to using software serial. If you want to use hardware serial
 // (because softserial isnt supported) comment out the following three lines 
 // and uncomment the HardwareSerial line
@@ -45,9 +48,9 @@ SoftwareSerial *fonaSerial = &fonaSS;
 //  HardwareSerial *fonaSerial = &Serial1;
 
 // Use this for FONA 800 and 808s
-Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
+Adafruit_FONA fona = Adafruit_FONA(FONA_RST, fonabuffer, sizeof(fonabuffer));
 // Use this one for FONA 3G
-//Adafruit_FONA_3G fona = Adafruit_FONA_3G(FONA_RST);
+//Adafruit_FONA_3G fona = Adafruit_FONA_3G(FONA_RST, fonabuffer, sizeof(fonabuffer));
 
 uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout = 0);
 
@@ -154,7 +157,17 @@ void printMenu(void) {
   Serial.println(F("[g] Disable GPRS"));
   Serial.println(F("[l] Query GSMLOC (GPRS)"));
   Serial.println(F("[w] Read webpage (GPRS)"));
-  Serial.println(F("[W] Post to website (GPRS)"));
+  Serial.println(F("[W] Post to website (GPRS)"));  
+	// GPRS - TCPIP
+  Serial.println(F("[k] Connect to server using TCP"));
+  Serial.println(F("[K] Connect to server using UDP"));
+  Serial.println(F("[j] Close connection with server"));
+  Serial.println(F("[I] Check if connected to server"));
+  Serial.println(F("[Q] Send Packet to server"));
+  Serial.println(F("[J] Get how many bytes are available to read from the server"));
+  Serial.println(F("[X] Read Packet from server"));
+  Serial.println(F("[z] Set fixed port"));
+  Serial.println(F("[Z] set dynamic port"));
 
   // GPS
   if ((type == FONA3G_A) || (type == FONA3G_E) || (type == FONA808_V1) || (type == FONA808_V2)) {
@@ -690,14 +703,27 @@ void loop() {
 
     case 'g': {
         // turn GPRS off
-        if (!fona.enableGPRS(false))
+        if (!fona.disableGPRS())
           Serial.println(F("Failed to turn off"));
         break;
       }
     case 'G': {
-        // turn GPRS on
-        if (!fona.enableGPRS(true))
-          Serial.println(F("Failed to turn on"));
+		int retry = 0;
+        boolean success = false;
+		// turn GPRS on
+		fona.setGPRSNetworkSettings(F("myAPN.com"), F("myUsername"), F("myPassword"));
+		
+		while (retry < 10) { 			
+			if (fona.enableGPRS()) {
+			  success = false;
+			  break;			  
+			}
+			delay(20); 
+			retry++; 
+		}
+		if	(!success) {
+			Serial.println(F("Failed to turn on"));
+		}
         break;
       }
     case 'l': {
@@ -791,6 +817,70 @@ void loop() {
         fona.HTTP_POST_end();
         break;
       }
+	 
+	case 'k' : { 
+		// Connect to server using TCP
+		if (!fona.TcpipConnect(TCP, "255.255.255.255", 12345)) {
+			Serial.println(F("Failed to connect with server using TCP"));
+		}
+	}
+	case 'K' : { 
+		// Connect to server using UDP		
+		if (!fona.TcpipConnect(UDP, "255.255.255.255", 12345)) {
+			Serial.println(F("Failed to connect with server using UDP"));
+		}
+	}
+	case 'j' : { 
+		// Close connection with server
+		if (!fona.TcpipClose()) {
+			Serial.println(F("Failed to close the connection"));
+		}
+	}
+	case 'I' : { 
+		// Check if connected to server
+		if (fona.TcpipConnected()) {
+			Serial.println(F("Connected!"));
+		}
+		else {
+			Serial.println(F("Not Connected!"));
+		}
+	}
+	case 'Q' : { 
+		// Send Packet to server
+		char message[] = { 0xDE, 0xAD, 0xBE, 0xEF };
+		if (!fona.TcpipSend(message, sizeof(message))) {
+			Serial.println(F("Failed to send data to server"));
+		}
+	}
+	
+	case 'J' : { 
+		// Get how many bytes are available to read from the server
+		uint16_t replySize = fona.TcpipAvailable();
+		Serial.print(replySize);
+		Serial.println(F(" bytes are available to read from the server"));		
+	}
+	
+	case 'X' : { 
+		// Read Packet from server
+		uint16_t replySize = 0; 
+		replySize = fona.TcpipRead((uint8_t*)replybuffer, sizeof(replybuffer));
+		Serial.print(replySize);
+		Serial.println(F(" bytes read from server"));
+		
+	}
+	case 'z' : { 
+		// Set fixed port
+		if (!fona.TcpipSetFixedPort(UDP, 12345)) {
+			Serial.println(F("Failed to set fixed port"));
+		}
+	}
+	case 'Z' : { 
+		// set dynamic port
+		if (!fona.TcpipSetDynamicPort(UDP)) {
+			Serial.println(F("Failed to set dynamic port"));
+		}
+	}
+	  
     /*****************************************/
 
     case 'S': {

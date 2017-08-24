@@ -64,9 +64,14 @@
 #define FONA_CALL_RINGING 3
 #define FONA_CALL_INPROGRESS 4
 
+enum ConnectionType {
+	TCP,
+	UDP
+};
+
 class Adafruit_FONA : public FONAStreamType {
  public:
-  Adafruit_FONA(int8_t r);
+  Adafruit_FONA(int8_t rst, char externalBuffer[], size_t externalBufferSize);  
   boolean begin(FONAStreamType &port);
   uint8_t type();
 
@@ -129,11 +134,15 @@ class Adafruit_FONA : public FONAStreamType {
   boolean getTime(char *buff, uint16_t maxlen);
 
   // GPRS handling
+  // deprecated, use only on legacy code.
   boolean enableGPRS(boolean onoff);
+  boolean enableGPRS(void);
+  boolean disableGPRS(void);
   uint8_t GPRSstate(void);
   boolean getGSMLoc(uint16_t *replycode, char *buff, uint16_t maxlen);
   boolean getGSMLoc(float *lat, float *lon);
-  void setGPRSNetworkSettings(FONAFlashStringPtr apn, FONAFlashStringPtr username=0, FONAFlashStringPtr password=0);
+  boolean setGPRSNetworkSettings(FONAFlashStringPtr apn, FONAFlashStringPtr username = NULL, FONAFlashStringPtr password = NULL);
+  boolean setGPRSNetworkSettings(const char *apn, const char *username = NULL, const char *password = NULL);
 
   // GPS handling
   boolean enableGPS(boolean onoff);
@@ -143,12 +152,23 @@ class Adafruit_FONA : public FONAStreamType {
   boolean enableGPSNMEA(uint8_t nmea);
 
   // TCP raw connections
+  // deprecated, use only on legacy code.
   boolean TCPconnect(char *server, uint16_t port);
   boolean TCPclose(void);
   boolean TCPconnected(void);
   boolean TCPsend(char *packet, uint8_t len);
   uint16_t TCPavailable(void);
   uint16_t TCPread(uint8_t *buff, uint8_t len);
+  
+  // TCP/IP raw connections
+  boolean TcpipConnect(ConnectionType, char *server, uint16_t port);
+  boolean TcpipClose(void);
+  boolean TcpipConnected(void);
+  boolean TcpipSend(char *packet, uint8_t len);
+  uint16_t TcpipAvailable(void);
+  uint16_t TcpipRead(char *buff, uint8_t len);
+  boolean TcpipSetFixedPort(ConnectionType connType, uint16_t port);
+  boolean TcpipSetDynamicPort(ConnectionType connType);
 
   // HTTP low level interface (maps directly to SIM800 commands).
   boolean HTTP_init();
@@ -195,10 +215,17 @@ class Adafruit_FONA : public FONAStreamType {
   int8_t _rstpin;
   uint8_t _type;
 
-  char replybuffer[255];
-  FONAFlashStringPtr apn;
-  FONAFlashStringPtr apnusername;
-  FONAFlashStringPtr apnpassword;
+  char *replybuffer;
+  size_t replyBufferSize = 0;
+
+  FONAFlashStringPtr apn_P;
+  FONAFlashStringPtr apnUsername_P;
+  FONAFlashStringPtr apnPassword_P;
+  
+  char apn[MAX_STRING_SIZE];
+  char apnUsername[MAX_STRING_SIZE];
+  char apnPassword[MAX_STRING_SIZE];
+  
   boolean httpsredirect;
   FONAFlashStringPtr useragent;
   FONAFlashStringPtr ok_reply;
@@ -215,11 +242,13 @@ class Adafruit_FONA : public FONAStreamType {
   uint8_t getReply(FONAFlashStringPtr prefix, int32_t suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   uint8_t getReply(FONAFlashStringPtr prefix, int32_t suffix1, int32_t suffix2, uint16_t timeout); // Don't set default value or else function call is ambiguous.
   uint8_t getReplyQuoted(FONAFlashStringPtr prefix, FONAFlashStringPtr suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  uint8_t getReplyQuoted(FONAFlashStringPtr prefix, const char *suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
 
   boolean sendCheckReply(FONAFlashStringPtr prefix, char *suffix, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix, int32_t suffix2, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReplyQuoted(FONAFlashStringPtr prefix, FONAFlashStringPtr suffix, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  boolean sendCheckReplyQuoted(FONAFlashStringPtr prefix, const char *suffix, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
 
 
   boolean parseReply(FONAFlashStringPtr toreply,
@@ -233,6 +262,9 @@ class Adafruit_FONA : public FONAStreamType {
        FONAFlashStringPtr toreply,
        uint16_t *v, char divider = ',', uint8_t index=0);
 
+  boolean isStringValid(const char string[], size_t size);
+  boolean isStringValid(FONAFlashStringPtr string, size_t size);
+
   static boolean _incomingCall;
   static void onIncomingCall();
 
@@ -242,7 +274,8 @@ class Adafruit_FONA : public FONAStreamType {
 class Adafruit_FONA_3G : public Adafruit_FONA {
 
  public:
-  Adafruit_FONA_3G (int8_t r) : Adafruit_FONA(r) { _type = FONA3G_A; }
+	 Adafruit_FONA_3G(int8_t rst, char externalBuffer[], size_t externalBufferSize) :
+		 Adafruit_FONA(rst, externalBuffer, externalBufferSize) { _type = FONA3G_A; }
 
     boolean getBattVoltage(uint16_t *v);
     boolean playToolkitTone(uint8_t t, uint16_t len);
