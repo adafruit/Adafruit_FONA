@@ -57,7 +57,7 @@ boolean Adafruit_FONA::begin(Stream &port) {
     if (sendCheckReply(F("AT"), ok_reply))
       break;
     while (mySerial->available()) mySerial->read();
-    if (sendCheckReply(F("AT"), F("AT"))) 
+    if (sendCheckReply(F("AT"), F("AT")))
       break;
     delay(500);
     timeout-=500;
@@ -142,12 +142,37 @@ boolean Adafruit_FONA::setBaudrate(uint16_t baud) {
 
 /********* Real Time Clock ********************************************/
 
-boolean Adafruit_FONA::readRTC(uint8_t *year, uint8_t *month, uint8_t *date, uint8_t *hr, uint8_t *min, uint8_t *sec) {
-  uint16_t v;
-  sendParseReply(F("AT+CCLK?"), F("+CCLK: "), &v, '/', 0);
-  *year = v;
+boolean Adafruit_FONA::readRTC(uint8_t *year, uint8_t *month, uint8_t *date, uint8_t *hr, uint8_t *min, uint8_t *sec, int8_t *tz) {
+  getReply(F("AT+CCLK?"), (uint16_t) 10000); //Get RTC timeout 10 sec
+  if (strncmp(replybuffer, "+CCLK: ", 7) != 0)
+    return false;
 
-  DEBUG_PRINTLN(*year);
+  char *p = replybuffer+8;   // skip +CCLK: "
+  // Parse Date.
+  int reply = atoi(p);  	       // get Year
+  *year = (uint8_t) reply;       // Save as year
+  p+=3; 				             // skip 3 char
+  reply = atoi(p);
+  *month = (uint8_t) reply;
+  p+=3;
+  reply = atoi(p);
+  *date = (uint8_t) reply;
+  p+=3;
+  reply = atoi(p);
+  *hr = (uint8_t) reply;
+  p+=3;
+  reply = atoi(p);
+  *min = (uint8_t) reply;
+  p+=3;
+  reply = atoi(p);
+  *sec = (uint8_t) reply;
+  p+=3;
+  reply = atoi(p);
+  *tz = reply;
+
+  readline(); // eat OK
+
+  return true;
 }
 
 boolean Adafruit_FONA::enableRTC(uint8_t i) {
@@ -382,7 +407,7 @@ boolean Adafruit_FONA::callPhone(char *number) {
 uint8_t Adafruit_FONA::getCallStatus(void) {
   uint16_t phoneStatus;
 
-  if (! sendParseReply(F("AT+CPAS"), F("+CPAS: "), &phoneStatus)) 
+  if (! sendParseReply(F("AT+CPAS"), F("+CPAS: "), &phoneStatus))
     return FONA_CALL_FAILED; // 1, since 0 is actually a known, good reply
 
   return phoneStatus;  // 0 ready, 2 unkown, 3 ringing, 4 call in progress
@@ -471,9 +496,9 @@ int8_t Adafruit_FONA::getNumSMS(void) {
   if (! sendCheckReply(F("AT+CMGF=1"), ok_reply)) return -1;
 
   // ask how many sms are stored
-  if (sendParseReply(F("AT+CPMS?"), F("\"SM\","), &numsms)) 
+  if (sendParseReply(F("AT+CPMS?"), F("\"SM\","), &numsms))
     return numsms;
-  if (sendParseReply(F("AT+CPMS?"), F("\"SM_P\","), &numsms)) 
+  if (sendParseReply(F("AT+CPMS?"), F("\"SM_P\","), &numsms))
     return numsms;
   return -1;
 }
@@ -507,7 +532,7 @@ boolean Adafruit_FONA::readSMS(uint8_t i, char *smsbuff,
 
   DEBUG_PRINTLN(replybuffer);
 
-  
+
   if (! parseReply(F("+CMGR:"), &thesmslen, ',', 11)) {
     *readlen = 0;
     return false;
@@ -1165,20 +1190,20 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
       mySerial->println("\"");
 
       DEBUG_PRINT(F("\t---> ")); DEBUG_PRINT(F("AT+CSTT=\""));
-      DEBUG_PRINT(apn); 
-      
+      DEBUG_PRINT(apn);
+
       if (apnusername) {
 	DEBUG_PRINT("\",\"");
-	DEBUG_PRINT(apnusername); 
+	DEBUG_PRINT(apnusername);
       }
       if (apnpassword) {
 	DEBUG_PRINT("\",\"");
-	DEBUG_PRINT(apnpassword); 
+	DEBUG_PRINT(apnpassword);
       }
       DEBUG_PRINTLN("\"");
-      
+
       if (! expectReply(ok_reply)) return false;
-    
+
       // set username/password
       if (apnusername) {
         // Send command AT+SAPBR=3,1,"USER","<user>" where <user> is the configured APN username.
