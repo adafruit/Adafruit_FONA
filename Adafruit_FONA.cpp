@@ -128,7 +128,7 @@ boolean Adafruit_FONA::begin(Stream &port) {
   }
 
 #if defined(FONA_PREF_SMS_STORAGE)
-  sendCheckReply(F("AT+CPMS=\"" FONA_PREF_SMS_STORAGE "\""), ok_reply);
+    sendCheckReply(F("AT+CPMS=" FONA_PREF_SMS_STORAGE "," FONA_PREF_SMS_STORAGE "," FONA_PREF_SMS_STORAGE), ok_reply);
 #endif
 
   return true;
@@ -471,9 +471,11 @@ int8_t Adafruit_FONA::getNumSMS(void) {
   if (! sendCheckReply(F("AT+CMGF=1"), ok_reply)) return -1;
 
   // ask how many sms are stored
-  if (sendParseReply(F("AT+CPMS?"), F("\"SM\","), &numsms)) 
+  if (sendParseReply(F("AT+CPMS?"), F(FONA_PREF_SMS_STORAGE ","), &numsms)) 
     return numsms;
-  if (sendParseReply(F("AT+CPMS?"), F("\"SM_P\","), &numsms)) 
+  if (sendParseReply(F("AT+CPMS?"), F("\"SM\","), &numsms))
+    return numsms;
+  if (sendParseReply(F("AT+CPMS?"), F("\"SM_P\","), &numsms))
     return numsms;
   return -1;
 }
