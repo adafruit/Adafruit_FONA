@@ -149,7 +149,7 @@ class Adafruit_FONA : public FONAStreamType {
   boolean TCPconnect(char *server, uint16_t port);
   boolean TCPclose(void);
   boolean TCPconnected(void);
-  boolean TCPsend(char *packet, uint8_t len);
+  boolean TCPsend(uint8_t *packet, uint8_t len);
   uint16_t TCPavailable(void);
   uint16_t TCPread(uint8_t *buff, uint8_t len);
 
@@ -193,12 +193,12 @@ class Adafruit_FONA : public FONAStreamType {
   boolean sendCheckReply(FONAFlashStringPtr send, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReply(char* send, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
 
+  char *replybuffer;
 
  protected:
   int8_t _rstpin;
   uint8_t _type;
 
-  char replybuffer[255];
   FONAFlashStringPtr apn;
   FONAFlashStringPtr apnusername;
   FONAFlashStringPtr apnpassword;
