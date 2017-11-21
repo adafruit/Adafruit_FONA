@@ -30,6 +30,7 @@ the commented section below at the end of the setup() function.
 #define FONA_RX 2
 #define FONA_TX 3
 #define FONA_RST 4
+#define FONA_KEY 8
 
 // this is a large buffer for replies
 char replybuffer[255];
@@ -55,6 +56,9 @@ uint8_t type;
 
 void setup() {
   while (!Serial);
+
+  pinMode(FONA_KEY, OUTPUT);
+  digitalWrite(FONA_KEY, HIGH);
 
   Serial.begin(115200);
   Serial.println(F("FONA basic test"));
@@ -86,7 +90,7 @@ void setup() {
   }
   
   // Print module IMEI number.
-  char imei[16] = {0}; // MUST use a 16 character buffer for IMEI!
+  char imei[15] = {0}; // MUST use a 16 character buffer for IMEI!
   uint8_t imeiLen = fona.getIMEI(imei);
   if (imeiLen > 0) {
     Serial.print("Module IMEI: "); Serial.println(imei);
@@ -122,6 +126,8 @@ void printMenu(void) {
   Serial.println(F("[e] set External audio (FONA800 & 808)"));
   Serial.println(F("[T] play audio Tone"));
   Serial.println(F("[P] PWM/Buzzer out (FONA800 & 808)"));
+  Serial.println(F("[Z] power off with Key"));
+  Serial.println(F("[z] power on with Key"));
 
   // FM (SIM800 only!)
   Serial.println(F("[f] tune FM radio (FONA800)"));
@@ -190,6 +196,23 @@ void loop() {
         break;
       }
 
+    case 'Z': {
+        digitalWrite(FONA_KEY, LOW);
+        delay(2000);
+        digitalWrite(FONA_KEY, HIGH);
+        delay(3000);
+        break;
+      }
+    case 'z': {
+        digitalWrite(FONA_KEY, LOW);
+        delay(2000);
+        digitalWrite(FONA_KEY, HIGH);
+        delay(3000);
+        if (! fona.begin(*fonaSerial)) {
+          Serial.println(F("Couldn't find FONA"));
+        }
+        break;
+      }
     case 'a': {
         // read the ADC
         uint16_t adc;
