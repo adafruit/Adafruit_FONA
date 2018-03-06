@@ -37,8 +37,11 @@
   #include <NewSoftSerial.h>
 #endif
 
+#if (defined(__AVR__))
 #include <avr/pgmspace.h>
-
+#elif (defined(ESP8266))
+#include <pgmspace.h>
+#endif
 
 // DebugStream	sets the Stream output to use
 // for debug (only applies when ADAFRUIT_FONA_DEBUG
