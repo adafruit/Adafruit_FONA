@@ -18,7 +18,15 @@
 
 #include "Adafruit_FONA.h"
 
-
+#if defined(ESP8266)
+  // ESP8266 doesn't have the min and max functions natively available like
+  // AVR libc seems to provide.  Include the STL algorithm library to get these.
+  // Unfortunately algorithm isn't available in AVR libc so this is ESP8266
+  // specific (and likely needed for ARM or other platforms, but they lack
+  // software serial and are currently incompatible with the FONA library).
+  #include <algorithm>
+  using namespace std;
+#endif
 
 
 Adafruit_FONA::Adafruit_FONA(int8_t rst)
@@ -57,7 +65,7 @@ boolean Adafruit_FONA::begin(Stream &port) {
     if (sendCheckReply(F("AT"), ok_reply))
       break;
     while (mySerial->available()) mySerial->read();
-    if (sendCheckReply(F("AT"), F("AT"))) 
+    if (sendCheckReply(F("AT"), F("AT")))
       break;
     delay(500);
     timeout-=500;
@@ -369,7 +377,7 @@ boolean Adafruit_FONA::setPWM(uint16_t period, uint8_t duty) {
 /********* CALL PHONES **************************************************/
 boolean Adafruit_FONA::callPhone(char *number) {
   char sendbuff[35] = "ATD";
-  strncpy(sendbuff+3, number, min(30, strlen(number)));
+  strncpy(sendbuff+3, number, min(30, (int)strlen(number)));
   uint8_t x = strlen(sendbuff);
   sendbuff[x] = ';';
   sendbuff[x+1] = 0;
@@ -382,7 +390,7 @@ boolean Adafruit_FONA::callPhone(char *number) {
 uint8_t Adafruit_FONA::getCallStatus(void) {
   uint16_t phoneStatus;
 
-  if (! sendParseReply(F("AT+CPAS"), F("+CPAS: "), &phoneStatus)) 
+  if (! sendParseReply(F("AT+CPAS"), F("+CPAS: "), &phoneStatus))
     return FONA_CALL_FAILED; // 1, since 0 is actually a known, good reply
 
   return phoneStatus;  // 0 ready, 2 unkown, 3 ringing, 4 call in progress
@@ -471,7 +479,7 @@ int8_t Adafruit_FONA::getNumSMS(void) {
   if (! sendCheckReply(F("AT+CMGF=1"), ok_reply)) return -1;
 
   // ask how many sms are stored
-  if (sendParseReply(F("AT+CPMS?"), F(FONA_PREF_SMS_STORAGE ","), &numsms)) 
+  if (sendParseReply(F("AT+CPMS?"), F(FONA_PREF_SMS_STORAGE ","), &numsms))
     return numsms;
   if (sendParseReply(F("AT+CPMS?"), F("\"SM\","), &numsms))
     return numsms;
@@ -509,7 +517,7 @@ boolean Adafruit_FONA::readSMS(uint8_t i, char *smsbuff,
 
   DEBUG_PRINTLN(replybuffer);
 
-  
+
   if (! parseReply(F("+CMGR:"), &thesmslen, ',', 11)) {
     *readlen = 0;
     return false;
@@ -519,7 +527,7 @@ boolean Adafruit_FONA::readSMS(uint8_t i, char *smsbuff,
 
   flushInput();
 
-  uint16_t thelen = min(maxlen, strlen(replybuffer));
+  uint16_t thelen = min(maxlen, (uint16_t)strlen(replybuffer));
   strncpy(smsbuff, replybuffer, thelen);
   smsbuff[thelen] = 0; // end the string
 
@@ -707,7 +715,7 @@ boolean Adafruit_FONA::getTime(char *buff, uint16_t maxlen) {
     return false;
 
   char *p = replybuffer+7;
-  uint16_t lentocopy = min(maxlen-1, strlen(p));
+  uint16_t lentocopy = min(maxlen-1, (int)strlen(p));
   strncpy(buff, p, lentocopy+1);
   buff[lentocopy] = 0;
 
@@ -835,7 +843,7 @@ uint8_t Adafruit_FONA::getGPS(uint8_t arg, char *buffer, uint8_t maxbuff) {
 
   p+=6;
 
-  uint8_t len = max(maxbuff-1, strlen(p));
+  uint8_t len = max(maxbuff-1, (int)strlen(p));
   strncpy(buffer, p, len);
   buffer[len] = 0;
 
@@ -1167,20 +1175,20 @@ boolean Adafruit_FONA::enableGPRS(boolean onoff) {
       mySerial->println("\"");
 
       DEBUG_PRINT(F("\t---> ")); DEBUG_PRINT(F("AT+CSTT=\""));
-      DEBUG_PRINT(apn); 
-      
+      DEBUG_PRINT(apn);
+
       if (apnusername) {
 	DEBUG_PRINT("\",\"");
-	DEBUG_PRINT(apnusername); 
+	DEBUG_PRINT(apnusername);
       }
       if (apnpassword) {
 	DEBUG_PRINT("\",\"");
-	DEBUG_PRINT(apnpassword); 
+	DEBUG_PRINT(apnpassword);
       }
       DEBUG_PRINTLN("\"");
-      
+
       if (! expectReply(ok_reply)) return false;
-    
+
       // set username/password
       if (apnusername) {
         // Send command AT+SAPBR=3,1,"USER","<user>" where <user> is the configured APN username.
@@ -1302,7 +1310,7 @@ boolean Adafruit_FONA::getGSMLoc(uint16_t *errorcode, char *buff, uint16_t maxle
     return false;
 
   char *p = replybuffer+14;
-  uint16_t lentocopy = min(maxlen-1, strlen(p));
+  uint16_t lentocopy = min(maxlen-1, (int)strlen(p));
   strncpy(buff, p, lentocopy+1);
 
   readline(); // eat OK
