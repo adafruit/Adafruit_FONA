@@ -254,6 +254,15 @@ uint8_t Adafruit_FONA::getRSSI(void) {
   return reply;
 }
 
+uint8_t Adafruit_FONA::getBusy(void) {
+  uint16_t reply;
+
+  if (! sendParseReply(F("AT+GSMBUSY?"), F("+GSMBUSY: "), &reply) ) return 0;
+
+  return reply;
+}
+
+
 /********* AUDIO *******************************************************/
 
 boolean Adafruit_FONA::setAudio(uint8_t a) {
