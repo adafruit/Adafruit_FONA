@@ -81,7 +81,7 @@ class Adafruit_FONA : public FONAStreamType {
   void flush();
 
   // FONA 3G requirements
-  boolean setBaudrate(uint16_t baud);
+  boolean setBaudrate(uint32_t baud);
 
   // RTC
   boolean enableRTC(uint8_t i);
