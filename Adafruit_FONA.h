@@ -138,6 +138,14 @@ class Adafruit_FONA : public FONAStreamType {
   boolean getGSMLoc(float *lat, float *lon);
   void setGPRSNetworkSettings(FONAFlashStringPtr apn, FONAFlashStringPtr username=0, FONAFlashStringPtr password=0);
 
+  // ~~~~~~~~~~~~~~~~~~~~~ ADDED CELL ANTENNA LOCATION SUPPORT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  boolean getCELLLoc(uint16_t *errorcode, char *buff, uint16_t maxlen);
+  boolean endCELLLoc(uint16_t *errorcode);
+  // ~~~~~~~~~~~~~~~~~~~~~ ADDED CELL ANTENNA LOCATION SUPPORT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // ~~~~~~~~~~~~~~~~~~~~~ ADDED URC SUPPRESSION SUPPORT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  boolean setURCMode(boolean stat);
+  // ~~~~~~~~~~~~~~~~~~~~~ ADDED URC SUPPRESSION SUPPORT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
   // GPS handling
   boolean enableGPS(boolean onoff);
   int8_t GPSstatus(void);
