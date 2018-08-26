@@ -424,6 +424,20 @@ void Adafruit_FONA::onIncomingCall() {
 
 boolean Adafruit_FONA::_incomingCall = false;
 
+/*
+ * Tell FONA to trigger an interrupt on an incoming call
+ * But don't set the handler, assumes caller will handle
+ */
+boolean Adafruit_FONA::callerIdNotification(boolean enable) {
+  if(enable){
+    return sendCheckReply(F("AT+CLIP=1"), ok_reply);
+  }
+  return sendCheckReply(F("AT+CLIP=0"), ok_reply);
+}
+/*
+ * Tell FONA to trigger an interrupt on an incoming call
+ * Set the default handler
+ */
 boolean Adafruit_FONA::callerIdNotification(boolean enable, uint8_t interrupt) {
   if(enable){
     attachInterrupt(interrupt, onIncomingCall, FALLING);

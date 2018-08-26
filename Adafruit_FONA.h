@@ -184,7 +184,8 @@ class Adafruit_FONA : public FONAStreamType {
   uint8_t getCallStatus(void);
   boolean hangUp(void);
   boolean pickUp(void);
-  boolean callerIdNotification(boolean enable, uint8_t interrupt = 0);
+  boolean callerIdNotification(boolean enable);
+  boolean callerIdNotification(boolean enable, uint8_t interrupt);
   boolean incomingCallNumber(char* phonenum);
 
   // Helper functions to verify responses.
