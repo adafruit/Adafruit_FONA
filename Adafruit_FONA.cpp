@@ -458,6 +458,149 @@ boolean Adafruit_FONA::incomingCallNumber(char* phonenum) {
   return true;
 }
 
+/*
+ * Get the identification of an incoming call
+ * The base class version would block
+ *   if there was no call ringing, and _incomingCall was set
+ *   (Could happen if SMS was set to trigger RI)
+ * Uses AT+CLCC, much more straightforward, and more data
+ * The defines FONA_CALLSTAT_* show that various
+ *  statuses that can be requested
+ *  0=active,1=hold,2=dialing,3=alerting,4=incoming,5=waiting,6=disconnect
+ *  2 and 3 are for outbound only
+ *  6 is a transient state, you could never get it here
+ *    unless it happened while you were requesting it.
+ * Note if there is more than one call of the same status,
+ *   only the first will be returned. Possible to have more than one?
+ * Returns true if a matching entry is found, otherwise false
+ */
+boolean Adafruit_FONA::incomingCallNumber(char* phonenum, uint8_t callstatus, uint8_t incoming) {
+  boolean          returnval=false;
+  int              maxloop;
+  struct callInfo  phoneinfo;
+
+  // set text mode
+  mySerial->println(F("AT+CMGF=1"));
+  //sendCheckReply(F("AT+CMGF=1"), F("OK"));
+  // clear anything already in the response buffer
+  flushInput();
+  // Request a list of all active calls
+  mySerial->println(F("AT+CLCC"));
+
+  readline();
+  maxloop=15; // Honestly, I can't see more than fifteen entries returned, prevent infinite loop if OK missing
+  while(maxloop && !prog_char_strcmp(replybuffer, (prog_char*)F("OK")) == 0){
+    if(parseCLCCReply(&phoneinfo)){
+      /* only concerned with voice */
+      if(phoneinfo.mode)
+        continue;
+      /* match requested? */
+      if(phoneinfo.inout == 1 && phoneinfo.state == callstatus){
+        //DEBUG_PRINT(F("Phone Number: "));
+        //DEBUG_PRINTLN(phoneinfo.phonenum);
+        strncpy(phonenum, phoneinfo.phonenum, 31);
+        returnval = true;
+        break;
+      }
+      else if(phoneinfo.inout == 1 && phoneinfo.state == FONA_CALLSTAT_INCOMING){
+        /* caller was asking for a different status,
+         * but there is an incoming call, flip the flag
+         */
+        Adafruit_FONA::_incomingCall = true;
+        //DEBUG_PRINTLN(F("INCOMING!!!"));
+      }
+    }
+    maxloop --;
+
+    readline();
+  } // end while
+
+  // clear any remaining data in the response buffer
+  flushInput();
+
+  /* Clear the incoming call flag if incoming call data was requested
+   *   There either was one, and we're returning the info,
+   *   or there wasn't one. Either way, clear the flag.
+   */
+  if(incoming && callstatus == FONA_CALLSTAT_INCOMING)
+    Adafruit_FONA::_incomingCall = false;
+
+  return returnval;
+}
+
+/*
+ * Parse CLCC responses (Call List)
+ * Used for responses to AT+CLCC
+ * Also if AT+CLCC=1 is issued, these will arrive unsolicited
+ * Note: strtok modifies the replybuffer
+ *   However, strtok only gets executed if the buffer IS +CLCC
+ *   So if the call fails, it was a corrupt entry
+ *   If it does not fail, then the data is in the callInfo struct
+ *     and you shouldn't need the buffer anymore
+ */
+boolean Adafruit_FONA::parseCLCCReply(struct callInfo *phoneinfo){
+  char *p=NULL;
+  char *tokpos=NULL;
+  uint8_t i=0;
+  uint8_t j;
+
+  if(!phoneinfo)
+	return false;
+
+  memset(phoneinfo, 0, sizeof(struct callInfo));
+
+  // Verify response starts with +CLCC.
+  p = prog_char_strstr(replybuffer, (prog_char *)F("+CLCC:"));
+  if (p == 0) return false;
+
+  // advance pointer to end of prefix
+  p+=6;
+
+  // first field is call ID
+  tokpos = strtok(p, ",");
+  if(!tokpos)
+    return false;
+  phoneinfo->callID = (uint8_t)atoi(tokpos);
+  // second field is in/out
+  tokpos = strtok(NULL, ",");
+  if(!tokpos)
+    return false;
+  phoneinfo->inout = (uint8_t)atoi(tokpos);
+  // third field is state
+  tokpos = strtok(NULL, ",");
+  if(!tokpos)
+    return false;
+  phoneinfo->state = (uint8_t)atoi(tokpos);
+  // fourth field is mode (voice/data/fax)
+  tokpos = strtok(NULL, ",");
+  if(!tokpos)
+    return false;
+  phoneinfo->mode = (uint8_t)atoi(tokpos);
+  // fifth field is multiparty
+  tokpos = strtok(NULL, ",");
+  if(!tokpos)
+    return false;
+  phoneinfo->multi = (uint8_t)atoi(tokpos);
+  // sixth field is number
+  tokpos = strtok(NULL, ",");
+  if(!tokpos)
+    return false;
+
+  // Copy characters from response field into result string.
+  for(i=0, j=0; j<32 && i<strlen(tokpos); ++i) {
+    // Stop if a divider is found.
+    if(tokpos[i] == ',')
+      break;
+    // Skip any quotation marks.
+    else if(tokpos[i] == '"')
+      continue;
+    phoneinfo->phonenum[j++] = tokpos[i];
+  }
+
+  return true;
+
+}
+
 /********* SMS **********************************************************/
 
 uint8_t Adafruit_FONA::getSMSInterrupt(void) {

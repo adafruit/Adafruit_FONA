@@ -67,6 +67,23 @@
 #define FONA_CALL_RINGING 3
 #define FONA_CALL_INPROGRESS 4
 
+#define FONA_CALLSTAT_ACTIVE     0
+#define FONA_CALLSTAT_HOLD       1
+#define FONA_CALLSTAT_DIALING    2
+#define FONA_CALLSTAT_ALERTING   3
+#define FONA_CALLSTAT_INCOMING   4
+#define FONA_CALLSTAT_WAITING    5
+#define FONA_CALLSTAT_DISCONNECT 6
+
+struct callInfo{
+  uint8_t callID;  // Module ID for the call
+  uint8_t inout;   // incoming call = 1, outgoing call = 0
+  uint8_t state;   // see FONA_CALLSTAT_*
+  uint8_t mode;    // 0=voice,1=data,2=fax
+  uint8_t multi;   // multi-party call 0=no
+  char    phonenum[32]; // Phone number calling/called
+};
+
 class Adafruit_FONA : public FONAStreamType {
  public:
   Adafruit_FONA(int8_t r);
@@ -186,6 +203,7 @@ class Adafruit_FONA : public FONAStreamType {
   boolean pickUp(void);
   boolean callerIdNotification(boolean enable, uint8_t interrupt = 0);
   boolean incomingCallNumber(char* phonenum);
+  boolean incomingCallNumber(char* phonenum, uint8_t status, uint8_t incoming = 1);
 
   // Helper functions to verify responses.
   boolean expectReply(FONAFlashStringPtr reply, uint16_t timeout = 10000);
@@ -224,6 +242,7 @@ class Adafruit_FONA : public FONAStreamType {
   boolean sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix, int32_t suffix2, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReplyQuoted(FONAFlashStringPtr prefix, FONAFlashStringPtr suffix, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
 
+  boolean parseCLCCReply(struct callInfo *phoneinfo);
 
   boolean parseReply(FONAFlashStringPtr toreply,
           uint16_t *v, char divider  = ',', uint8_t index=0);
