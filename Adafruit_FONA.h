@@ -106,6 +106,8 @@ class Adafruit_FONA : public FONAStreamType {
   boolean setVolume(uint8_t i);
   uint8_t getVolume(void);
   boolean playToolkitTone(uint8_t t, uint16_t len);
+  // edit ----------------------------------------------------------------------
+  boolean stopToolkitTone();
   boolean setMicVolume(uint8_t a, uint8_t level);
   boolean playDTMF(char tone);
 

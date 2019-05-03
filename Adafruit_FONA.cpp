@@ -289,6 +289,11 @@ boolean Adafruit_FONA::playToolkitTone(uint8_t t, uint16_t len) {
   return sendCheckReply(F("AT+STTONE=1,"), t, len, ok_reply);
 }
 
+// edit ------------------------------------------------------------------------
+boolean Adafruit_FONA::stopToolkitTone() {
+  return sendCheckReply(F("AT+STTONE=0,"), ok_reply);
+}
+
 boolean Adafruit_FONA_3G::playToolkitTone(uint8_t t, uint16_t len) {
   if (! sendCheckReply(F("AT+CPTONE="), t, ok_reply))
     return false;

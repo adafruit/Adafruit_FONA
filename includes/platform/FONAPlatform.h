@@ -31,12 +31,13 @@
 #include "FONAPlatStd.h"
 
 
-
-#ifndef DEBUG_PRINT
+// edit ------------------------------------------------------------------------
+#ifndef ADAFRUIT_FONA_DEBUG
 // debug is disabled
 
 #define DEBUG_PRINT(...)
 #define DEBUG_PRINTLN(...)
+#define DEBUG_INIT(...)
 
 #endif
 
