@@ -289,17 +289,30 @@ boolean Adafruit_FONA::playToolkitTone(uint8_t t, uint16_t len) {
   return sendCheckReply(F("AT+STTONE=1,"), t, len, ok_reply);
 }
 
-// edit ------------------------------------------------------------------------
-boolean Adafruit_FONA::stopToolkitTone() {
-  return sendCheckReply(F("AT+STTONE=0,"), ok_reply);
-}
-
 boolean Adafruit_FONA_3G::playToolkitTone(uint8_t t, uint16_t len) {
   if (! sendCheckReply(F("AT+CPTONE="), t, ok_reply))
     return false;
   delay(len);
   return sendCheckReply(F("AT+CPTONE=0"), ok_reply);
 }
+
+// edit ------------------------------------------------------------------------
+boolean Adafruit_FONA::stopToolkitTone() {
+  return sendCheckReply(F("AT+STTONE=0"), ok_reply);
+}
+
+boolean Adafruit_FONA::setRingerVolume(uint8_t i) {
+  return sendCheckReply(F("AT+CRSL="), i, ok_reply);
+}
+
+boolean Adafruit_FONA::playUserTone(uint16_t f, uint16_t on, uint16_t off, uint16_t len) { // freqency, on duration, off duration, len = 10 - 500000
+  return sendCheckReply(F("AT+SIMTONE=1,"), f, on, off, len, ok_reply);
+}
+
+boolean Adafruit_FONA::stopUserTone() {
+  return sendCheckReply(F("AT+SIMTONE=0"), ok_reply);
+}
+
 
 boolean Adafruit_FONA::setMicVolume(uint8_t a, uint8_t level) {
   // 0 is headset, 1 is external audio
@@ -1891,6 +1904,32 @@ uint8_t Adafruit_FONA::getReply(FONAFlashStringPtr prefix, int32_t suffix1, int3
   return l;
 }
 
+// edit ------------------------------------------------------------------------
+uint8_t Adafruit_FONA::getReply(FONAFlashStringPtr prefix, int32_t suffix1, int32_t suffix2, int32_t suffix3, int32_t suffix4, uint16_t timeout) {
+  flushInput();
+
+
+  DEBUG_PRINT(F("\t---> ")); DEBUG_PRINT(prefix);
+  DEBUG_PRINT(suffix1, DEC); DEBUG_PRINT(','); DEBUG_PRINT(suffix2, DEC); DEBUG_PRINT(','); DEBUG_PRINTLN(suffix3, DEC);
+
+
+  mySerial->print(prefix);
+  mySerial->print(suffix1);
+  mySerial->print(',');
+  mySerial->print(suffix2);
+  mySerial->print(',');
+  mySerial->print(suffix3);
+  mySerial->print(',');
+  mySerial->println(suffix4, DEC);
+
+  uint8_t l = readline(timeout);
+
+  DEBUG_PRINT (F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
+
+  return l;
+}
+
+
 // Send prefix, ", suffix, ", and newline. Return response (and also set replybuffer with response).
 uint8_t Adafruit_FONA::getReplyQuoted(FONAFlashStringPtr prefix, FONAFlashStringPtr suffix, uint16_t timeout) {
   flushInput();
@@ -1959,6 +1998,13 @@ boolean Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix1
   getReply(prefix, suffix1, suffix2, timeout);
   return (prog_char_strcmp(replybuffer, (prog_char*)reply) == 0);
 }
+
+// edit ------------------------------------------------------------------------
+boolean Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix1, int32_t suffix2, int32_t suffix3, int32_t suffix4, FONAFlashStringPtr reply, uint16_t timeout) {
+  getReply(prefix, suffix1, suffix2, suffix3, suffix4, timeout);
+  return (prog_char_strcmp(replybuffer, (prog_char*)reply) == 0);
+}
+
 
 // Send prefix, ", suffix, ", and newline.  Verify FONA response matches reply parameter.
 boolean Adafruit_FONA::sendCheckReplyQuoted(FONAFlashStringPtr prefix, FONAFlashStringPtr suffix, FONAFlashStringPtr reply, uint16_t timeout) {

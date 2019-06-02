@@ -105,9 +105,13 @@ class Adafruit_FONA : public FONAStreamType {
   boolean setAudio(uint8_t a);
   boolean setVolume(uint8_t i);
   uint8_t getVolume(void);
-  boolean playToolkitTone(uint8_t t, uint16_t len);
+  boolean playToolkitTone(uint8_t t, uint16_t len); // len = 10 - 15300000
   // edit ----------------------------------------------------------------------
   boolean stopToolkitTone();
+  boolean setRingerVolume(uint8_t i);
+  boolean playUserTone(uint16_t f, uint16_t on, uint16_t off, uint16_t len); // freqency, on duration, off duration, len = 10 - 500000
+  boolean stopUserTone();
+
   boolean setMicVolume(uint8_t a, uint8_t level);
   boolean playDTMF(char tone);
 
@@ -219,11 +223,17 @@ class Adafruit_FONA : public FONAStreamType {
   uint8_t getReply(FONAFlashStringPtr prefix, char *suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   uint8_t getReply(FONAFlashStringPtr prefix, int32_t suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   uint8_t getReply(FONAFlashStringPtr prefix, int32_t suffix1, int32_t suffix2, uint16_t timeout); // Don't set default value or else function call is ambiguous.
+  // edit ----------------------------------------------------------------------
+  uint8_t getReply(FONAFlashStringPtr prefix, int32_t suffix1, int32_t suffix2, int32_t suffix3, int32_t suffix4, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+
   uint8_t getReplyQuoted(FONAFlashStringPtr prefix, FONAFlashStringPtr suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
 
   boolean sendCheckReply(FONAFlashStringPtr prefix, char *suffix, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
   boolean sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix, int32_t suffix2, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  // edit ----------------------------------------------------------------------
+  boolean sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix1, int32_t suffix2, int32_t suffix3, int32_t suffix4, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+
   boolean sendCheckReplyQuoted(FONAFlashStringPtr prefix, FONAFlashStringPtr suffix, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
 
 
