@@ -1910,7 +1910,7 @@ uint8_t Adafruit_FONA::getReply(FONAFlashStringPtr prefix, int32_t suffix1, int3
 
 
   DEBUG_PRINT(F("\t---> ")); DEBUG_PRINT(prefix);
-  DEBUG_PRINT(suffix1, DEC); DEBUG_PRINT(','); DEBUG_PRINT(suffix2, DEC); DEBUG_PRINT(','); DEBUG_PRINTLN(suffix3, DEC);
+  DEBUG_PRINT(suffix1, DEC); DEBUG_PRINT(','); DEBUG_PRINT(suffix2, DEC); DEBUG_PRINT(','); DEBUG_PRINT(suffix3, DEC); DEBUG_PRINT(','); DEBUG_PRINTLN(suffix4, DEC);
 
 
   mySerial->print(prefix);
