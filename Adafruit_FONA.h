@@ -109,8 +109,8 @@ class Adafruit_FONA : public FONAStreamType {
   // edit ----------------------------------------------------------------------
   boolean stopToolkitTone();
   boolean setRingerVolume(uint8_t i);
-  boolean playUserTone(uint16_t f, uint16_t on, uint16_t off, uint16_t len); // freqency, on duration, off duration, len = 10 - 500000
-  boolean playUserXTone(uint16_t f1, uint16_t f2, uint16_t on, uint16_t off, uint16_t len); // freqency, on duration, off duration, len = 10 - 500000
+  boolean playUserTone(uint16_t f, uint16_t on, uint16_t off, uint16_t len); // plays custon frequency; freqency, on duration, off duration, len = 10 - 500000
+  boolean playUserXTone(uint16_t f1, uint16_t f2, uint16_t on, uint16_t off, uint16_t len); // plays custon tone with 2 freqencies, on duration, off duration, len = 10 - 500000
   boolean stopUserTone();
   boolean stopUserXTone();
 
