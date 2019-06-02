@@ -309,8 +309,16 @@ boolean Adafruit_FONA::playUserTone(uint16_t f, uint16_t on, uint16_t off, uint1
   return sendCheckReply(F("AT+SIMTONE=1,"), f, on, off, len, ok_reply);
 }
 
+boolean Adafruit_FONA::playUserXTone(uint16_t f1, uint16_t f2, uint16_t on, uint16_t off, uint16_t len) {
+  return sendCheckReply(F("AT+SIMTONEX=1,"), len, f1, f2, on, off, 0, ok_reply);
+}
+
 boolean Adafruit_FONA::stopUserTone() {
   return sendCheckReply(F("AT+SIMTONE=0"), ok_reply);
+}
+
+boolean Adafruit_FONA::stopUserXTone() {
+  return sendCheckReply(F("AT+SIMTONEX=0"), ok_reply);
 }
 
 
@@ -1929,6 +1937,34 @@ uint8_t Adafruit_FONA::getReply(FONAFlashStringPtr prefix, int32_t suffix1, int3
   return l;
 }
 
+uint8_t Adafruit_FONA::getReply(FONAFlashStringPtr prefix, int32_t suffix1, int32_t suffix2, int32_t suffix3, int32_t suffix4, int32_t suffix5, int32_t suffix6, uint16_t timeout) {
+  flushInput();
+
+
+  DEBUG_PRINT(F("\t---> ")); DEBUG_PRINT(prefix);
+  DEBUG_PRINT(suffix1, DEC); DEBUG_PRINT(','); DEBUG_PRINT(suffix2, DEC); DEBUG_PRINT(','); DEBUG_PRINT(suffix3, DEC); DEBUG_PRINT(','); DEBUG_PRINT(suffix4, DEC); DEBUG_PRINT(','); DEBUG_PRINT(suffix5, DEC); DEBUG_PRINT(','); DEBUG_PRINTLN(suffix6, DEC);
+
+
+  mySerial->print(prefix);
+  mySerial->print(suffix1);
+  mySerial->print(',');
+  mySerial->print(suffix2);
+  mySerial->print(',');
+  mySerial->print(suffix3);
+  mySerial->print(',');
+  mySerial->print(suffix4);
+  mySerial->print(',');
+  mySerial->print(suffix5);
+  mySerial->print(',');
+  mySerial->println(suffix6, DEC);
+
+  uint8_t l = readline(timeout);
+
+  DEBUG_PRINT (F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
+
+  return l;
+}
+
 
 // Send prefix, ", suffix, ", and newline. Return response (and also set replybuffer with response).
 uint8_t Adafruit_FONA::getReplyQuoted(FONAFlashStringPtr prefix, FONAFlashStringPtr suffix, uint16_t timeout) {
@@ -2002,6 +2038,10 @@ boolean Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix1
 // edit ------------------------------------------------------------------------
 boolean Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix1, int32_t suffix2, int32_t suffix3, int32_t suffix4, FONAFlashStringPtr reply, uint16_t timeout) {
   getReply(prefix, suffix1, suffix2, suffix3, suffix4, timeout);
+  return (prog_char_strcmp(replybuffer, (prog_char*)reply) == 0);
+}
+boolean Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix1, int32_t suffix2, int32_t suffix3, int32_t suffix4, int32_t suffix5, int32_t suffix6, FONAFlashStringPtr reply, uint16_t timeout) {
+  getReply(prefix, suffix1, suffix2, suffix3, suffix4, suffix5, suffix6, timeout);
   return (prog_char_strcmp(replybuffer, (prog_char*)reply) == 0);
 }
 
