@@ -113,6 +113,7 @@ class Adafruit_FONA : public FONAStreamType {
   boolean playUserXTone(uint16_t f1, uint16_t f2, uint16_t on, uint16_t off, uint16_t len); // plays custon tone with 2 freqencies, on duration, off duration, len = 10 - 500000
   boolean stopUserTone();
   boolean stopUserXTone();
+  boolean setToneVolume(uint8_t i);
 
   boolean setMicVolume(uint8_t a, uint8_t level);
   boolean playDTMF(char tone);

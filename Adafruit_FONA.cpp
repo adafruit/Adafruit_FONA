@@ -321,6 +321,10 @@ boolean Adafruit_FONA::stopUserXTone() {
   return sendCheckReply(F("AT+SIMTONEX=0"), ok_reply);
 }
 
+boolean Adafruit_FONA::setToneVolume(uint8_t i) {
+  return sendCheckReply(F("AT+SNDLEVEL=0,"), i, ok_reply);
+}
+
 
 boolean Adafruit_FONA::setMicVolume(uint8_t a, uint8_t level) {
   // 0 is headset, 1 is external audio
