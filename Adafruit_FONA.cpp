@@ -275,6 +275,17 @@ boolean Adafruit_FONA::setVolume(uint8_t i) {
   return sendCheckReply(F("AT+CLVL="), i, ok_reply);
 }
 
+uint8_t Adafruit_FONA::getRingerVolume(void) {
+  uint16_t reply;
+
+  if (! sendParseReply(F("AT+CRSL?"), F("+CLVL: "), &reply) ) return 0;
+
+  return reply;
+}
+
+boolean Adafruit_FONA::setRingerVolume(uint8_t i) {
+  return sendCheckReply(F("AT+CRSL="), i, ok_reply);
+}
 
 boolean Adafruit_FONA::playDTMF(char dtmf) {
   char str[4];
@@ -283,6 +294,18 @@ boolean Adafruit_FONA::playDTMF(char dtmf) {
   str[2] = '\"';
   str[3] = 0;
   return sendCheckReply(F("AT+CLDTMF=3,"), str, ok_reply);
+}
+
+uint8_t Adafruit_FONA::getToneVolume(void) {
+  uint16_t reply;
+
+  if (! sendParseReply(F("AT+SNDLEVEL?"), F("+CLVL: "), &reply) ) return 0;
+
+  return reply;
+}
+
+boolean Adafruit_FONA::setToneVolume(uint8_t i) {
+  return sendCheckReply(F("AT+SNDLEVEL=0,"), i, ok_reply);
 }
 
 boolean Adafruit_FONA::playToolkitTone(uint8_t t, uint16_t len) {
@@ -296,35 +319,25 @@ boolean Adafruit_FONA_3G::playToolkitTone(uint8_t t, uint16_t len) {
   return sendCheckReply(F("AT+CPTONE=0"), ok_reply);
 }
 
-// edit ------------------------------------------------------------------------
 boolean Adafruit_FONA::stopToolkitTone() {
   return sendCheckReply(F("AT+STTONE=0"), ok_reply);
-}
-
-boolean Adafruit_FONA::setRingerVolume(uint8_t i) {
-  return sendCheckReply(F("AT+CRSL="), i, ok_reply);
 }
 
 boolean Adafruit_FONA::playUserTone(uint16_t f, uint16_t on, uint16_t off, uint16_t len) { // freqency, on duration, off duration, len = 10 - 500000
   return sendCheckReply(F("AT+SIMTONE=1,"), f, on, off, len, ok_reply);
 }
 
-boolean Adafruit_FONA::playUserXTone(uint16_t f1, uint16_t f2, uint16_t on, uint16_t off, uint16_t len) {
-  return sendCheckReply(F("AT+SIMTONEX=1,"), len, f1, f2, on, off, 0, ok_reply);
-}
-
 boolean Adafruit_FONA::stopUserTone() {
   return sendCheckReply(F("AT+SIMTONE=0"), ok_reply);
+}
+
+boolean Adafruit_FONA::playUserXTone(uint16_t f1, uint16_t f2, uint16_t on, uint16_t off, uint16_t len) {
+  return sendCheckReply(F("AT+SIMTONEX=1,"), len, f1, f2, on, off, 0, ok_reply);
 }
 
 boolean Adafruit_FONA::stopUserXTone() {
   return sendCheckReply(F("AT+SIMTONEX=0"), ok_reply);
 }
-
-boolean Adafruit_FONA::setToneVolume(uint8_t i) {
-  return sendCheckReply(F("AT+SNDLEVEL=0,"), i, ok_reply);
-}
-
 
 boolean Adafruit_FONA::setMicVolume(uint8_t a, uint8_t level) {
   // 0 is headset, 1 is external audio
@@ -1916,7 +1929,6 @@ uint8_t Adafruit_FONA::getReply(FONAFlashStringPtr prefix, int32_t suffix1, int3
   return l;
 }
 
-// edit ------------------------------------------------------------------------
 uint8_t Adafruit_FONA::getReply(FONAFlashStringPtr prefix, int32_t suffix1, int32_t suffix2, int32_t suffix3, int32_t suffix4, uint16_t timeout) {
   flushInput();
 
@@ -2039,7 +2051,6 @@ boolean Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix1
   return (prog_char_strcmp(replybuffer, (prog_char*)reply) == 0);
 }
 
-// edit ------------------------------------------------------------------------
 boolean Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix1, int32_t suffix2, int32_t suffix3, int32_t suffix4, FONAFlashStringPtr reply, uint16_t timeout) {
   getReply(prefix, suffix1, suffix2, suffix3, suffix4, timeout);
   return (prog_char_strcmp(replybuffer, (prog_char*)reply) == 0);
@@ -2055,7 +2066,6 @@ boolean Adafruit_FONA::sendCheckReplyQuoted(FONAFlashStringPtr prefix, FONAFlash
   getReplyQuoted(prefix, suffix, timeout);
   return (prog_char_strcmp(replybuffer, (prog_char*)reply) == 0);
 }
-
 
 boolean Adafruit_FONA::parseReply(FONAFlashStringPtr toreply,
           uint16_t *v, char divider, uint8_t index) {
