@@ -48,7 +48,6 @@
 // is defined in config)
 #define DebugStream		Serial
 
-// edit ------------------------------------------------------------------------
 #ifdef ADAFRUIT_FONA_DEBUG
 // need to do some debugging...
 #define DEBUG_PRINT(...)		DebugStream.print(__VA_ARGS__)

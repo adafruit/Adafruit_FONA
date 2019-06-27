@@ -31,7 +31,6 @@
 #include "FONAPlatStd.h"
 
 
-// edit ------------------------------------------------------------------------
 #ifndef ADAFRUIT_FONA_DEBUG
 // debug is disabled
 
