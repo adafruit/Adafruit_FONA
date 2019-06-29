@@ -105,7 +105,7 @@ class Adafruit_FONA : public FONAStreamType {
   boolean setAudio(uint8_t a);
   boolean setVolume(uint8_t i);
   uint8_t getVolume(void);
-  boolean setRingerVolume(uint8_t i);
+  boolean setRingerVolume(uint8_t i); // set volume of ringtone
   uint8_t getRingerVolume(void);
   boolean setToneVolume(uint8_t i); // sets volume of Toolkit and user tones (0-100)
   uint8_t getToneVolume(void);
