@@ -12,18 +12,18 @@ Designed specifically to work with the Adafruit FONA Breakout
 
 These modules use TTL Serial to communicate, 2 pins are required to interface
 
-Adafruit invests time and resources providing this open source code, 
-please support Adafruit and open-source hardware by purchasing 
+Adafruit invests time and resources providing this open source code,
+please support Adafruit and open-source hardware by purchasing
 products from Adafruit!
 
-Check out the links above for our tutorials and wiring diagrams 
+Check out the links above for our tutorials and wiring diagrams
 
 Written by Limor Fried/Ladyada for Adafruit Industries.  
 BSD license, all text above must be included in any redistribution
-With updates from Samy Kamkar
+With updates from Samy Kamkar and Zeno Gries
 
-To download. click the DOWNLOADS button in the top right corner, rename the uncompressed folder Adafruit_FONA 
+To download. click the DOWNLOADS button in the top right corner, rename the uncompressed folder Adafruit_FONA
 Check that the Adafruit_FONA folder contains Adafruit_FONA.cpp and Adafruit_FONA.h
 
-Place the Adafruit_FONA library folder your *arduinosketchfolder*/libraries/ folder. 
+Place the Adafruit_FONA library folder your *arduinosketchfolder*/libraries/ folder.
 You may need to create the libraries subfolder if its your first library. Restart the IDE.
