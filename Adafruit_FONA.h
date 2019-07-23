@@ -153,6 +153,14 @@ class Adafruit_FONA : public FONAStreamType {
   uint16_t TCPavailable(void);
   uint16_t TCPread(uint8_t *buff, uint8_t len);
 
+  // UDP raw connections
+  boolean UDPconnect(char *server, uint16_t port);
+  boolean UDPclose(void);
+  boolean UDPconnected(void);
+  boolean UDPsend(char *packet, uint8_t len);
+  uint16_t UDPavailable(void);
+  uint16_t UDPread(uint8_t *buff, uint8_t len);
+
   // HTTP low level interface (maps directly to SIM800 commands).
   boolean HTTP_init();
   boolean HTTP_term();
