@@ -1682,10 +1682,15 @@ boolean Adafruit_FONA::HTTP_setup(char *url) {
   // Initialize and set parameters
   if (! HTTP_init())
     return false;
+  
   if (! HTTP_para(F("CID"), 1))
     return false;
-  if (! HTTP_para(F("UA"), useragent))
-    return false;
+  
+  if (! HTTP_para(F("UA"), useragent)){
+    //return false;  // UA is not mandatory, so why fail because of this ?
+    DEBUG_PRINT(F("\tUser agent setup failed on HTTP REQUEST"));
+  }
+	
   if (! HTTP_para(F("URL"), url))
     return false;
 
