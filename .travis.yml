@@ -1,9 +1,8 @@
-language: c
 sudo: false
-before_install:
-  - source <(curl -SLs https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/install.sh)
+language: ruby
 script:
-  - build_main_platforms
+   - bundle install
+   - bundle exec arduino_ci_remote.rb
 notifications:
   email:
     on_success: change

@@ -1,0 +1,8 @@
+compile:
+  platforms:
+    - uno
+    - leonardo
+
+unittest:
+  platforms:
+    - uno
