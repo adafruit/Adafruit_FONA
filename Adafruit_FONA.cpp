@@ -406,8 +406,8 @@ boolean Adafruit_FONA_3G::hangUp(void) {
   return (prog_char_strstr(replybuffer, (prog_char *)F("VOICE CALL: END")) != 0);
 }
 
-boolean Adafruit_FONA::pickUp(void) {
-  return sendCheckReply(F("ATA"), ok_reply);
+boolean Adafruit_FONA::pickUp(uint16_t timeout) {
+  return sendCheckReply(F("ATA"), ok_reply, timeout);
 }
 
 boolean Adafruit_FONA_3G::pickUp(void) {
