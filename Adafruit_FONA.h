@@ -253,6 +253,11 @@ class Adafruit_FONA_3G : public Adafruit_FONA {
     boolean pickUp(void);
     boolean enableGPRS(boolean onoff);
     boolean enableGPS(boolean onoff);
+    boolean netOpen();
+    boolean netClose();
+    boolean TCPconnect(uint8_t conn, char *server, uint16_t port);
+    boolean TCPclose(uint8_t conn);
+    boolean TCPsend(uint8_t conn, char *packet, uint8_t len);
 
  protected:
     boolean parseReply(FONAFlashStringPtr toreply,
