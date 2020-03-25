@@ -21,8 +21,6 @@
 #include "includes/FONAExtIncludes.h"
 #include "includes/platform/FONAPlatform.h"
 
-
-
 #define FONA800L 1
 #define FONA800H 6
 
@@ -57,9 +55,9 @@
 
 #define FONA_DEFAULT_TIMEOUT_MS 500
 
-#define FONA_HTTP_GET   0
-#define FONA_HTTP_POST  1
-#define FONA_HTTP_HEAD  2
+#define FONA_HTTP_GET 0
+#define FONA_HTTP_POST 1
+#define FONA_HTTP_HEAD 2
 
 #define FONA_CALL_READY 0
 #define FONA_CALL_FAILED 1
@@ -68,7 +66,7 @@
 #define FONA_CALL_INPROGRESS 4
 
 class Adafruit_FONA : public FONAStreamType {
- public:
+public:
   Adafruit_FONA(int8_t r);
   boolean begin(FONAStreamType &port);
   uint8_t type();
@@ -85,7 +83,8 @@ class Adafruit_FONA : public FONAStreamType {
 
   // RTC
   boolean enableRTC(uint8_t i);
-  boolean readRTC(uint8_t *year, uint8_t *month, uint8_t *date, uint8_t *hr, uint8_t *min, uint8_t *sec);
+  boolean readRTC(uint8_t *year, uint8_t *month, uint8_t *date, uint8_t *hr,
+                  uint8_t *min, uint8_t *sec);
 
   // Battery and ADC
   boolean getADCVoltage(uint16_t *v);
@@ -124,11 +123,12 @@ class Adafruit_FONA : public FONAStreamType {
   boolean sendSMS(char *smsaddr, char *smsmsg);
   boolean deleteSMS(uint8_t i);
   boolean getSMSSender(uint8_t i, char *sender, int senderlen);
-  boolean sendUSSD(char *ussdmsg, char *ussdbuff, uint16_t maxlen, uint16_t *readlen);
+  boolean sendUSSD(char *ussdmsg, char *ussdbuff, uint16_t maxlen,
+                   uint16_t *readlen);
 
   // Time
   boolean enableNetworkTimeSync(boolean onoff);
-  boolean enableNTPTimeSync(boolean onoff, FONAFlashStringPtr ntpserver=0);
+  boolean enableNTPTimeSync(boolean onoff, FONAFlashStringPtr ntpserver = 0);
   boolean getTime(char *buff, uint16_t maxlen);
 
   // GPRS handling
@@ -136,13 +136,16 @@ class Adafruit_FONA : public FONAStreamType {
   uint8_t GPRSstate(void);
   boolean getGSMLoc(uint16_t *replycode, char *buff, uint16_t maxlen);
   boolean getGSMLoc(float *lat, float *lon);
-  void setGPRSNetworkSettings(FONAFlashStringPtr apn, FONAFlashStringPtr username=0, FONAFlashStringPtr password=0);
+  void setGPRSNetworkSettings(FONAFlashStringPtr apn,
+                              FONAFlashStringPtr username = 0,
+                              FONAFlashStringPtr password = 0);
 
   // GPS handling
   boolean enableGPS(boolean onoff);
   int8_t GPSstatus(void);
   uint8_t getGPS(uint8_t arg, char *buffer, uint8_t maxbuff);
-  boolean getGPS(float *lat, float *lon, float *speed_kph=0, float *heading=0, float *altitude=0);
+  boolean getGPS(float *lat, float *lon, float *speed_kph = 0,
+                 float *heading = 0, float *altitude = 0);
   boolean enableGPSNMEA(uint8_t nmea);
 
   // TCP raw connections
@@ -161,15 +164,18 @@ class Adafruit_FONA : public FONAStreamType {
   boolean HTTP_para(FONAFlashStringPtr parameter, const char *value);
   boolean HTTP_para(FONAFlashStringPtr parameter, FONAFlashStringPtr value);
   boolean HTTP_para(FONAFlashStringPtr parameter, int32_t value);
-  boolean HTTP_data(uint32_t size, uint32_t maxTime=10000);
-  boolean HTTP_action(uint8_t method, uint16_t *status, uint16_t *datalen, int32_t timeout = 10000);
+  boolean HTTP_data(uint32_t size, uint32_t maxTime = 10000);
+  boolean HTTP_action(uint8_t method, uint16_t *status, uint16_t *datalen,
+                      int32_t timeout = 10000);
   boolean HTTP_readall(uint16_t *datalen);
   boolean HTTP_ssl(boolean onoff);
 
   // HTTP high level interface (easier to use, less flexible).
   boolean HTTP_GET_start(char *url, uint16_t *status, uint16_t *datalen);
   void HTTP_GET_end(void);
-  boolean HTTP_POST_start(char *url, FONAFlashStringPtr contenttype, const uint8_t *postdata, uint16_t postdatalen,  uint16_t *status, uint16_t *datalen);
+  boolean HTTP_POST_start(char *url, FONAFlashStringPtr contenttype,
+                          const uint8_t *postdata, uint16_t postdatalen,
+                          uint16_t *status, uint16_t *datalen);
   void HTTP_POST_end(void);
   void setUserAgent(FONAFlashStringPtr useragent);
 
@@ -185,16 +191,18 @@ class Adafruit_FONA : public FONAStreamType {
   boolean hangUp(void);
   boolean pickUp(void);
   boolean callerIdNotification(boolean enable, uint8_t interrupt = 0);
-  boolean incomingCallNumber(char* phonenum);
+  boolean incomingCallNumber(char *phonenum);
 
   // Helper functions to verify responses.
   boolean expectReply(FONAFlashStringPtr reply, uint16_t timeout = 10000);
-  boolean sendCheckReply(char *send, char *reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
-  boolean sendCheckReply(FONAFlashStringPtr send, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
-  boolean sendCheckReply(char* send, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  boolean sendCheckReply(char *send, char *reply,
+                         uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  boolean sendCheckReply(FONAFlashStringPtr send, FONAFlashStringPtr reply,
+                         uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  boolean sendCheckReply(char *send, FONAFlashStringPtr reply,
+                         uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
 
-
- protected:
+protected:
   int8_t _rstpin;
   uint8_t _type;
 
@@ -211,30 +219,44 @@ class Adafruit_FONA : public FONAStreamType {
 
   void flushInput();
   uint16_t readRaw(uint16_t b);
-  uint8_t readline(uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS, boolean multiline = false);
+  uint8_t readline(uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS,
+                   boolean multiline = false);
   uint8_t getReply(char *send, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
-  uint8_t getReply(FONAFlashStringPtr send, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
-  uint8_t getReply(FONAFlashStringPtr prefix, char *suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
-  uint8_t getReply(FONAFlashStringPtr prefix, int32_t suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
-  uint8_t getReply(FONAFlashStringPtr prefix, int32_t suffix1, int32_t suffix2, uint16_t timeout); // Don't set default value or else function call is ambiguous.
-  uint8_t getReplyQuoted(FONAFlashStringPtr prefix, FONAFlashStringPtr suffix, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  uint8_t getReply(FONAFlashStringPtr send,
+                   uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  uint8_t getReply(FONAFlashStringPtr prefix, char *suffix,
+                   uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  uint8_t getReply(FONAFlashStringPtr prefix, int32_t suffix,
+                   uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  uint8_t getReply(FONAFlashStringPtr prefix, int32_t suffix1, int32_t suffix2,
+                   uint16_t timeout); // Don't set default value or else
+                                      // function call is ambiguous.
+  uint8_t getReplyQuoted(FONAFlashStringPtr prefix, FONAFlashStringPtr suffix,
+                         uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
 
-  boolean sendCheckReply(FONAFlashStringPtr prefix, char *suffix, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
-  boolean sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
-  boolean sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix, int32_t suffix2, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
-  boolean sendCheckReplyQuoted(FONAFlashStringPtr prefix, FONAFlashStringPtr suffix, FONAFlashStringPtr reply, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  boolean sendCheckReply(FONAFlashStringPtr prefix, char *suffix,
+                         FONAFlashStringPtr reply,
+                         uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  boolean sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix,
+                         FONAFlashStringPtr reply,
+                         uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  boolean sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix,
+                         int32_t suffix2, FONAFlashStringPtr reply,
+                         uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
+  boolean sendCheckReplyQuoted(FONAFlashStringPtr prefix,
+                               FONAFlashStringPtr suffix,
+                               FONAFlashStringPtr reply,
+                               uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
 
+  boolean parseReply(FONAFlashStringPtr toreply, uint16_t *v,
+                     char divider = ',', uint8_t index = 0);
+  boolean parseReply(FONAFlashStringPtr toreply, char *v, char divider = ',',
+                     uint8_t index = 0);
+  boolean parseReplyQuoted(FONAFlashStringPtr toreply, char *v, int maxlen,
+                           char divider, uint8_t index);
 
-  boolean parseReply(FONAFlashStringPtr toreply,
-          uint16_t *v, char divider  = ',', uint8_t index=0);
-  boolean parseReply(FONAFlashStringPtr toreply,
-          char *v, char divider  = ',', uint8_t index=0);
-  boolean parseReplyQuoted(FONAFlashStringPtr toreply,
-          char *v, int maxlen, char divider, uint8_t index);
-
-  boolean sendParseReply(FONAFlashStringPtr tosend,
-       FONAFlashStringPtr toreply,
-       uint16_t *v, char divider = ',', uint8_t index=0);
+  boolean sendParseReply(FONAFlashStringPtr tosend, FONAFlashStringPtr toreply,
+                         uint16_t *v, char divider = ',', uint8_t index = 0);
 
   static boolean _incomingCall;
   static void onIncomingCall();
@@ -244,23 +266,22 @@ class Adafruit_FONA : public FONAStreamType {
 
 class Adafruit_FONA_3G : public Adafruit_FONA {
 
- public:
-  Adafruit_FONA_3G (int8_t r) : Adafruit_FONA(r) { _type = FONA3G_A; }
+public:
+  Adafruit_FONA_3G(int8_t r) : Adafruit_FONA(r) { _type = FONA3G_A; }
 
-    boolean getBattVoltage(uint16_t *v);
-    boolean playToolkitTone(uint8_t t, uint16_t len);
-    boolean hangUp(void);
-    boolean pickUp(void);
-    boolean enableGPRS(boolean onoff);
-    boolean enableGPS(boolean onoff);
+  boolean getBattVoltage(uint16_t *v);
+  boolean playToolkitTone(uint8_t t, uint16_t len);
+  boolean hangUp(void);
+  boolean pickUp(void);
+  boolean enableGPRS(boolean onoff);
+  boolean enableGPS(boolean onoff);
 
- protected:
-    boolean parseReply(FONAFlashStringPtr toreply,
-		       float *f, char divider, uint8_t index);
+protected:
+  boolean parseReply(FONAFlashStringPtr toreply, float *f, char divider,
+                     uint8_t index);
 
-    boolean sendParseReply(FONAFlashStringPtr tosend,
-			   FONAFlashStringPtr toreply,
-			   float *f, char divider = ',', uint8_t index=0);
+  boolean sendParseReply(FONAFlashStringPtr tosend, FONAFlashStringPtr toreply,
+                         float *f, char divider = ',', uint8_t index = 0);
 };
 
 #endif
