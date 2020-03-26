@@ -61,8 +61,8 @@ typedef const __FlashStringHelper *FONAFlashStringPtr;
 #define prog_char char PROGMEM
 
 #define prog_char_strcmp(a, b) strcmp_P((a), (b))
-// define prog_char_strncmp(a, b, c)				strncmp_P((a), (b),
-// (c))
+// define prog_char_strncmp(a, b, c)				strncmp_P((a),
+// (b), (c))
 #define prog_char_strstr(a, b) strstr_P((a), (b))
 #define prog_char_strlen(a) strlen_P((a))
 #define prog_char_strcpy(to, fromprogmem) strcpy_P((to), (fromprogmem))
