@@ -362,10 +362,10 @@ uint8_t Adafruit_FONA::getRSSI(void) {
  * @return false failure
  */
 bool Adafruit_FONA::setAudio(uint8_t audio_output) {
-  if (a > 1)
+  if (audio_output > 1)
     return false;
 
-  return sendCheckReply(F("AT+CHFA="), a, ok_reply);
+  return sendCheckReply(F("AT+CHFA="), audio_output, ok_reply);
 }
 /**
  * @brief Get the current volume level
@@ -2399,11 +2399,11 @@ void Adafruit_FONA::flushInput() {
 uint16_t Adafruit_FONA::readRaw(uint16_t read_length) {
   uint16_t idx = 0;
 
-  while (b && (idx < sizeof(replybuffer) - 1)) {
+  while (read_length && (idx < sizeof(replybuffer) - 1)) {
     if (mySerial->available()) {
       replybuffer[idx] = mySerial->read();
       idx++;
-      b--;
+      read_length--;
     }
   }
   replybuffer[idx] = 0;
