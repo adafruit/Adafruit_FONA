@@ -83,8 +83,8 @@ public:
   bool setBaudrate(uint16_t baud);
 
   // RTC
-  bool enableRTC(uint8_t i);
-  bool readRTC(uint8_t *year, uint8_t *month, uint8_t *date, uint8_t *hr,
+  bool enableRTC(uint8_t mode);
+  bool readRTC(uint8_t *year, uint8_t *month, uint8_t *day, uint8_t *hr,
                uint8_t *min, uint8_t *sec);
 
   // Battery and ADC

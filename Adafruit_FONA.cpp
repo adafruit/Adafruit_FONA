@@ -29,7 +29,7 @@
 using namespace std;
 #endif
 /**
- * @brief Construct a new Adafruit_FONA::Adafruit_FONA object
+ * @brief Construct a new Adafruit_FONA object
  *
  * @param rst The reset pin
  */
@@ -54,7 +54,7 @@ uint8_t Adafruit_FONA::type(void) { return _type; }
 /**
  * @brief Connect to the cell module
  *
- * @param port the serial connection to uset o connect
+ * @param port the serial connection to use to connect
  * @return bool true on success, false if a connection cannot be made
  */
 bool Adafruit_FONA::begin(Stream &port) {
@@ -165,58 +165,56 @@ bool Adafruit_FONA::begin(Stream &port) {
  * @brief  Set the baud rate that the module will use
  *
  * @param baud The new baud rate to set
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::setBaudrate(uint16_t baud) {
   return sendCheckReply(F("AT+IPREX="), baud, ok_reply);
 }
 
 /********* Real Time Clock ********************************************/
-
+// This RTC setup isn't fully operational
+// see https://forums.adafruit.com/viewtopic.php?f=19&t=58002&p=294235#p294235
 /**
  * @brief Read the Real Time Clock
  *
- * @param year
- * @param month
- * @param date
- * @param hr
- * @param min
- * @param sec
- * @return true success
- * @return false failure
+ * @param year pointer to a uint8_t to be set with year data
+ * @param month pointer to a uint8_t to be set with month data
+ * @param day pointer to a uint8_t to be set with day data
+ * @param hr pointer to a uint8_t to be set with hour data
+ * @param min pointer to a uint8_t to be set with minute data
+ * @param sec pointer to a uint8_t to be set with year data
+ * @return true: success, false: failure
  */
-bool Adafruit_FONA::readRTC(uint8_t *year, uint8_t *month, uint8_t *date,
+bool Adafruit_FONA::readRTC(uint8_t *year, uint8_t *month, uint8_t *day,
                             uint8_t *hr, uint8_t *min, uint8_t *sec) {
   uint16_t v;
   sendParseReply(F("AT+CCLK?"), F("+CCLK: "), &v, '/', 0);
+  // TODO: https://github.com/adafruit/Adafruit_FONA/issues/111
   *year = v;
 
   DEBUG_PRINTLN(*year);
 }
+
 /**
  * @brief Enable the Real Time Clock
  *
- * @param i
- * @return true success
- * @return false failure
+ * @param mode  1: Enable 0: Disable
+ * @return true: Success , false: failure
  */
-bool Adafruit_FONA::enableRTC(uint8_t i) {
-  if (!sendCheckReply(F("AT+CLTS="), i, ok_reply))
+bool Adafruit_FONA::enableRTC(uint8_t mode) {
+  if (!sendCheckReply(F("AT+CLTS="), mode, ok_reply))
     return false;
   return sendCheckReply(F("AT&W"), ok_reply);
 }
 
 /********* BATTERY & ADC ********************************************/
 
-/* returns  */
 /**
  * @brief Get the current batery voltage
  *
  * @param v battery value pointer to be filled with the current value in mV
  * (uint16_t)
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::getBattVoltage(uint16_t *v) {
   return sendParseReply(F("AT+CBC"), F("+CBC: "), v, ',', 2);
@@ -228,8 +226,7 @@ bool Adafruit_FONA::getBattVoltage(uint16_t *v) {
  *
  * @param v battery voltage pointer to be filled with the current value in mV
  * (uint16_t)
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA_3G::getBattVoltage(uint16_t *v) {
   float f;
@@ -243,8 +240,7 @@ bool Adafruit_FONA_3G::getBattVoltage(uint16_t *v) {
  * @brief Get the percentage charge of battery as reported by sim800
  *
  * @param p battery percentage pointer
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::getBattPercent(uint16_t *p) {
   return sendParseReply(F("AT+CBC"), F("+CBC: "), p, ',', 1);
@@ -254,8 +250,7 @@ bool Adafruit_FONA::getBattPercent(uint16_t *p) {
  *
  * @param v ADC voltage pointer to be filled with the current value in mV
  * (uint16_t)
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::getADCVoltage(uint16_t *v) {
   return sendParseReply(F("AT+CADC?"), F("+CADC: 1,"), v);
@@ -358,8 +353,7 @@ uint8_t Adafruit_FONA::getRSSI(void) {
  * @brief Set the audio ouput
  *
  * @param audio_output The output to set. 0 is headset, 1 is external audio
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::setAudio(uint8_t audio_output) {
   if (audio_output > 1)
@@ -385,8 +379,7 @@ uint8_t Adafruit_FONA::getVolume(void) {
  * @brief Set the volume
  *
  * @param i The new volume to set
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::setVolume(uint8_t i) {
   return sendCheckReply(F("AT+CLVL="), i, ok_reply);
@@ -396,8 +389,7 @@ bool Adafruit_FONA::setVolume(uint8_t i) {
  * @brief Play a DTMF/Key tone
  *
  * @param dtmf The tone to play
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::playDTMF(char dtmf) {
   char str[4];
@@ -413,8 +405,7 @@ bool Adafruit_FONA::playDTMF(char dtmf) {
  *
  * @param t The tone to play
  * @param len The tone length
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::playToolkitTone(uint8_t t, uint16_t len) {
   return sendCheckReply(F("AT+STTONE=1,"), t, len, ok_reply);
@@ -424,8 +415,7 @@ bool Adafruit_FONA::playToolkitTone(uint8_t t, uint16_t len) {
  *
  * @param t The tone to play
  * @param len The tone length
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA_3G::playToolkitTone(uint8_t t, uint16_t len) {
   if (!sendCheckReply(F("AT+CPTONE="), t, ok_reply))
@@ -440,8 +430,7 @@ bool Adafruit_FONA_3G::playToolkitTone(uint8_t t, uint16_t len) {
  *
  * @param a Which microphone gain to set. 0 is headset, 1 is external audio
  * @param level The new gain level
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::setMicVolume(uint8_t a, uint8_t level) {
 
@@ -458,8 +447,7 @@ bool Adafruit_FONA::setMicVolume(uint8_t a, uint8_t level) {
  *
  * @param onoff true; on false: off
  * @param a The audio source to use. 0 is headset, 1 is external audio
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::FMradio(bool onoff, uint8_t a) {
   if (!onoff) {
@@ -476,8 +464,7 @@ bool Adafruit_FONA::FMradio(bool onoff, uint8_t a) {
  * @brief Set the FM Radio station
  *
  * @param station The station to set the radio to
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::tuneFMradio(uint16_t station) {
   // Fail if FM station is outside allowed range.
@@ -491,8 +478,7 @@ bool Adafruit_FONA::tuneFMradio(uint16_t station) {
  * @brief Set the FM Radio Volume
  *
  * @param i The volume to set
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::setFMVolume(uint8_t i) {
   // Fail if volume is outside allowed range (0-6).
@@ -554,8 +540,7 @@ int8_t Adafruit_FONA::getFMSignalLevel(uint16_t station) {
  *
  * @param period
  * @param duty
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::setPWM(uint16_t period, uint8_t duty) {
   if (period > 2000)
@@ -572,8 +557,7 @@ bool Adafruit_FONA::setPWM(uint16_t period, uint8_t duty) {
  * @brief Call a phone number
  *
  * @param number The phone number to call
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::callPhone(char *number) {
   char sendbuff[35] = "ATD";
@@ -603,15 +587,13 @@ uint8_t Adafruit_FONA::getCallStatus(void) {
 /**
  * @brief End the current call
  *
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::hangUp(void) { return sendCheckReply(F("ATH0"), ok_reply); }
 /**
  * @brief End the current call
  *
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA_3G::hangUp(void) {
   getReply(F("ATH"));
@@ -623,16 +605,14 @@ bool Adafruit_FONA_3G::hangUp(void) {
 /**
  * @brief Answer a call
  *
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::pickUp(void) { return sendCheckReply(F("ATA"), ok_reply); }
 
 /**
  * @brief Answer an incoming call
  *
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA_3G::pickUp(void) {
   return sendCheckReply(F("ATA"), F("VOICE CALL: BEGIN"));
@@ -656,8 +636,7 @@ bool Adafruit_FONA::_incomingCall = false;
  *
  * @param enable true to enable, false to disable
  * @param interrupt The interrupt to attach
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::callerIdNotification(bool enable, uint8_t interrupt) {
   if (enable) {
@@ -673,8 +652,7 @@ bool Adafruit_FONA::callerIdNotification(bool enable, uint8_t interrupt) {
  * @brief Get the number of the incoming call
  *
  * @param phonenum The incoming caller's phone number
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::incomingCallNumber(char *phonenum) {
   //+CLIP: "<incoming phone number>",145,"",0,"",0
@@ -718,8 +696,7 @@ uint8_t Adafruit_FONA::getSMSInterrupt(void) {
  * @brief Attach an interrupt for SMS notifications
  *
  * @param i The interrupt to set
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::setSMSInterrupt(uint8_t i) {
   return sendCheckReply(F("AT+CFGRI="), i, ok_reply);
@@ -756,8 +733,7 @@ int8_t Adafruit_FONA::getNumSMS(void) {
  * @param smsbuff SMS message buffer
  * @param maxlen The maximum read length
  * @param readlen The length read
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::readSMS(uint8_t i, char *smsbuff, uint16_t maxlen,
                             uint16_t *readlen) {
@@ -816,8 +792,7 @@ bool Adafruit_FONA::readSMS(uint8_t i, char *smsbuff, uint16_t maxlen,
  * @param i
  * @param sender The sender buffer
  * @param senderlen the length to read
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::getSMSSender(uint8_t i, char *sender, int senderlen) {
   // Ensure text mode and all text mode parameters are sent.
@@ -848,8 +823,7 @@ bool Adafruit_FONA::getSMSSender(uint8_t i, char *sender, int senderlen) {
  *
  * @param smsaddr The SMS address buffer
  * @param smsmsg The SMS message buffer
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::sendSMS(char *smsaddr, char *smsmsg) {
   if (!sendCheckReply(F("AT+CMGF=1"), ok_reply))
@@ -898,8 +872,7 @@ bool Adafruit_FONA::sendSMS(char *smsaddr, char *smsmsg) {
  * @brief Delete an SMS Message
  *
  * @param i The message to delete
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::deleteSMS(uint8_t i) {
   if (!sendCheckReply(F("AT+CMGF=1"), ok_reply))
@@ -924,8 +897,7 @@ bool Adafruit_FONA::deleteSMS(uint8_t i) {
  * @param ussdbuff The USSD bufer
  * @param maxlen The maximum read length
  * @param readlen The length actually read
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::sendUSSD(char *ussdmsg, char *ussdbuff, uint16_t maxlen,
                              uint16_t *readlen) {
@@ -973,8 +945,7 @@ bool Adafruit_FONA::sendUSSD(char *ussdmsg, char *ussdbuff, uint16_t maxlen,
  * @brief Enable network time sync
  *
  * @param onoff true: enable false: disable
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::enableNetworkTimeSync(bool onoff) {
   if (onoff) {
@@ -995,8 +966,7 @@ bool Adafruit_FONA::enableNetworkTimeSync(bool onoff) {
  *
  * @param onoff true: enable false: disable
  * @param ntpserver The NTP server buffer
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::enableNTPTimeSync(bool onoff,
                                       FONAFlashStringPtr ntpserver) {
@@ -1035,8 +1005,7 @@ bool Adafruit_FONA::enableNTPTimeSync(bool onoff,
  *
  * @param buff Time buffer
  * @param maxlen maximum read length
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::getTime(char *buff, uint16_t maxlen) {
   getReply(F("AT+CCLK?"), (uint16_t)10000);
@@ -1059,8 +1028,7 @@ bool Adafruit_FONA::getTime(char *buff, uint16_t maxlen) {
  * @brief Enable GPS
  *
  * @param onoff true: enable false: disable
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::enableGPS(bool onoff) {
   uint16_t state;
@@ -1099,8 +1067,7 @@ bool Adafruit_FONA::enableGPS(bool onoff) {
  * @brief Enable GPS
  *
  * @param onoff true: enable false: disable
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA_3G::enableGPS(bool onoff) {
   uint16_t state;
@@ -1222,8 +1189,7 @@ uint8_t Adafruit_FONA::getGPS(uint8_t arg, char *buffer, uint8_t maxbuff) {
  * @param speed_kph speed pointer
  * @param heading heading pointer
  * @param altitude altitude pointer
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::getGPS(float *lat, float *lon, float *speed_kph,
                            float *heading, float *altitude) {
@@ -1523,8 +1489,7 @@ bool Adafruit_FONA::getGPS(float *lat, float *lon, float *speed_kph,
  * @brief Enable GPS NMEA
  *
  * @param i mode
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::enableGPSNMEA(uint8_t i) {
 
@@ -1551,8 +1516,7 @@ bool Adafruit_FONA::enableGPSNMEA(uint8_t i) {
  * @brief Enable GPRS
  *
  * @param onoff true: enable false: disable
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::enableGPRS(bool onoff) {
 
@@ -1652,8 +1616,7 @@ bool Adafruit_FONA::enableGPRS(bool onoff) {
  * @brief Enable GPRS
  *
  * @param onoff true: enable false; disable
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA_3G::enableGPRS(bool onoff) {
 
@@ -1751,8 +1714,7 @@ void Adafruit_FONA::setGPRSNetworkSettings(FONAFlashStringPtr apn,
  * @param errorcode
  * @param buff location buffer
  * @param maxlen maximum read length
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::getGSMLoc(uint16_t *errorcode, char *buff,
                               uint16_t maxlen) {
@@ -1776,8 +1738,7 @@ bool Adafruit_FONA::getGSMLoc(uint16_t *errorcode, char *buff,
  *
  * @param lat latitude pointer
  * @param lon longitude pointer
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::getGSMLoc(float *lat, float *lon) {
 
@@ -1814,8 +1775,7 @@ bool Adafruit_FONA::getGSMLoc(float *lat, float *lon) {
  *
  * @param server The server to connect to
  * @param port The port to connect to
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 
 bool Adafruit_FONA::TCPconnect(char *server, uint16_t port) {
@@ -1857,8 +1817,7 @@ bool Adafruit_FONA::TCPconnect(char *server, uint16_t port) {
 /**
  * @brief Close the TCP connection
  *
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::TCPclose(void) {
   return sendCheckReply(F("AT+CIPCLOSE"), ok_reply);
@@ -1867,8 +1826,7 @@ bool Adafruit_FONA::TCPclose(void) {
 /**
  * @brief Check the TCP connection status
  *
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::TCPconnected(void) {
   if (!sendCheckReply(F("AT+CIPSTATUS"), ok_reply, 100))
@@ -1886,8 +1844,7 @@ bool Adafruit_FONA::TCPconnected(void) {
  *
  * @param packet Packet buffer
  * @param len Length to send
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::TCPsend(char *packet, uint8_t len) {
 
@@ -1973,8 +1930,7 @@ uint16_t Adafruit_FONA::TCPread(uint8_t *buff, uint8_t len) {
 /**
  * @brief Initialize HTTP
  *
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::HTTP_init() {
   return sendCheckReply(F("AT+HTTPINIT"), ok_reply);
@@ -1983,8 +1939,7 @@ bool Adafruit_FONA::HTTP_init() {
 /**
  * @brief Terminate HTTP
  *
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::HTTP_term() {
   return sendCheckReply(F("AT+HTTPTERM"), ok_reply);
@@ -2016,8 +1971,7 @@ void Adafruit_FONA::HTTP_para_start(FONAFlashStringPtr parameter, bool quoted) {
  * @brief Finish sending an HTTP parameter
  *
  * @param quoted true if quoted
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::HTTP_para_end(bool quoted) {
   if (quoted)
@@ -2033,8 +1987,7 @@ bool Adafruit_FONA::HTTP_para_end(bool quoted) {
  *
  * @param parameter The parameter to send
  * @param value The parameter value
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::HTTP_para(FONAFlashStringPtr parameter, const char *value) {
   HTTP_para_start(parameter, true);
@@ -2047,8 +2000,7 @@ bool Adafruit_FONA::HTTP_para(FONAFlashStringPtr parameter, const char *value) {
  *
  * @param parameter The parameter to send
  * @param value The parameter value
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::HTTP_para(FONAFlashStringPtr parameter,
                               FONAFlashStringPtr value) {
@@ -2062,8 +2014,7 @@ bool Adafruit_FONA::HTTP_para(FONAFlashStringPtr parameter,
  *
  * @param parameter The parameter to send
  * @param value The parameter value
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::HTTP_para(FONAFlashStringPtr parameter, int32_t value) {
   HTTP_para_start(parameter, false);
@@ -2076,8 +2027,7 @@ bool Adafruit_FONA::HTTP_para(FONAFlashStringPtr parameter, int32_t value) {
  *
  * @param size The amount of data to get
  * @param maxTime The maximum amount of time
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::HTTP_data(uint32_t size, uint32_t maxTime) {
   flushInput();
@@ -2103,8 +2053,7 @@ bool Adafruit_FONA::HTTP_data(uint32_t size, uint32_t maxTime) {
  * @param status The request status
  * @param datalen The data length
  * @param timeout Timeout for waiting for response
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::HTTP_action(uint8_t method, uint16_t *status,
                                 uint16_t *datalen, int32_t timeout) {
@@ -2126,8 +2075,7 @@ bool Adafruit_FONA::HTTP_action(uint8_t method, uint16_t *status,
  * @brief Read all available HTTP data
  *
  * @param datalen The length read
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::HTTP_readall(uint16_t *datalen) {
   getReply(F("AT+HTTPREAD"));
@@ -2141,8 +2089,7 @@ bool Adafruit_FONA::HTTP_readall(uint16_t *datalen) {
  * @brief Enable or disable SSL
  *
  * @param onoff true: enable false: disable
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::HTTP_ssl(bool onoff) {
   return sendCheckReply(F("AT+HTTPSSL="), onoff ? 1 : 0, ok_reply);
@@ -2156,8 +2103,7 @@ bool Adafruit_FONA::HTTP_ssl(bool onoff) {
  * @param url The URL to request
  * @param status request status pointer
  * @param datalen The data length
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::HTTP_GET_start(char *url, uint16_t *status,
                                    uint16_t *datalen) {
@@ -2294,8 +2240,7 @@ void Adafruit_FONA::setHTTPSRedirect(bool onoff) { httpsredirect = onoff; }
  * @brief Configure an HTTP request
  *
  * @param url The URL to make the request to
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::HTTP_setup(char *url) {
   // Handle any pending
@@ -2330,8 +2275,7 @@ bool Adafruit_FONA::HTTP_setup(char *url) {
  *
  * @param reply The expected reply
  * @param timeout Read timeout
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::expectReply(FONAFlashStringPtr reply, uint16_t timeout) {
   readline(timeout);
@@ -2633,8 +2577,7 @@ uint8_t Adafruit_FONA::getReplyQuoted(FONAFlashStringPtr prefix,
  * @param send The buffer of data to send
  * @param reply Buffer with the expected reply
  * @param timeout Read timeout
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::sendCheckReply(char *send, char *reply, uint16_t timeout) {
   if (!getReply(send, timeout))
@@ -2658,8 +2601,7 @@ bool Adafruit_FONA::sendCheckReply(char *send, char *reply, uint16_t timeout) {
  * @param send The buffer of data to send
  * @param reply Buffer with the expected reply
  * @param timeout Read timeout
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::sendCheckReply(FONAFlashStringPtr send,
                                    FONAFlashStringPtr reply, uint16_t timeout) {
@@ -2675,8 +2617,7 @@ bool Adafruit_FONA::sendCheckReply(FONAFlashStringPtr send,
  * @param send The buffer of data to send
  * @param reply Buffer with the expected reply
  * @param timeout Read timeout
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::sendCheckReply(char *send, FONAFlashStringPtr reply,
                                    uint16_t timeout) {
@@ -2695,8 +2636,7 @@ bool Adafruit_FONA::sendCheckReply(char *send, FONAFlashStringPtr reply,
  * @param suffix The suffix buffer of data to send
  * @param reply Buffer with the expected reply
  * @param timeout Read timeout
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, char *suffix,
                                    FONAFlashStringPtr reply, uint16_t timeout) {
@@ -2714,8 +2654,7 @@ bool Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, char *suffix,
  * @param suffix The suffix to send
  * @param reply Buffer with the expected reply
  * @param timeout Read timeout
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix,
                                    FONAFlashStringPtr reply, uint16_t timeout) {
@@ -2731,8 +2670,7 @@ bool Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix,
  * @param suffix2 The second suffix to send
  * @param reply Buffer with the expected reply
  * @param timeout Read timeout
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix1,
                                    int32_t suffix2, FONAFlashStringPtr reply,
@@ -2748,8 +2686,7 @@ bool Adafruit_FONA::sendCheckReply(FONAFlashStringPtr prefix, int32_t suffix1,
  * @param suffix The suffix buffer send
  * @param reply The expected response
  * @param timeout Read timeout
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::sendCheckReplyQuoted(FONAFlashStringPtr prefix,
                                          FONAFlashStringPtr suffix,
@@ -2766,8 +2703,7 @@ bool Adafruit_FONA::sendCheckReplyQuoted(FONAFlashStringPtr prefix,
  * @param v read buffer
  * @param divider The divider character
  * @param index The index to read up to
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::parseReply(FONAFlashStringPtr toreply, uint16_t *v,
                                char divider, uint8_t index) {
@@ -2802,8 +2738,7 @@ bool Adafruit_FONA::parseReply(FONAFlashStringPtr toreply, uint16_t *v,
  * @param v The response buffer
  * @param divider The divider character
  * @param index
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::parseReply(FONAFlashStringPtr toreply, char *v,
                                char divider, uint8_t index) {
@@ -2844,8 +2779,7 @@ bool Adafruit_FONA::parseReply(FONAFlashStringPtr toreply, char *v,
  * @param maxlen The maximum read length
  * @param divider The divider character
  * @param index
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::parseReplyQuoted(FONAFlashStringPtr toreply, char *v,
                                      int maxlen, char divider, uint8_t index) {
@@ -2891,8 +2825,7 @@ bool Adafruit_FONA::parseReplyQuoted(FONAFlashStringPtr toreply, char *v,
  * @param v The data buffer
  * @param divider The divider character
  * @param index The index to read to
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA::sendParseReply(FONAFlashStringPtr tosend,
                                    FONAFlashStringPtr toreply, uint16_t *v,
@@ -2917,8 +2850,7 @@ bool Adafruit_FONA::sendParseReply(FONAFlashStringPtr tosend,
  * @param f data buffer (float)
  * @param divider The divider character
  * @param index The index to read to
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA_3G::sendParseReply(FONAFlashStringPtr tosend,
                                       FONAFlashStringPtr toreply, float *f,
@@ -2940,8 +2872,7 @@ bool Adafruit_FONA_3G::sendParseReply(FONAFlashStringPtr tosend,
  * @param f data buffer (float)
  * @param divider The divider character
  * @param index The index to read to
- * @return true success
- * @return false failure
+ * @return true: success, false: failure
  */
 bool Adafruit_FONA_3G::parseReply(FONAFlashStringPtr toreply, float *f,
                                   char divider, uint8_t index) {
