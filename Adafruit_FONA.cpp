@@ -177,12 +177,14 @@ bool Adafruit_FONA::setBaudrate(uint16_t baud) {
 /**
  * @brief Read the Real Time Clock
  *
+ * **NOTE** Currently this function **will only fill the 'year' variable**
+ *
  * @param year pointer to a uint8_t to be set with year data
- * @param month pointer to a uint8_t to be set with month data
- * @param day pointer to a uint8_t to be set with day data
- * @param hr pointer to a uint8_t to be set with hour data
- * @param min pointer to a uint8_t to be set with minute data
- * @param sec pointer to a uint8_t to be set with year data
+ * @param month pointer to a uint8_t to be set with month data **NOT WORKING**
+ * @param day pointer to a uint8_t to be set with day data **NOT WORKING**
+ * @param hr pointer to a uint8_t to be set with hour data **NOT WORKING**
+ * @param min pointer to a uint8_t to be set with minute data **NOT WORKING**
+ * @param sec pointer to a uint8_t to be set with year data **NOT WORKING**
  * @return true: success, false: failure
  */
 bool Adafruit_FONA::readRTC(uint8_t *year, uint8_t *month, uint8_t *day,
