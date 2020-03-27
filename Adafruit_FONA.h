@@ -65,7 +65,6 @@
 #define FONA_CALL_RINGING 3
 #define FONA_CALL_INPROGRESS 4
 
-
 /** Object that controls and keeps state for the FONA module. */
 class Adafruit_FONA : public FONAStreamType {
 public:
@@ -206,15 +205,15 @@ public:
 
 protected:
   int8_t _rstpin; ///< Reset pin
-  uint8_t _type; ///< Module type
+  uint8_t _type;  ///< Module type
 
-  char replybuffer[255]; ///< buffer for holding replies from the module
+  char replybuffer[255];  ///< buffer for holding replies from the module
   FONAFlashStringPtr apn; ///< Access point name
   FONAFlashStringPtr apnusername; ///< Access point username
   FONAFlashStringPtr apnpassword; ///< Access point password
-  bool httpsredirect;  ///< HTTPS redirect state
-  FONAFlashStringPtr useragent; ///< User agent used when making requests
-  FONAFlashStringPtr ok_reply; ///< OK reply for successful requests
+  bool httpsredirect;             ///< HTTPS redirect state
+  FONAFlashStringPtr useragent;   ///< User agent used when making requests
+  FONAFlashStringPtr ok_reply;    ///< OK reply for successful requests
 
   // HTTP helpers
   bool HTTP_setup(char *url);
@@ -273,7 +272,9 @@ public:
    *
    * @param reset_pin
    */
-  Adafruit_FONA_3G(int8_t reset_pin) : Adafruit_FONA(reset_pin) { _type = FONA3G_A; }
+  Adafruit_FONA_3G(int8_t reset_pin) : Adafruit_FONA(reset_pin) {
+    _type = FONA3G_A;
+  }
 
   bool getBattVoltage(uint16_t *v);
   bool playToolkitTone(uint8_t t, uint16_t len);
