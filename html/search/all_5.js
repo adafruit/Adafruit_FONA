@@ -5,6 +5,6 @@ var searchData=
   ['enablegpsnmea',['enableGPSNMEA',['../class_adafruit___f_o_n_a.html#a58e85b40063ff907873e62c59d00c72c',1,'Adafruit_FONA']]],
   ['enablenetworktimesync',['enableNetworkTimeSync',['../class_adafruit___f_o_n_a.html#acfb1ce434e9937b77f8e879ce39eb128',1,'Adafruit_FONA']]],
   ['enablentptimesync',['enableNTPTimeSync',['../class_adafruit___f_o_n_a.html#a2c2a6d6c7bfb1f33809c58deba3181ad',1,'Adafruit_FONA']]],
-  ['enablertc',['enableRTC',['../class_adafruit___f_o_n_a.html#afb20e4183ac386fee33671561a299431',1,'Adafruit_FONA']]],
+  ['enablertc',['enableRTC',['../class_adafruit___f_o_n_a.html#af672fa9fddbfd349e51bbff3ff9fc55f',1,'Adafruit_FONA']]],
   ['expectreply',['expectReply',['../class_adafruit___f_o_n_a.html#af09a4adf3a9c2eaa85a1792d63a525b2',1,'Adafruit_FONA']]]
 ];
