@@ -103,7 +103,7 @@ public:
   uint8_t getIMEI(char *imei);
 
   // set Audio output
-  bool setAudio(uint8_t a);
+  bool setAudio(uint8_t audio_output);
   bool setVolume(uint8_t i);
   uint8_t getVolume(void);
   bool playToolkitTone(uint8_t t, uint16_t len);
@@ -114,7 +114,7 @@ public:
   bool tuneFMradio(uint16_t station);
   bool FMradio(bool onoff, uint8_t a = FONA_HEADSETAUDIO);
   bool setFMVolume(uint8_t i);
-  int8_t getFMVolume();
+  int8_t getFMVolume(void);
   int8_t getFMSignalLevel(uint16_t station);
 
   // SMS handling
@@ -220,7 +220,7 @@ protected:
   bool HTTP_setup(char *url);
 
   void flushInput();
-  uint16_t readRaw(uint16_t b);
+  uint16_t readRaw(uint16_t read_length);
   uint8_t readline(uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS,
                    bool multiline = false);
   uint8_t getReply(char *send, uint16_t timeout = FONA_DEFAULT_TIMEOUT_MS);
@@ -268,7 +268,12 @@ protected:
 class Adafruit_FONA_3G : public Adafruit_FONA {
 
 public:
-  Adafruit_FONA_3G(int8_t r) : Adafruit_FONA(r) { _type = FONA3G_A; }
+  /**
+   * @brief Construct a new Adafruit_FONA_3G object
+   *
+   * @param reset_pin
+   */
+  Adafruit_FONA_3G(int8_t reset_pin) : Adafruit_FONA(reset_pin) { _type = FONA3G_A; }
 
   bool getBattVoltage(uint16_t *v);
   bool playToolkitTone(uint8_t t, uint16_t len);
