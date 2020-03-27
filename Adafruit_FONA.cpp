@@ -151,12 +151,7 @@ bool Adafruit_FONA::begin(Stream &port) {
 }
 
 /********* Serial port ********************************************/
-/**
- * @brief
- *
- * @param baud
- * @return bool true on suc
- */
+
 /**
  * @brief  Set the baud rate that the module will use
  *

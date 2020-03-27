@@ -65,6 +65,8 @@
 #define FONA_CALL_RINGING 3
 #define FONA_CALL_INPROGRESS 4
 
+
+/** Object that controls and keeps state for the FONA module. */
 class Adafruit_FONA : public FONAStreamType {
 public:
   Adafruit_FONA(int8_t r);
@@ -262,7 +264,7 @@ protected:
 
   FONAStreamType *mySerial; ///< Serial connection
 };
-
+/** Object that controls and keeps state for a 3G FONA module. */
 class Adafruit_FONA_3G : public Adafruit_FONA {
 
 public:
