@@ -772,7 +772,7 @@ bool Adafruit_FONA::readSMS(uint8_t message_index, char *smsbuff,
   uint16_t thesmslen = 0;
 
   DEBUG_PRINT(F("AT+CMGR="));
-  DEBUG_PRINTLN(i);
+  DEBUG_PRINTLN(message_index);
 
   // getReply(F("AT+CMGR="), message_index, 1000);  //  do not print debug!
   mySerial->print(F("AT+CMGR="));
