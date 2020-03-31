@@ -103,7 +103,7 @@ public:
 
   // set Audio output
   bool setAudio(uint8_t audio_output);
-  bool setVolume(uint8_t i);
+  bool setVolume(uint8_t volume_level);
   uint8_t getVolume(void);
   bool playToolkitTone(uint8_t t, uint16_t len);
   bool setMicVolume(uint8_t a, uint8_t level);
@@ -120,17 +120,18 @@ public:
   bool setSMSInterrupt(uint8_t i);
   uint8_t getSMSInterrupt(void);
   int8_t getNumSMS(void);
-  bool readSMS(uint8_t i, char *smsbuff, uint16_t max, uint16_t *readsize);
+  bool readSMS(uint8_t message_index, char *smsbuff, uint16_t max,
+               uint16_t *readsize);
   bool sendSMS(char *smsaddr, char *smsmsg);
-  bool deleteSMS(uint8_t i);
-  bool getSMSSender(uint8_t i, char *sender, int senderlen);
+  bool deleteSMS(uint8_t message_index);
+  bool getSMSSender(uint8_t message_index, char *sender, int senderlen);
   bool sendUSSD(char *ussdmsg, char *ussdbuff, uint16_t maxlen,
                 uint16_t *readlen);
 
   // Time
   bool enableNetworkTimeSync(bool onoff);
   bool enableNTPTimeSync(bool onoff, FONAFlashStringPtr ntpserver = 0);
-  bool getTime(char *buff, uint16_t maxlen);
+  bool getTime(char *time_buffer, uint16_t maxlen);
 
   // GPRS handling
   bool enableGPRS(bool onoff);
@@ -147,13 +148,13 @@ public:
   uint8_t getGPS(uint8_t arg, char *buffer, uint8_t maxbuff);
   bool getGPS(float *lat, float *lon, float *speed_kph = 0, float *heading = 0,
               float *altitude = 0);
-  bool enableGPSNMEA(uint8_t nmea);
+  bool enableGPSNMEA(uint8_t enable_value);
 
   // TCP raw connections
   bool TCPconnect(char *server, uint16_t port);
   bool TCPclose(void);
   bool TCPconnected(void);
-  bool TCPsend(char *packet, uint8_t len);
+  bool TCPsend(char *data, uint8_t len);
   uint16_t TCPavailable(void);
   uint16_t TCPread(uint8_t *buff, uint8_t len);
 
