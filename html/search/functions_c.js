@@ -14,5 +14,5 @@ var searchData=
   ['setpwm',['setPWM',['../class_adafruit___f_o_n_a.html#a3c0de65f68ff520efa4df01365594fa4',1,'Adafruit_FONA']]],
   ['setsmsinterrupt',['setSMSInterrupt',['../class_adafruit___f_o_n_a.html#ae9dfd24cf8a13a7db9e218a8dd5be7a3',1,'Adafruit_FONA']]],
   ['setuseragent',['setUserAgent',['../class_adafruit___f_o_n_a.html#a9c4fc57d47109fde894b19ead2ebef88',1,'Adafruit_FONA']]],
-  ['setvolume',['setVolume',['../class_adafruit___f_o_n_a.html#a14d35f1b0a8f02e884290688072da77a',1,'Adafruit_FONA']]]
+  ['setvolume',['setVolume',['../class_adafruit___f_o_n_a.html#a32010da6972bcd816eab7fe2db45bbb5',1,'Adafruit_FONA']]]
 ];

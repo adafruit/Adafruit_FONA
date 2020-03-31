@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['deletesms',['deleteSMS',['../class_adafruit___f_o_n_a.html#a96abcd34afe2a3a605e8c79191a8c38a',1,'Adafruit_FONA']]]
+  ['deletesms',['deleteSMS',['../class_adafruit___f_o_n_a.html#a0f18051250c7b355f16c5a1ceb286e14',1,'Adafruit_FONA']]]
 ];

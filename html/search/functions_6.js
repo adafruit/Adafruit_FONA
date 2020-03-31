@@ -16,8 +16,8 @@ var searchData=
   ['getrssi',['getRSSI',['../class_adafruit___f_o_n_a.html#ad8249cf1af16521cda696e2a759658a6',1,'Adafruit_FONA']]],
   ['getsimccid',['getSIMCCID',['../class_adafruit___f_o_n_a.html#a08f321d0676c03760b44f43a260a0c3c',1,'Adafruit_FONA']]],
   ['getsmsinterrupt',['getSMSInterrupt',['../class_adafruit___f_o_n_a.html#aa1df08d3e6864a9e9562b80e25ee3b2d',1,'Adafruit_FONA']]],
-  ['getsmssender',['getSMSSender',['../class_adafruit___f_o_n_a.html#a4930b1e7781abc2133a4ed23fa7234c9',1,'Adafruit_FONA']]],
-  ['gettime',['getTime',['../class_adafruit___f_o_n_a.html#a1d29715cc493a86167d48dd70bf9694c',1,'Adafruit_FONA']]],
+  ['getsmssender',['getSMSSender',['../class_adafruit___f_o_n_a.html#a87a62990135a1023846e3cb2edd54c6d',1,'Adafruit_FONA']]],
+  ['gettime',['getTime',['../class_adafruit___f_o_n_a.html#a4e6f0f207c39132bb74fea2221a75a9e',1,'Adafruit_FONA']]],
   ['getvolume',['getVolume',['../class_adafruit___f_o_n_a.html#adda37f8d1deee3b6286347510bc0afad',1,'Adafruit_FONA']]],
   ['gprsstate',['GPRSstate',['../class_adafruit___f_o_n_a.html#aa08364d4b361a7a3852191b9b7ed1110',1,'Adafruit_FONA']]],
   ['gpsstatus',['GPSstatus',['../class_adafruit___f_o_n_a.html#aaf77aa8e9d4b7999616f6850a0e1ee3f',1,'Adafruit_FONA']]]

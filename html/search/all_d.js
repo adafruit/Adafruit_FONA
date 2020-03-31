@@ -4,6 +4,6 @@ var searchData=
   ['readline',['readline',['../class_adafruit___f_o_n_a.html#a4cc9bf4bf9882a2ebb06f4d27f07f49c',1,'Adafruit_FONA']]],
   ['readraw',['readRaw',['../class_adafruit___f_o_n_a.html#aeff110690d6a8a37aa7f0845db53e76d',1,'Adafruit_FONA']]],
   ['readrtc',['readRTC',['../class_adafruit___f_o_n_a.html#a5d78827926035e14eca547c7e29a1f25',1,'Adafruit_FONA']]],
-  ['readsms',['readSMS',['../class_adafruit___f_o_n_a.html#a23d8b18b7e34d2895cebaff463b2dea3',1,'Adafruit_FONA']]],
+  ['readsms',['readSMS',['../class_adafruit___f_o_n_a.html#a8f29a955e3dbe95aba3f7ffd9cdfc007',1,'Adafruit_FONA']]],
   ['replybuffer',['replybuffer',['../class_adafruit___f_o_n_a.html#a064274d0bf31ed558130553f3601c249',1,'Adafruit_FONA']]]
 ];
