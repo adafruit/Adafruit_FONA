@@ -20,14 +20,10 @@
  *      Author: Pat Deegan
  */
 
-
 #ifndef ADAFRUIT_FONA_LIBRARY_SRC_INCLUDES_FONAEXTINCLUDES_H_
 #define ADAFRUIT_FONA_LIBRARY_SRC_INCLUDES_FONAEXTINCLUDES_H_
 
-
 #include "FONAConfig.h"
 // include any system-wide includes required here
-
-
 
 #endif /* ADAFRUIT_FONA_LIBRARY_SRC_INCLUDES_FONAEXTINCLUDES_H_ */

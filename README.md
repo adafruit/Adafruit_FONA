@@ -1,4 +1,4 @@
-# Adafruit FONA Library [![Build Status](https://secure.travis-ci.org/adafruit/Adafruit_FONA_Library.svg?branch=master)](https://travis-ci.org/adafruit/Adafruit_FONA_Library)
+# Adafruit FONA Library[![Build Status](https://github.com/adafruit/Adafruit_FONA/workflows/Arduino%20Library%20CI/badge.svg)](https://github.com/adafruit/Adafruit_FONA/actions)
 
 **This library requires Arduino v1.0.6 or higher**
 
