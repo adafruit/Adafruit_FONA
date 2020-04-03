@@ -145,7 +145,7 @@ void printMenu(void) {
   Serial.println(F("[u] Send USSD"));
   
   // Time
-  Serial.println(F("[y] Enable network time sync (FONA 800 & 808)"));
+  Serial.println(F("[y] Enable network time sync"));
   Serial.println(F("[Y] Enable NTP time sync (GPRS FONA 800 & 808)"));
   Serial.println(F("[t] Get network time"));
 
