@@ -1,4 +1,4 @@
-# Adafruit FONA Library[![Build Status](https://github.com/adafruit/Adafruit_FONA/workflows/Arduino%20Library%20CI/badge.svg)](https://github.com/adafruit/Adafruit_FONA/actions)
+# Adafruit FONA Library[![Build Status](https://github.com/adafruit/Adafruit_FONA/workflows/Arduino%20Library%20CI/badge.svg)](https://github.com/adafruit/Adafruit_FONA/actions)[![Documentation](assets/doxygen-badge.svg)](http://adafruit.github.io/Adafruit_FONA/html/index.html)
 
 **This library requires Arduino v1.0.6 or higher**
 
