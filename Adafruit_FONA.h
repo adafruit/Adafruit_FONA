@@ -281,15 +281,20 @@ public:
   bool playToolkitTone(uint8_t t, uint16_t len);
   bool hangUp(void);
   bool pickUp(void);
+  bool enableNetworkTimeSync(bool onoff);
   bool enableGPRS(bool onoff);
   bool enableGPS(bool onoff);
 
 protected:
   bool parseReply(FONAFlashStringPtr toreply, float *f, char divider,
                   uint8_t index);
+  bool parseReply(FONAFlashStringPtr toreply, uint16_t *v, char divider,
+                  uint8_t index);
 
   bool sendParseReply(FONAFlashStringPtr tosend, FONAFlashStringPtr toreply,
                       float *f, char divider = ',', uint8_t index = 0);
+  bool sendParseReply(FONAFlashStringPtr tosend, FONAFlashStringPtr toreply,
+                      uint16_t *v, char divider = ',', uint8_t index = 0);
 };
 
 #endif

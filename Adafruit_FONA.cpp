@@ -983,6 +983,39 @@ bool Adafruit_FONA::enableNetworkTimeSync(bool onoff) {
 }
 
 /**
+ * @brief Enable network time sync and toggle network state to update time.
+ *
+ * @param onoff true: enable false: disable
+ * @return true: success, false: failure
+ */
+bool Adafruit_FONA_3G::enableNetworkTimeSync(bool onoff) {
+    if (onoff) {
+        if (!sendCheckReply(F("AT+CTZU=1"), ok_reply))
+            return false;
+    } else {
+        if (!sendCheckReply(F("AT+CTZU=0"), ok_reply))
+            return false;
+    }
+    // Disable and re-enable FONA's transmit/receive RF circuits
+    // This is because time updates occur during network registration
+    // See 4.1 AT+CFUN (https://simcom.ee/documents/SIM5320/SIMCOM_SIM5320_ATC_EN_V2.05.pdf)
+
+    // Get existing network network functionality level
+    uint16_t prior_level;
+    sendParseReply(F("AT+CFUN?"), F("+CFUN: "), &prior_level);
+    // Set network functionality level to 4 ('disable both transmit and receive RF circuits')
+    if (!sendCheckReply(F("AT+CFUN=4"), ok_reply, 4000))
+        return false;
+    // Restore existing network functionality level
+    if (!sendCheckReply(F("AT+CFUN="), prior_level, ok_reply))
+        return false;
+
+    flushInput(); // eat any 'Unsolicted Result Code'
+
+    return true;
+}
+
+/**
  * @brief Enable NTP time sync
  *
  * @param onoff true: enable false: disable
@@ -1109,7 +1142,7 @@ bool Adafruit_FONA_3G::enableGPS(bool onoff) {
   return true;
 }
 /**
- * @brief Get teh GPS status
+ * @brief Get the GPS status
  *
  * @return int8_t The GPS status:
  * * 0: GPS off
@@ -2891,7 +2924,7 @@ bool Adafruit_FONA::sendParseReply(FONAFlashStringPtr tosend,
 /**
  * @brief Send data and parse the reply
  *
- * @param tosend Pointer to he data buffer to send
+ * @param tosend Pointer to the data buffer to send
  * @param toreply The expected reply string
  * @param f Pointer to a float buffer to hold value of the parsed field
  * @param divider The divider character
@@ -2909,6 +2942,29 @@ bool Adafruit_FONA_3G::sendParseReply(FONAFlashStringPtr tosend,
   readline(); // eat 'OK'
 
   return true;
+}
+
+/**
+ * @brief Send data and parse the reply
+ *
+ * @param tosend Pointer to the data buffer to send
+ * @param toreply The expected reply string
+ * @param f Pointer to a uint16_t buffer to hold value of the parsed field
+ * @param divider The divider character
+ * @param index The index of the parsed field to retrieve
+ * @return true: success, false: failure
+ */
+bool Adafruit_FONA_3G::sendParseReply(FONAFlashStringPtr tosend,
+                                      FONAFlashStringPtr toreply, uint16_t *v,
+                                      char divider, uint8_t index) {
+    getReply(tosend);
+
+    if (!parseReply(toreply, v, divider, index))
+        return false;
+
+    readline(); // eat 'OK'
+
+    return true;
 }
 
 /**
@@ -2938,4 +2994,33 @@ bool Adafruit_FONA_3G::parseReply(FONAFlashStringPtr toreply, float *f,
   *f = atof(p);
 
   return true;
+}
+
+/**
+ * @brief Parse a reply
+ *
+ * @param toreply Pointer to a buffer with the expected reply string
+ * @param f Pointer to a uint16_t buffer to hold the value of the parsed field
+ * @param divider The divider character
+ * @param index The index of the parsed field to retrieve
+ * @return true: success, false: failure
+ */
+bool Adafruit_FONA_3G::parseReply(FONAFlashStringPtr toreply, uint16_t *v,
+                                  char divider, uint8_t index) {
+    char *p = prog_char_strstr(replybuffer, (prog_char *)toreply);
+    if (p == 0)
+        return false;
+    p += prog_char_strlen((prog_char *)toreply);
+    // DEBUG_PRINTLN(p);
+    for (uint8_t i = 0; i < index; i++) {
+        // increment dividers
+        p = strchr(p, divider);
+        if (!p)
+            return false;
+        p++;
+        // DEBUG_PRINTLN(p);
+    }
+    *v = atoi(p);
+
+    return true;
 }
