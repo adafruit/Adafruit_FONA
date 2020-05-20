@@ -1,25 +1,38 @@
-/***************************************************
-  This is a library for our Adafruit FONA Cellular Module
-
-  Designed specifically to work with the Adafruit FONA
-  ----> http://www.adafruit.com/products/1946
-  ----> http://www.adafruit.com/products/1963
-
-  These displays use TTL Serial to communicate, 2 pins are required to
-  interface
-  Adafruit invests time and resources providing this open source code,
-  please support Adafruit and open-source hardware by purchasing
-  products from Adafruit!
-
-  Written by Limor Fried/Ladyada for Adafruit Industries.
-  BSD license, all text above must be included in any redistribution
- ****************************************************/
+/*!
+ * @file Adafruit_FONA.cpp
+ *
+ * @mainpage Adafruit FONA
+ *
+ * @section intro_sec Introduction
+ *
+ * This is a library for our Adafruit FONA Cellular Module
+ *
+ * Designed specifically to work with the Adafruit FONA
+ * ----> http://www.adafruit.com/products/1946
+ * ----> http://www.adafruit.com/products/1963
+ *
+ * These displays use TTL Serial to communicate, 2 pins are required to
+ * interface
+ * Adafruit invests time and resources providing this open source code,
+ * please support Adafruit and open-source hardware by purchasing
+ * products from Adafruit!
+ *
+ * @section author Author
+ *
+ * Written by Limor Fried/Ladyada for Adafruit Industries.
+ * @section license License
+ *
+ * BSD license, all text above must be included in any redistribution
+ *
+ */
 // next line per
 // http://postwarrior.com/arduino-ethershield-error-prog_char-does-not-name-a-type/
 
 #include "Adafruit_FONA.h"
 
+/// @cond DISABLE
 #if defined(ESP8266)
+/// @endcond
 // ESP8266 doesn't have the min and max functions natively available like
 // AVR libc seems to provide.  Include the STL algorithm library to get these.
 // Unfortunately algorithm isn't available in AVR libc so this is ESP8266
@@ -27,7 +40,9 @@
 // software serial and are currently incompatible with the FONA library).
 #include <algorithm>
 using namespace std;
+/// @cond DISABLE
 #endif
+/// @endcond
 /**
  * @brief Construct a new Adafruit_FONA object
  *
@@ -85,9 +100,13 @@ bool Adafruit_FONA::begin(Stream &port) {
   }
 
   if (timeout <= 0) {
+/// @cond DISABLE
 #ifdef ADAFRUIT_FONA_DEBUG
+    /// @endcond
     DEBUG_PRINTLN(F("Timeout: No response to AT... last ditch attempt."));
+/// @cond DISABLE
 #endif
+    /// @endcond
     sendCheckReply(F("AT"), ok_reply);
     delay(100);
     sendCheckReply(F("AT"), ok_reply);
@@ -150,11 +169,15 @@ bool Adafruit_FONA::begin(Stream &port) {
     }
   }
 
+/// @cond DISABLE
 #if defined(FONA_PREF_SMS_STORAGE)
+  /// @endcond
   sendCheckReply(F("AT+CPMS=" FONA_PREF_SMS_STORAGE "," FONA_PREF_SMS_STORAGE
                    "," FONA_PREF_SMS_STORAGE),
                  ok_reply);
+/// @cond DISABLE
 #endif
+  /// @endcond
 
   return true;
 }
@@ -1885,12 +1908,16 @@ bool Adafruit_FONA::TCPsend(char *data, uint8_t len) {
 
   DEBUG_PRINT(F("AT+CIPSEND="));
   DEBUG_PRINTLN(len);
+/// @cond DISABLE
 #ifdef ADAFRUIT_FONA_DEBUG
+  /// @endcond
   for (uint16_t i = 0; i < len; i++) {
     DEBUG_PRINT(F(" 0x"));
     DEBUG_PRINT(data[i], HEX);
   }
+/// @cond DISABLE
 #endif
+  /// @endcond
   DEBUG_PRINTLN();
 
   mySerial->print(F("AT+CIPSEND="));
@@ -1945,7 +1972,9 @@ uint16_t Adafruit_FONA::TCPread(uint8_t *buff, uint8_t len) {
 
   readRaw(avail);
 
+/// @cond DISABLE
 #ifdef ADAFRUIT_FONA_DEBUG
+  /// @endcond
   DEBUG_PRINT(avail);
   DEBUG_PRINTLN(F(" bytes read"));
   for (uint8_t i = 0; i < avail; i++) {
@@ -1953,7 +1982,9 @@ uint16_t Adafruit_FONA::TCPread(uint8_t *buff, uint8_t len) {
     DEBUG_PRINT(replybuffer[i], HEX);
   }
   DEBUG_PRINTLN();
+/// @cond DISABLE
 #endif
+  /// @endcond
 
   memcpy(buff, replybuffer, avail);
 
