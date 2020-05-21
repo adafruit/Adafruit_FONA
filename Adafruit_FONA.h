@@ -1,9 +1,7 @@
 /*
  * @file Adafruit_FONA.h
  */
-/// @cond DISABLE
 #ifndef ADAFRUIT_FONA_H
-/// @endcond
 #define ADAFRUIT_FONA_H
 
 #include "includes/FONAConfig.h"
@@ -281,6 +279,4 @@ protected:
                       float *f, char divider = ',', uint8_t index = 0);
 };
 
-/// @cond DISABLE
 #endif
-/// @endcond

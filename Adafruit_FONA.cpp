@@ -30,9 +30,7 @@
 
 #include "Adafruit_FONA.h"
 
-/// @cond DISABLE
 #if defined(ESP8266)
-/// @endcond
 // ESP8266 doesn't have the min and max functions natively available like
 // AVR libc seems to provide.  Include the STL algorithm library to get these.
 // Unfortunately algorithm isn't available in AVR libc so this is ESP8266
@@ -40,9 +38,7 @@
 // software serial and are currently incompatible with the FONA library).
 #include <algorithm>
 using namespace std;
-/// @cond DISABLE
 #endif
-/// @endcond
 /**
  * @brief Construct a new Adafruit_FONA object
  *
@@ -100,13 +96,9 @@ bool Adafruit_FONA::begin(Stream &port) {
   }
 
   if (timeout <= 0) {
-/// @cond DISABLE
 #ifdef ADAFRUIT_FONA_DEBUG
-    /// @endcond
     DEBUG_PRINTLN(F("Timeout: No response to AT... last ditch attempt."));
-/// @cond DISABLE
 #endif
-    /// @endcond
     sendCheckReply(F("AT"), ok_reply);
     delay(100);
     sendCheckReply(F("AT"), ok_reply);
@@ -169,15 +161,11 @@ bool Adafruit_FONA::begin(Stream &port) {
     }
   }
 
-/// @cond DISABLE
 #if defined(FONA_PREF_SMS_STORAGE)
-  /// @endcond
   sendCheckReply(F("AT+CPMS=" FONA_PREF_SMS_STORAGE "," FONA_PREF_SMS_STORAGE
                    "," FONA_PREF_SMS_STORAGE),
                  ok_reply);
-/// @cond DISABLE
 #endif
-  /// @endcond
 
   return true;
 }
@@ -1908,16 +1896,12 @@ bool Adafruit_FONA::TCPsend(char *data, uint8_t len) {
 
   DEBUG_PRINT(F("AT+CIPSEND="));
   DEBUG_PRINTLN(len);
-/// @cond DISABLE
 #ifdef ADAFRUIT_FONA_DEBUG
-  /// @endcond
   for (uint16_t i = 0; i < len; i++) {
     DEBUG_PRINT(F(" 0x"));
     DEBUG_PRINT(data[i], HEX);
   }
-/// @cond DISABLE
 #endif
-  /// @endcond
   DEBUG_PRINTLN();
 
   mySerial->print(F("AT+CIPSEND="));
@@ -1972,9 +1956,7 @@ uint16_t Adafruit_FONA::TCPread(uint8_t *buff, uint8_t len) {
 
   readRaw(avail);
 
-/// @cond DISABLE
 #ifdef ADAFRUIT_FONA_DEBUG
-  /// @endcond
   DEBUG_PRINT(avail);
   DEBUG_PRINTLN(F(" bytes read"));
   for (uint8_t i = 0; i < avail; i++) {
@@ -1982,9 +1964,7 @@ uint16_t Adafruit_FONA::TCPread(uint8_t *buff, uint8_t len) {
     DEBUG_PRINT(replybuffer[i], HEX);
   }
   DEBUG_PRINTLN();
-/// @cond DISABLE
 #endif
-  /// @endcond
 
   memcpy(buff, replybuffer, avail);
 
