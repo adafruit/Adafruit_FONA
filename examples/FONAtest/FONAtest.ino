@@ -862,12 +862,11 @@ uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout) {
 
       //Serial.print(c, HEX); Serial.print("#"); Serial.println(c);
 
-      if (c == '\r') continue;
-      if (c == 0xA) {
-        if (buffidx == 0)   // the first 0x0A is ignored
+      if (c == 0xA || c == 0xD) {
+        if (buffidx == 0)   // the first 0x0A or 0x0D is ignored
           continue;
 
-        timeout = 0;         // the second 0x0A is the end of the line
+        timeout = 0;         // the second 0x0A or 0x0D is the end of the line
         timeoutvalid = true;
         break;
       }
