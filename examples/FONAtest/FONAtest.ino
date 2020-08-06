@@ -722,7 +722,7 @@ void loop() {
 
         flushSerial();
         Serial.println(F("NOTE: in beta! Use small webpages to read!"));
-        Serial.println(F("URL to read (e.g. www.adafruit.com/testwifi/index.html):"));
+        Serial.println(F("URL to read (e.g. wifitest.adafruit.com/testwifi/index.html):"));
         Serial.print(F("http://")); readline(url, 79);
         Serial.println(url);
 
