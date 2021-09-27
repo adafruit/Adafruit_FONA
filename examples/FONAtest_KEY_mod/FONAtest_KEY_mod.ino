@@ -27,23 +27,30 @@ the commented section below at the end of the setup() function.
 */
 #include "Adafruit_FONA.h"
 
-#define FONA_RX 2
-#define FONA_TX 3
 #define FONA_RST 4
 #define FONA_KEY 8
 
 // this is a large buffer for replies
 char replybuffer[255];
 
-// We default to using software serial. If you want to use hardware serial
+#if (defined(__AVR__) || defined(ESP8266)) && !defined(__AVR_ATmega2560__)
+// For UNO and others without hardware serial,
+// we default to using software serial. If you want to use hardware serial
 // (because softserial isnt supported) comment out the following three lines 
 // and uncomment the HardwareSerial line
 #include <SoftwareSerial.h>
+
+#define FONA_RX 2
+#define FONA_TX 3
+
 SoftwareSerial fonaSS = SoftwareSerial(FONA_TX, FONA_RX);
 SoftwareSerial *fonaSerial = &fonaSS;
 
-// Hardware serial is also possible!
-//  HardwareSerial *fonaSerial = &Serial1;
+#else
+// On Leonardo/M0/etc, others with hardware serial, use hardware serial!
+HardwareSerial *fonaSerial = &Serial1;
+
+#endif
 
 // Use this for FONA 800 and 808s
 Adafruit_FONA fona = Adafruit_FONA(FONA_RST);

@@ -205,7 +205,15 @@ bool Adafruit_FONA::readRTC(uint8_t *year, uint8_t *month, uint8_t *day,
   // TODO: https://github.com/adafruit/Adafruit_FONA/issues/111
   *year = v;
 
+  // avoid non-used warning
+  (void *)month;
+  (void *)day;
+  (void *)hr;
+  (void *)min;
+  (void *)sec;
+
   DEBUG_PRINTLN(*year);
+  return true;
 }
 
 /**
