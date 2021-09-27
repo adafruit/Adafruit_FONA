@@ -51,7 +51,7 @@ Adafruit_FONA::Adafruit_FONA(int8_t rst) {
   apnusername = 0;
   apnpassword = 0;
   mySerial = 0;
-  httpsredirect = true;
+  httpsredirect = false;
   useragent = F("FONA");
   ok_reply = F("OK");
 }
@@ -116,9 +116,6 @@ bool Adafruit_FONA::begin(Stream &port) {
   }
 
   // turn on hangupitude
-  sendCheckReply(F("AT+CVHU=0"), ok_reply);
-
-  // turn on SSL support
   sendCheckReply(F("AT+CVHU=0"), ok_reply);
 
   delay(100);
