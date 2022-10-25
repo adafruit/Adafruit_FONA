@@ -392,7 +392,7 @@ void loop() {
       }
     case 'M': {
         // Get FM volume.
-        uint8_t fmvol = fona.getFMVolume();
+        int8_t fmvol = fona.getFMVolume();
         if (fmvol < 0) {
           Serial.println(F("Failed"));
         } else {
@@ -610,6 +610,7 @@ void loop() {
         Serial.println(replybuffer);
         Serial.println(F("*****"));
       }
+      break;
     }
 
     /*** Time ***/

@@ -130,7 +130,7 @@ void loop() {
 
       //Send back an automatic response
       Serial.println("Sending reponse...");
-      if (!fona.sendSMS(callerIDbuffer, "Hey, I got your text!")) {
+      if (!fona.sendSMS(callerIDbuffer, (char *)"Hey, I got your text!")) {
         Serial.println(F("Failed"));
       } else {
         Serial.println(F("Sent!"));

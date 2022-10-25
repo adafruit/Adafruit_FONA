@@ -1264,7 +1264,6 @@ bool Adafruit_FONA::getGPS(float *lat, float *lon, float *speed_kph,
     // Parse 3G respose
     // +CGPSINFO:4043.000000,N,07400.000000,W,151015,203802.1,-12.0,0.0,0
     // skip beginning
-    char *tok;
 
     // grab the latitude
     char *latp = strtok(gpsbuffer, ",");
@@ -1287,8 +1286,8 @@ bool Adafruit_FONA::getGPS(float *lat, float *lon, float *speed_kph,
       return false;
 
     // skip date & time
-    tok = strtok(NULL, ",");
-    tok = strtok(NULL, ",");
+    (void)strtok(NULL, ",");
+    (void)strtok(NULL, ",");
 
     // only grab altitude if needed
     if (altitude != NULL) {
