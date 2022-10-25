@@ -206,11 +206,19 @@ bool Adafruit_FONA::readRTC(uint8_t *year, uint8_t *month, uint8_t *day,
   *year = v;
 
   // avoid non-used warning
+#if 0
   (void *)month;
   (void *)day;
   (void *)hr;
   (void *)min;
   (void *)sec;
+#else
+  month = month;
+  day = day;
+  hr = hr;
+  min = min;
+  sec = sec;
+#endif
 
   DEBUG_PRINTLN(*year);
   return true;
