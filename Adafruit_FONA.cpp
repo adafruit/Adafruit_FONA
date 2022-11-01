@@ -347,6 +347,18 @@ uint8_t Adafruit_FONA::getIMEI(char *imei) {
   return strlen(imei);
 }
 
+/********* OPERATOR *******************************************************/
+bool Adafruit_FONA::getOperator(char *op, uint8_t oplen) {
+  DEBUG_PRINT(F("\t---> ")); DEBUG_PRINTLN(F("AT+COPS?"));
+  mySerial->println(F("AT+COPS?"));
+  readline(1000);
+  DEBUG_PRINT(F("\t<--- ")); DEBUG_PRINTLN(replybuffer);
+  boolean result = parseReplyQuoted(F("+COPS:"), op, oplen, ',', 2);
+  if (!result) op[0] ='\0';
+  flushInput();
+  return result;
+}
+
 /********* NETWORK *******************************************************/
 
 /**

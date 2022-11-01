@@ -87,6 +87,7 @@ public:
 
   // IMEI
   uint8_t getIMEI(char *imei);
+  bool getOperator(char *op, uint8_t oplen);
 
   // set Audio output
   bool setAudio(uint8_t audio_output);
