@@ -1311,7 +1311,7 @@ bool Adafruit_FONA::getGPS(float *lat, float *lon, float *speed_kph,
     // only grab heading if needed
     if (heading != NULL) {
 
-      // grab the speed in knots
+      // grab the heading in degrees
       char *coursep = strtok(NULL, ",");
       if (!coursep)
         return false;
