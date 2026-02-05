@@ -28,13 +28,14 @@
 
 #if (ARDUINO >= 100)
 #include "Arduino.h"
-#if !defined(__SAM3X8E__) &&                                                   \
+#if !defined(__SAM3X8E__) && \
     !defined(ARDUINO_ARCH_SAMD) // Arduino Due doesn't support     #include
                                 // <SoftwareSerial.h>
 #endif
 #else
-#include "WProgram.h"
 #include <NewSoftSerial.h>
+
+#include "WProgram.h"
 #endif
 
 #if (defined(__AVR__))
@@ -56,7 +57,7 @@
 
 // a few typedefs to keep things portable
 typedef Stream FONAStreamType;
-typedef const __FlashStringHelper *FONAFlashStringPtr;
+typedef const __FlashStringHelper* FONAFlashStringPtr;
 
 #define prog_char char PROGMEM
 
