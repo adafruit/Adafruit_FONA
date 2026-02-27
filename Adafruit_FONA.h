@@ -84,6 +84,7 @@ class Adafruit_FONA : public FONAStreamType {
   uint8_t getSIMCCID(char* ccid);
   uint8_t getNetworkStatus(void);
   uint8_t getRSSI(void);
+  uint8_t getBusy(void);
 
   // IMEI
   uint8_t getIMEI(char* imei);
