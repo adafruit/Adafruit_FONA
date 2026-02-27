@@ -171,6 +171,98 @@ bool Adafruit_FONA::begin(Stream& port) {
 
   return true;
 }
+/* ~~~~~~~~~~~~~~~~~~~~~ ADDED CELL ANTENNA LOCATION SUPPORT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+if you want the module to keep you updated with the lac and cid, 
+you can get that with at+creg=2 or at+cgreg=2 (they appear to do the same thing), 
+and the module will report whenever you are shoved to another tower. 
+
+also, set at+cnetscan=1 and then at+cnetscan will show you all towers 
+the fona can see at present along with signal strength.
+// ~~~~~~~~~~~~~~~~~~~~~ ADDED CELL ANTENNA LOCATION SUPPORT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+boolean Adafruit_FONA::getCELLLoc(uint16_t *errorcode, char *buff, uint16_t maxlen) {
+  // Set mode = 2 (Because nothing else seems to work)
+  getReply(F("AT+CENG=2"), (uint16_t)20000);
+  readline(); // eat OK
+  
+  // CENG: does a Read and should give us what we need - and it does
+  char *p = replybuffer+6;      // Skip the first 6 characters	
+  while((int)strlen(p) < 10) 	// This is my attempt to make sure we get data rather than a status message
+  {
+  	  getReply(F("AT+CENG:"), (uint16_t)20000);
+  	  
+	  if (! parseReply(F("+CENG: "), errorcode))
+		return false;
+  }
+  
+  // Copy the response into user's buffer
+  uint16_t lentocopy = min(maxlen-1, (int)strlen(p));
+  strncpy(buff, p, lentocopy+1);
+  
+  // Set mode = 0 (turns off engineering mode)
+  endCELLLoc(0);
+
+  return true;
+}
+/*
+//		Will report more or less the same as CENG, but a bit more detail
+boolean Adafruit_FONA::getCELLLoc(uint16_t *errorcode, char *buff, uint16_t maxlen) {
+  // Set mode = 2 (Becuase nothing else seems to work)
+  getReply(F("AT+CNETSCAN=1"), (uint16_t)20000);
+  readline(); // eat OK
+  getReply(F("AT+CNETSCAN"), (uint16_t)20000);
+  // CENG: does a Read and should give us what we need - and it does, on occasion
+  char *p = replybuffer+6;      // Skip the first 6 characters	
+  while((int)strlen(p) < 10) 	// This is my attempt to make sure we get data rather than a status message
+  {
+  	  getReply(F("AT+CNETSCAN:"), (uint16_t)20000);
+  	  
+	  if (! parseReply(F("+CNETSCAN: "), errorcode))
+		return false;
+  }
+  
+  // Copy the response into user's buffer
+  uint16_t lentocopy = min(maxlen-1, (int)strlen(p));
+  strncpy(buff, p, lentocopy+1);
+  
+  // Set mode = 0 (turns off engineering mode)
+  endCELLLoc(0);
+
+  return true;
+}
+*/
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//	Provide a call to turn it off as well
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+boolean Adafruit_FONA::endCELLLoc(uint16_t *errorcode) {
+
+  getReply(F("AT+CENG=0"), (uint16_t)20000);
+  readline(); // eat OK
+  
+  if (! parseReply(F("+CENG: "), errorcode))
+    return false;
+  
+  return true;
+}
+
+// ~~~~~~~~~~~~~~~~~~~~~ ADDED CELL ANTENNA LOCATION SUPPORT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~ ADDED CELL ANTENNA LOCATION SUPPORT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+// ~~~~~~~~~~~~~~~~~~~~~ ADDED URC SUPPRESSION SUPPORT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~ ADDED URC SUPPRESSION SUPPORT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//	Disable URC (Unsolicited Response Codes) from FONA 
+//	They screw up transactional sequences by being "Unsolicited"
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+boolean Adafruit_FONA::setURCMode(boolean stat) {
+  if(! stat) getReply(F("AT+CNMI=0"), (uint16_t)20000);
+  if(  stat) getReply(F("AT+CNMI=3"), (uint16_t)20000);
+  readline(); // eat OK
+  return true;
+}
+// ~~~~~~~~~~~~~~~~~~~~~ ADDED URC SUPPRESSION SUPPORT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~ ADDED URC SUPPRESSION SUPPORT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 /********* Serial port ********************************************/
 
